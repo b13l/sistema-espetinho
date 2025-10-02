@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Espetinho do Gesselo - Pedidos</title>
+  <meta name="theme-color" content="#d97706" />
+  <meta name="description" content="Sistema de pedidos - Espetinho do Gesselo. Garçom faz pedido pelo celular, chega no caixa via web." />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);min-height:100vh;color:#1f2937}
+    .garcom-view .container{max-width:480px;margin:0 auto;background:#fff;min-height:100vh;position:relative;padding-bottom:80px}
+    .header{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;padding:1rem;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.1);position:relative}
+    .connection-status{position:absolute;top:1rem;right:1rem;width:12px;height:12px;border-radius:50%;background:#9ca3af;border:2px solid rgba(255,255,255,.25)}
+    .alert{padding:1rem;margin:1rem;border-radius:8px}
+    .alert.error{background:#fee2e2;color:#dc2626}
+    .alert.success{background:#d1fae5;color:#059669}
+    .tab-content{display:block;padding:1rem;max-height:calc(100vh - 140px);overflow:auto}
+    .select-group{display:flex;gap:10px;margin-bottom:1rem;position:sticky;top:0;background:#fff;z-index:10;padding-bottom:1rem}
+    .select-group .select-wrapper{flex:1}
+    .select-group select,.select-group input[type="text"]{width:100%;padding:.75rem;border:2px solid #e5e7eb;border-radius:8px;font-size:1rem}
+    .observacoes-field textarea{width:100%;padding:.75rem;border:2px solid #e5e7eb;border-radius:8px;font-size:1rem;resize:vertical;margin-bottom:1rem}
+    .categoria{margin-bottom:1rem;background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);overflow:hidden}
+    .categoria h3{color:#fff;background:#d97706;margin:0;padding:.75rem 1rem;font-size:1rem;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}
+    .categoria h3::after{content:'▼';font-size:.8rem;transition:transform .3s}
+    .categoria.collapsed h3::after{transform:rotate(-90deg)}
+    .categoria-content{padding:.5rem;transition:max-height .3s ease-out;overflow:hidden}
+    .categoria.collapsed .categoria-content{max-height:0;padding:0 .5rem}
+    .produto{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:.75rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center}
+    .produto-info h4{font-size:0.95rem;margin-bottom:4px}
+    .produto-info .preco{color:#059669;font-weight:700;font-size:.9rem}
+    .produto.esgotado{background:#fee2e2;border-left:5px solid #dc2626;opacity:.8;pointer-events:none}
+    .produto.esgotado .produto-info .preco::after{content:' (ESGOTADO)';color:#dc2626;font-weight:700}
+    .quantidade-control{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+    .btn-qty{width:28px;height:28px;border:1px solid #d97706;background:#fff;color:#d97706;border-radius:50%;cursor:pointer;font-weight:700;font-size:.95rem}
+    .btn-qty[aria-label]{outline:none}
+    .btn-primary{background:#d97706;color:#fff;border:none;padding:1rem 2rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%;margin-top:1rem;font-weight:700;position:sticky;bottom:0;z-index:10;box-shadow:0 -2px 10px rgba(0,0,0,.1)}
+    .btn-primary:disabled{background:#9ca3af;cursor:not-allowed}
+    .resumo-pedido{background:#f9fafb;border:2px solid #d97706;border-radius:8px;padding:1rem;margin-bottom:1rem}
+    .resumo-pedido.hidden{display:none}
+    .resumo-item{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #e5e7eb}
+    .resumo-total{font-weight:800;font-size:1.1rem;color:#d97706;margin-top:.5rem;text-align:right}
+    @media(min-width:900px){ .garcom-view .container{max-width:900px} .produto{padding:1rem} }
+  </style>
+</head>
+<body class="garcom-view">
+  <div class="container">
+    <div class="header" role="banner">
+      <div id="connectionStatus" class="connection-status" aria-hidden="true"></div>
+      <h1>🍖 Espetinho do Gesselo</h1>
+      <p id="headerSubtitle">Sistema de Pedidos</p>
+    </div>
+
+    <main id="pedidos" class="tab-content" role="main" aria-labelledby="mainTitle">
+      <h2 id="mainTitle" style="margin-bottom:8px">Fazer Pedido</h2>
+
+      <div id="alertContainer" aria-live="polite"></div>
+
+      <div class="select-group" aria-label="Mesa e comanda">
+        <div class="select-wrapper">
+          <select id="mesaSelect" aria-label="Selecione a mesa">
+            <option value="">Carregando mesas...</option>
+          </select>
+        </div>
+        <div class="select-wrapper">
+          <input id="clienteComanda" type="text" placeholder="Nº Comanda/Cliente" value="1" aria-label="Número da comanda" />
+        </div>
+      </div>
+
+      <div class="observacoes-field">
+        <textarea id="observacoes" rows="2" placeholder="Ex: Ponto da carne, sem cebola, etc." aria-label="Observações do pedido"></textarea>
+      </div>
+
+      <div id="resumoPedido" class="resumo-pedido hidden" aria-live="polite">
+        <h4>📋 Resumo do Pedido</h4>
+        <div id="resumoItens"></div>
+        <div id="resumoTotal" class="resumo-total">Total: R$ 0,00</div>
+      </div>
+
+      <!-- ========== CATEGORIAS E ITENS ========== -->
+      <!-- Bebidas -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Bebidas">
+        <h3>🍺 Bebidas</h3>
+        <div class="categoria-content">
+          <!-- CERVEJAS (600ml / linha) -->
+          <div class="produto" id="div-cerveja_original_600">
+            <div class="produto-info"><h4>ORIGINAL 600ml</h4><div class="preco">R$ 12,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ORIGINAL 600ml" onclick="changeQty('cerveja_original_600',-1)">-</button>
+              <input class="qty" id="cerveja_original_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ORIGINAL 600ml" onclick="changeQty('cerveja_original_600',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-stella_artois_600">
+            <div class="produto-info"><h4>STELLA ARTOIS 600ml</h4><div class="preco">R$ 13,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir STELLA 600ml" onclick="changeQty('stella_artois_600',-1)">-</button>
+              <input class="qty" id="stella_artois_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar STELLA 600ml" onclick="changeQty('stella_artois_600',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-spaten_600">
+            <div class="produto-info"><h4>SPATEN 600ml</h4><div class="preco">R$ 12,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir SPATEN 600ml" onclick="changeQty('spaten_600',-1)">-</button>
+              <input class="qty" id="spaten_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar SPATEN 600ml" onclick="changeQty('spaten_600',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-brahma_600">
+            <div class="produto-info"><h4>BRAHMA 600ml</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir BRAHMA 600ml" onclick="changeQty('brahma_600',-1)">-</button>
+              <input class="qty" id="brahma_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar BRAHMA 600ml" onclick="changeQty('brahma_600',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-antartica_600">
+            <div class="produto-info"><h4>ANTÁRTICA 600ml</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ANTARTICA 600ml" onclick="changeQty('antartica_600',-1)">-</button>
+              <input class="qty" id="antartica_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ANTARTICA 600ml" onclick="changeQty('antartica_600',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-budweiser_600">
+            <div class="produto-info"><h4>BUDWEISER 600ml</h4><div class="preco">R$ 11,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir BUDWEISER 600ml" onclick="changeQty('budweiser_600',-1)">-</button>
+              <input class="qty" id="budweiser_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar BUDWEISER 600ml" onclick="changeQty('budweiser_600',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-heineken_600">
+            <div class="produto-info"><h4>HEINEKEN 600ml</h4><div class="preco">R$ 15,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir HEINEKEN 600ml" onclick="changeQty('heineken_600',-1)">-</button>
+              <input class="qty" id="heineken_600" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar HEINEKEN 600ml" onclick="changeQty('heineken_600',1)">+</button>
+            </div>
+          </div>
+
+          <!-- LITRINHOS -->
+          <div class="produto" id="div-litrinho_brahma">
+            <div class="produto-info"><h4>LITRINHO BRAHMA</h4><div class="preco">R$ 4,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO BRAHMA" onclick="changeQty('litrinho_brahma',-1)">-</button>
+              <input class="qty" id="litrinho_brahma" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO BRAHMA" onclick="changeQty('litrinho_brahma',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-litrinho_antartica">
+            <div class="produto-info"><h4>LITRINHO ANTÁRTICA</h4><div class="preco">R$ 4,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO ANTARTICA" onclick="changeQty('litrinho_antartica',-1)">-</button>
+              <input class="qty" id="litrinho_antartica" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO ANTARTICA" onclick="changeQty('litrinho_antartica',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-litrinho_skol">
+            <div class="produto-info"><h4>LITRINHO SKOL</h4><div class="preco">R$ 4,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO SKOL" onclick="changeQty('litrinho_skol',-1)">-</button>
+              <input class="qty" id="litrinho_skol" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO SKOL" onclick="changeQty('litrinho_skol',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-litrinho_original">
+            <div class="produto-info"><h4>LITRINHO ORIGINAL</h4><div class="preco">R$ 4,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO ORIGINAL" onclick="changeQty('litrinho_original',-1)">-</button>
+              <input class="qty" id="litrinho_original" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO ORIGINAL" onclick="changeQty('litrinho_original',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-litrinho_budweiser">
+            <div class="produto-info"><h4>LITRINHO BUDWEISER</h4><div class="preco">R$ 4,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO BUDWEISER" onclick="changeQty('litrinho_budweiser',-1)">-</button>
+              <input class="qty" id="litrinho_budweiser" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO BUDWEISER" onclick="changeQty('litrinho_budweiser',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-litrinho_petra">
+            <div class="produto-info"><h4>LITRINHO PETRA</h4><div class="preco">R$ 4,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO PETRA" onclick="changeQty('litrinho_petra',-1)">-</button>
+              <input class="qty" id="litrinho_petra" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO PETRA" onclick="changeQty('litrinho_petra',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-litrinho_imperio">
+            <div class="produto-info"><h4>LITRINHO IMPÉRIO</h4><div class="preco">R$ 4,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LITRINHO IMPERIO" onclick="changeQty('litrinho_imperio',-1)">-</button>
+              <input class="qty" id="litrinho_imperio" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LITRINHO IMPERIO" onclick="changeQty('litrinho_imperio',1)">+</button>
+            </div>
+          </div>
+
+          <!-- LONG NECK -->
+          <div class="produto" id="div-stella_long">
+            <div class="produto-info"><h4>STELLA ARTOIS (Long Neck)</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir STELLA long" onclick="changeQty('stella_long',-1)">-</button>
+              <input class="qty" id="stella_long" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar STELLA long" onclick="changeQty('stella_long',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-stella_puregold">
+            <div class="produto-info"><h4>STELLA PURE GOLD</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir STELLA PURE GOLD" onclick="changeQty('stella_puregold',-1)">-</button>
+              <input class="qty" id="stella_puregold" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar STELLA PURE GOLD" onclick="changeQty('stella_puregold',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-corona_long">
+            <div class="produto-info"><h4>CORONA (Long Neck)</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CORONA long" onclick="changeQty('corona_long',-1)">-</button>
+              <input class="qty" id="corona_long" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CORONA long" onclick="changeQty('corona_long',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-corona_zero">
+            <div class="produto-info"><h4>CORONA ZERO</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CORONA ZERO" onclick="changeQty('corona_zero',-1)">-</button>
+              <input class="qty" id="corona_zero" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CORONA ZERO" onclick="changeQty('corona_zero',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-heineken_long">
+            <div class="produto-info"><h4>HEINEKEN (Long Neck)</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir HEINEKEN long" onclick="changeQty('heineken_long',-1)">-</button>
+              <input class="qty" id="heineken_long" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar HEINEKEN long" onclick="changeQty('heineken_long',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-heineken_zero">
+            <div class="produto-info"><h4>HEINEKEN ZERO</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir HEINEKEN ZERO" onclick="changeQty('heineken_zero',-1)">-</button>
+              <input class="qty" id="heineken_zero" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar HEINEKEN ZERO" onclick="changeQty('heineken_zero',1)">+</button>
+            </div>
+          </div>
+
+          <!-- DOSES -->
+          <div class="produto" id="div-cachaca_especial">
+            <div class="produto-info"><h4>CACHACA ESPECIAL (Dose)</h4><div class="preco">R$ 5,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir Cachaça" onclick="changeQty('cachaca_especial',-1)">-</button>
+              <input class="qty" id="cachaca_especial" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar Cachaça" onclick="changeQty('cachaca_especial',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-conhaque">
+            <div class="produto-info"><h4>CONHAQUE (Dose)</h4><div class="preco">R$ 6,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CONHAQUE" onclick="changeQty('conhaque',-1)">-</button>
+              <input class="qty" id="conhaque" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CONHAQUE" onclick="changeQty('conhaque',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-campare">
+            <div class="produto-info"><h4>CAMPARI (Dose)</h4><div class="preco">R$ 12,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CAMPARE" onclick="changeQty('campare',-1)">-</button>
+              <input class="qty" id="campare" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CAMPARE" onclick="changeQty('campare',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-whisky">
+            <div class="produto-info"><h4>WHISKY (Dose)</h4><div class="preco">R$ 15,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir WHISKY" onclick="changeQty('whisky',-1)">-</button>
+              <input class="qty" id="whisky" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar WHISKY" onclick="changeQty('whisky',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-vodka">
+            <div class="produto-info"><h4>VODKA (Dose)</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir VODKA" onclick="changeQty('vodka',-1)">-</button>
+              <input class="qty" id="vodka" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar VODKA" onclick="changeQty('vodka',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-caipirinha">
+            <div class="produto-info"><h4>CAIPIRINHA</h4><div class="preco">R$ 13,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CAIPIRINHA" onclick="changeQty('caipirinha',-1)">-</button>
+              <input class="qty" id="caipirinha" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CAIPIRINHA" onclick="changeQty('caipirinha',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-caipivodka">
+            <div class="produto-info"><h4>CAIPIVODKA</h4><div class="preco">R$ 14,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CAIPIVODKA" onclick="changeQty('caipivodka',-1)">-</button>
+              <input class="qty" id="caipivodka" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CAIPIVODKA" onclick="changeQty('caipivodka',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Refrigerantes -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Refrigerantes">
+        <h3>🥤 Refrigerantes</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-lata_refri">
+            <div class="produto-info"><h4>LATA</h4><div class="preco">R$ 6,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LATA" onclick="changeQty('lata_refri',-1)">-</button>
+              <input class="qty" id="lata_refri" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LATA" onclick="changeQty('lata_refri',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-pet_pequeno">
+            <div class="produto-info"><h4>PET PEQUENO</h4><div class="preco">R$ 3,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PET PEQUENO" onclick="changeQty('pet_pequeno',-1)">-</button>
+              <input class="qty" id="pet_pequeno" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PET PEQUENO" onclick="changeQty('pet_pequeno',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-2litros">
+            <div class="produto-info"><h4>2 LITROS</h4><div class="preco">R$ 14,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir 2L" onclick="changeQty('2litros',-1)">-</button>
+              <input class="qty" id="2litros" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar 2L" onclick="changeQty('2litros',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-1litro_rs">
+            <div class="produto-info"><h4>1 LITRO</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir 1L" onclick="changeQty('1litro_rs',-1)">-</button>
+              <input class="qty" id="1litro_rs" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar 1L" onclick="changeQty('1litro_rs',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-1litro_meio">
+            <div class="produto-info"><h4>1,5 LITRO</h4><div class="preco">R$ 11,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir 1.5L" onclick="changeQty('1litro_meio',-1)">-</button>
+              <input class="qty" id="1litro_meio" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar 1.5L" onclick="changeQty('1litro_meio',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-g600ml">
+            <div class="produto-info"><h4>600ml</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir 600ml" onclick="changeQty('g600ml',-1)">-</button>
+              <input class="qty" id="g600ml" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar 600ml" onclick="changeQty('g600ml',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Outras Bebidas -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Outras Bebidas">
+        <h3>💧 Outras Bebidas</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-h20">
+            <div class="produto-info"><h4>H2O</h4><div class="preco">R$ 7,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir H2O" onclick="changeQty('h20',-1)">-</button>
+              <input class="qty" id="h20" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar H2O" onclick="changeQty('h20',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-suco_laranja">
+            <div class="produto-info"><h4>SUCO LARANJA (NATUREBA)</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir SUCO LARANJA" onclick="changeQty('suco_laranja',-1)">-</button>
+              <input class="qty" id="suco_laranja" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar SUCO LARANJA" onclick="changeQty('suco_laranja',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-suco_polpa">
+            <div class="produto-info"><h4>SUCO POLPA</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir SUCO POLPA" onclick="changeQty('suco_polpa',-1)">-</button>
+              <input class="qty" id="suco_polpa" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar SUCO POLPA" onclick="changeQty('suco_polpa',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-redbull">
+            <div class="produto-info"><h4>ENERGÉTICO RED BULL</h4><div class="preco">R$ 12,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir RED BULL" onclick="changeQty('redbull',-1)">-</button>
+              <input class="qty" id="redbull" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar RED BULL" onclick="changeQty('redbull',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-agua_simples">
+            <div class="produto-info"><h4>ÁGUA</h4><div class="preco">R$ 3,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ÁGUA" onclick="changeQty('agua_simples',-1)">-</button>
+              <input class="qty" id="agua_simples" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ÁGUA" onclick="changeQty('agua_simples',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-agua_com_gas">
+            <div class="produto-info"><h4>ÁGUA C/ GÁS</h4><div class="preco">R$ 4,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ÁGUA C GÁS" onclick="changeQty('agua_com_gas',-1)">-</button>
+              <input class="qty" id="agua_com_gas" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ÁGUA C GÁS" onclick="changeQty('agua_com_gas',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-agua_tonica">
+            <div class="produto-info"><h4>ÁGUA TÔNICA</h4><div class="preco">R$ 5,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ÁGUA TÔNICA" onclick="changeQty('agua_tonica',-1)">-</button>
+              <input class="qty" id="agua_tonica" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ÁGUA TÔNICA" onclick="changeQty('agua_tonica',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-cozumel_sem_cerveja">
+            <div class="produto-info"><h4>COZUMEL (SEM CERVEJA)</h4><div class="preco">R$ 6,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir COZUMEL" onclick="changeQty('cozumel_sem_cerveja',-1)">-</button>
+              <input class="qty" id="cozumel_sem_cerveja" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar COZUMEL" onclick="changeQty('cozumel_sem_cerveja',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-cdb">
+            <div class="produto-info"><h4>CDB</h4><div class="preco">R$ 2,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CDB" onclick="changeQty('cdb',-1)">-</button>
+              <input class="qty" id="cdb" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CDB" onclick="changeQty('cdb',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-oopo_sujo">
+            <div class="produto-info"><h4>OPO SUJO</h4><div class="preco">R$ 1,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir OPO SUJO" onclick="changeQty('oopo_sujo',-1)">-</button>
+              <input class="qty" id="oopo_sujo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar OPO SUJO" onclick="changeQty('oopo_sujo',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-copo_gelo_limao_laranja">
+            <div class="produto-info"><h4>COPO GELO C/ LIMÃO OU LARANJA</h4><div class="preco">R$ 2,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir COPO GELO" onclick="changeQty('copo_gelo_limao_laranja',-1)">-</button>
+              <input class="qty" id="copo_gelo_limao_laranja" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar COPO GELO" onclick="changeQty('copo_gelo_limao_laranja',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-limao_esprimido_com_gelo">
+            <div class="produto-info"><h4>LIMÃO ESPREMIDO C/ GELO</h4><div class="preco">R$ 2,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LIMÃO ESPREMIDO" onclick="changeQty('limao_esprimido_com_gelo',-1)">-</button>
+              <input class="qty" id="limao_esprimido_com_gelo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LIMÃO ESPREMIDO" onclick="changeQty('limao_esprimido_com_gelo',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Espetos - Carne Bovina -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Espetos - Carne Bovina">
+        <h3>🥩 Espetos - Carne Bovina</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-boi">
+            <div class="produto-info"><h4>001 - BOI</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir BOI" onclick="changeQty('boi',-1)">-</button>
+              <input class="qty" id="boi" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar BOI" onclick="changeQty('boi',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-kafta">
+            <div class="produto-info"><h4>002 - KAFTA</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir KAFTA" onclick="changeQty('kafta',-1)">-</button>
+              <input class="qty" id="kafta" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar KAFTA" onclick="changeQty('kafta',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_kafta">
+            <div class="produto-info"><h4>003 - MEDALHÃO DE KAFTA</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir MEDALHÃO DE KAFTA" onclick="changeQty('medalhao_kafta',-1)">-</button>
+              <input class="qty" id="medalhao_kafta" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar MEDALHÃO DE KAFTA" onclick="changeQty('medalhao_kafta',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-kibe_com_queijo">
+            <div class="produto-info"><h4>004 - KIBE COM QUEIJO</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir KIBE COM QUEIJO" onclick="changeQty('kibe_com_queijo',-1)">-</button>
+              <input class="qty" id="kibe_com_queijo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar KIBE COM QUEIJO" onclick="changeQty('kibe_com_queijo',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-picanha_falsa">
+            <div class="produto-info"><h4>005 - PICANHA FALSA</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PICANHA FALSA" onclick="changeQty('picanha_falsa',-1)">-</button>
+              <input class="qty" id="picanha_falsa" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PICANHA FALSA" onclick="changeQty('picanha_falsa',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-picanha">
+            <div class="produto-info"><h4>006 - PICANHA</h4><div class="preco">R$ 15,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PICANHA" onclick="changeQty('picanha',-1)">-</button>
+              <input class="qty" id="picanha" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PICANHA" onclick="changeQty('picanha',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-kafta_com_queijo">
+            <div class="produto-info"><h4>007 - KAFTA COM QUEIJO</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir KAFTA COM QUEIJO" onclick="changeQty('kafta_com_queijo',-1)">-</button>
+              <input class="qty" id="kafta_com_queijo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar KAFTA COM QUEIJO" onclick="changeQty('kafta_com_queijo',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Carne Suína -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Carne Suína">
+        <h3>🐷 Carne Suína</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-porco">
+            <div class="produto-info"><h4>008 - PORCO</h4><div class="preco">R$ 8,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PORCO" onclick="changeQty('porco',-1)">-</button>
+              <input class="qty" id="porco" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PORCO" onclick="changeQty('porco',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_porco">
+            <div class="produto-info"><h4>009 - MEDALHÃO DE PORCO</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir MEDALHÃO DE PORCO" onclick="changeQty('medalhao_porco',-1)">-</button>
+              <input class="qty" id="medalhao_porco" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar MEDALHÃO DE PORCO" onclick="changeQty('medalhao_porco',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-linguica_com_pimenta">
+            <div class="produto-info"><h4>010 - LINGUIÇA COM PIMENTA</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LINGUIÇA COM PIMENTA" onclick="changeQty('linguica_com_pimenta',-1)">-</button>
+              <input class="qty" id="linguica_com_pimenta" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LINGUIÇA COM PIMENTA" onclick="changeQty('linguica_com_pimenta',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-linguica_pura">
+            <div class="produto-info"><h4>011 - LINGUIÇA PURA</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir LINGUIÇA PURA" onclick="changeQty('linguica_pura',-1)">-</button>
+              <input class="qty" id="linguica_pura" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar LINGUIÇA PURA" onclick="changeQty('linguica_pura',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-panceta">
+            <div class="produto-info"><h4>012 - PANCETA</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PANCETA" onclick="changeQty('panceta',-1)">-</button>
+              <input class="qty" id="panceta" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PANCETA" onclick="changeQty('panceta',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-costelinha">
+            <div class="produto-info"><h4>013 - COSTELINHA</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir COSTELINHA" onclick="changeQty('costelinha',-1)">-</button>
+              <input class="qty" id="costelinha" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar COSTELINHA" onclick="changeQty('costelinha',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Carne Frango -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Carne Frango">
+        <h3>🐔 Carne Frango</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-frango">
+            <div class="produto-info"><h4>014 - FRANGO</h4><div class="preco">R$ 8,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir FRANGO" onclick="changeQty('frango',-1)">-</button>
+              <input class="qty" id="frango" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar FRANGO" onclick="changeQty('frango',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-tulipa">
+            <div class="produto-info"><h4>015 - TULIPA</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir TULIPA" onclick="changeQty('tulipa',-1)">-</button>
+              <input class="qty" id="tulipa" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar TULIPA" onclick="changeQty('tulipa',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-coracao">
+            <div class="produto-info"><h4>016 - CORAÇÃO</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CORAÇÃO" onclick="changeQty('coracao',-1)">-</button>
+              <input class="qty" id="coracao" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CORAÇÃO" onclick="changeQty('coracao',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_frango">
+            <div class="produto-info"><h4>017 - MEDALHÃO DE FRANGO</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir MEDALHÃO DE FRANGO" onclick="changeQty('medalhao_frango',-1)">-</button>
+              <input class="qty" id="medalhao_frango" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar MEDALHÃO DE FRANGO" onclick="changeQty('medalhao_frango',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_coracao">
+            <div class="produto-info"><h4>018 - MEDALHÃO DE CORAÇÃO</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir MEDALHÃO DE CORAÇÃO" onclick="changeQty('medalhao_coracao',-1)">-</button>
+              <input class="qty" id="medalhao_coracao" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar MEDALHÃO DE CORAÇÃO" onclick="changeQty('medalhao_coracao',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Queijos -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Queijos">
+        <h3>🧀 Queijos</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-medalhao_mussarela">
+            <div class="produto-info"><h4>019 - MEDALHÃO DE MUSSARELA</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir MEDALHÃO DE MUSSARELA" onclick="changeQty('medalhao_mussarela',-1)">-</button>
+              <input class="qty" id="medalhao_mussarela" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar MEDALHÃO DE MUSSARELA" onclick="changeQty('medalhao_mussarela',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-queijo_coalho">
+            <div class="produto-info"><h4>020 - QUEIJO COALHO</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir QUEIJO COALHO" onclick="changeQty('queijo_coalho',-1)">-</button>
+              <input class="qty" id="queijo_coalho" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar QUEIJO COALHO" onclick="changeQty('queijo_coalho',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-queijo_provolone">
+            <div class="produto-info"><h4>021 - QUEIJO PROVOLONE</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PROVOLONE" onclick="changeQty('queijo_provolone',-1)">-</button>
+              <input class="qty" id="queijo_provolone" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PROVOLONE" onclick="changeQty('queijo_provolone',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-queijo_mussarela">
+            <div class="produto-info"><h4>022 - QUEIJO MUSSARELA</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir QUEIJO MUSSARELA" onclick="changeQty('queijo_mussarela',-1)">-</button>
+              <input class="qty" id="queijo_mussarela" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar QUEIJO MUSSARELA" onclick="changeQty('queijo_mussarela',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-queijo_coalho_com_mel">
+            <div class="produto-info"><h4>023 - QUEIJO COALHO C/ MEL</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir QUEIJO COM MEL" onclick="changeQty('queijo_coalho_com_mel',-1)">-</button>
+              <input class="qty" id="queijo_coalho_com_mel" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar QUEIJO COM MEL" onclick="changeQty('queijo_coalho_com_mel',1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legumes -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Legumes">
+        <h3>🥗 Legumes</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-medalhao_batata">
+            <div class="produto-info"><h4>024 - MEDALHÃO DE BATATA</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir BATATA" onclick="changeQty('medalhao_batata',-1)">-</button>
+              <input class="qty" id="medalhao_batata" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar BATATA" onclick="changeQty('medalhao_batata',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_quiabo">
+            <div class="produto-info"><h4>025 - MEDALHÃO DE QUIABO</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir QUIABO" onclick="changeQty('medalhao_quiabo',-1)">-</button>
+              <input class="qty" id="medalhao_quiabo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar QUIABO" onclick="changeQty('medalhao_quiabo',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_jilo">
+            <div class="produto-info"><h4>026 - MEDALHÃO DE JILÓ</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir JILÓ" onclick="changeQty('medalhao_jilo',-1)">-</button>
+              <input class="qty" id="medalhao_jilo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar JILÓ" onclick="changeQty('medalhao_jilo',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_mandioca">
+            <div class="produto-info"><h4>027 - MEDALHÃO DE MANDIOCA</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir MANDIOCA" onclick="changeQty('medalhao_mandioca',-1)">-</button>
+              <input class="qty" id="medalhao_mandioca" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar MANDIOCA" onclick="changeQty('medalhao_mandioca',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_palmito">
+            <div class="produto-info"><h4>028 - MEDALHÃO DE PALMITO</h4><div class="preco">R$ 9,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PALMITO" onclick="changeQty('medalhao_palmito',-1)">-</button>
+              <input class="qty" id="medalhao_palmito" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PALMITO" onclick="changeQty('medalhao_palmito',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Especiais -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Especiais">
+        <h3>🌟 Especiais</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-medalhao_peixe">
+            <div class="produto-info"><h4>029 - MEDALHÃO DE PEIXE</h4><div class="preco">R$ 9,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PEIXE" onclick="changeQty('medalhao_peixe',-1)">-</button>
+              <input class="qty" id="medalhao_peixe" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PEIXE" onclick="changeQty('medalhao_peixe',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_ovo_codorna">
+            <div class="produto-info"><h4>030 - MEDALHÃO DE OVO DE CODORNA</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir OVO CODORNA" onclick="changeQty('medalhao_ovo_codorna',-1)">-</button>
+              <input class="qty" id="medalhao_ovo_codorna" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar OVO CODORNA" onclick="changeQty('medalhao_ovo_codorna',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_kani">
+            <div class="produto-info"><h4>031 - MEDALHÃO DE KANI</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir KANI" onclick="changeQty('medalhao_kani',-1)">-</button>
+              <input class="qty" id="medalhao_kani" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar KANI" onclick="changeQty('medalhao_kani',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-medalhao_salsicha">
+            <div class="produto-info"><h4>032 - MEDALHÃO DE SALSICHA</h4><div class="preco">R$ 8,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir SALSICHA" onclick="changeQty('medalhao_salsicha',-1)">-</button>
+              <input class="qty" id="medalhao_salsicha" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar SALSICHA" onclick="changeQty('medalhao_salsicha',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-kafta_carneiro">
+            <div class="produto-info"><h4>033 - KAFTA DE CARNEIRO</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir KAFTA CARNEIRO" onclick="changeQty('kafta_carneiro',-1)">-</button>
+              <input class="qty" id="kafta_carneiro" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar KAFTA CARNEIRO" onclick="changeQty('kafta_carneiro',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-camarao">
+            <div class="produto-info"><h4>034 - CAMARÃO</h4><div class="preco">R$ 13,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir CAMARÃO" onclick="changeQty('camarao',-1)">-</button>
+              <input class="qty" id="camarao" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar CAMARÃO" onclick="changeQty('camarao',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-especial_do_gesselo">
+            <div class="produto-info"><h4>035 - ESPECIAL DO GESSELO</h4><div class="preco">R$ 22,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ESPECIAL DO GESSELO" onclick="changeQty('especial_do_gesselo',-1)">-</button>
+              <input class="qty" id="especial_do_gesselo" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ESPECIAL DO GESSELO" onclick="changeQty('especial_do_gesselo',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-pao_de_alho">
+            <div class="produto-info"><h4>036 - PÃO DE ALHO</h4><div class="preco">R$ 5,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PÃO DE ALHO" onclick="changeQty('pao_de_alho',-1)">-</button>
+              <input class="qty" id="pao_de_alho" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PÃO DE ALHO" onclick="changeQty('pao_de_alho',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-pao_de_alho_gourmet">
+            <div class="produto-info"><h4>037 - PÃO DE ALHO GOURMET</h4><div class="preco">R$ 7,50</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir PÃO DE ALHO GOURMET" onclick="changeQty('pao_de_alho_gourmet',-1)">-</button>
+              <input class="qty" id="pao_de_alho_gourmet" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar PÃO DE ALHO GOURMET" onclick="changeQty('pao_de_alho_gourmet',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Doces -->
+      <div class="categoria collapsed" onclick="toggleCategoria(this)" role="region" aria-label="Doces">
+        <h3>🍰 Doces</h3>
+        <div class="categoria-content">
+          <div class="produto" id="div-romeu_e_julieta">
+            <div class="produto-info"><h4>038 - ROMEU E JULIETA</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ROMEU E JULIETA" onclick="changeQty('romeu_e_julieta',-1)">-</button>
+              <input class="qty" id="romeu_e_julieta" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ROMEU E JULIETA" onclick="changeQty('romeu_e_julieta',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-banana_chocolate">
+            <div class="produto-info"><h4>039 - BANANA C/ CHOCOLATE</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir BANANA C CHOCOLATE" onclick="changeQty('banana_chocolate',-1)">-</button>
+              <input class="qty" id="banana_chocolate" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar BANANA C CHOCOLATE" onclick="changeQty('banana_chocolate',1)">+</button>
+            </div>
+          </div>
+
+          <div class="produto" id="div-abacaxi_canela">
+            <div class="produto-info"><h4>040 - ABACAXI C/ CANELA</h4><div class="preco">R$ 10,00</div></div>
+            <div class="quantidade-control">
+              <button class="btn-qty" aria-label="Diminuir ABACAXI C CANELA" onclick="changeQty('abacaxi_canela',-1)">-</button>
+              <input class="qty" id="abacaxi_canela" value="0" readonly />
+              <button class="btn-qty" aria-label="Aumentar ABACAXI C CANELA" onclick="changeQty('abacaxi_canela',1)">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Botão enviar -->
+      <button id="enviarBtn" class="btn-primary" onclick="enviarPedido()" disabled>Conectando...</button>
+
+    </main>
+  </div>
+
+  <script>
+    // === CONFIG SUPABASE ===
+    const SUPABASE_URL = 'https://ufxbltjyswbynwnaybev.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc'; // <-- COLE SUA ANON KEY AQUI
+    const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+    // === ESTADO LOCAL ===
+    let estoque = {};
+
+    // === PRODUTOS (IDs devem bater com os IDs das DIVs acima) ===
+    // Nota: nomes sem acento nos IDs, preços como número (ponto decimal)
+    const produtos = {
+      // Bebidas - 600ml
+      'cerveja_original_600': { nome: 'ORIGINAL 600ml', preco: 12.00, tipo: 'bebida' },
+      'stella_artois_600': { nome: 'STELLA ARTOIS 600ml', preco: 13.00, tipo: 'bebida' },
+      'spaten_600': { nome: 'SPATEN 600ml', preco: 12.00, tipo: 'bebida' },
+      'brahma_600': { nome: 'BRAHMA 600ml', preco: 10.00, tipo: 'bebida' },
+      'antartica_600': { nome: 'ANTÁRTICA 600ml', preco: 10.00, tipo: 'bebida' },
+      'budweiser_600': { nome: 'BUDWEISER 600ml', preco: 11.00, tipo: 'bebida' },
+      'heineken_600': { nome: 'HEINEKEN 600ml', preco: 15.00, tipo: 'bebida' },
+      // Litrinho
+      'litrinho_brahma': { nome: 'LITRINHO BRAHMA', preco: 4.00, tipo: 'bebida' },
+      'litrinho_antartica': { nome: 'LITRINHO ANTARTICA', preco: 4.00, tipo: 'bebida' },
+      'litrinho_skol': { nome: 'LITRINHO SKOL', preco: 4.00, tipo: 'bebida' },
+      'litrinho_original': { nome: 'LITRINHO ORIGINAL', preco: 4.50, tipo: 'bebida' },
+      'litrinho_budweiser': { nome: 'LITRINHO BUDWEISER', preco: 4.50, tipo: 'bebida' },
+      'litrinho_petra': { nome: 'LITRINHO PETRA', preco: 4.00, tipo: 'bebida' },
+      'litrinho_imperio': { nome: 'LITRINHO IMPERIO', preco: 4.00, tipo: 'bebida' },
+      // Long necks
+      'stella_long': { nome: 'STELLA ARTOIS (Long Neck)', preco: 9.50, tipo: 'bebida' },
+      'stella_puregold': { nome: 'STELLA PURE GOLD', preco: 9.50, tipo: 'bebida' },
+      'corona_long': { nome: 'CORONA (Long Neck)', preco: 9.50, tipo: 'bebida' },
+      'corona_zero': { nome: 'CORONA ZERO', preco: 9.50, tipo: 'bebida' },
+      'heineken_long': { nome: 'HEINEKEN (Long Neck)', preco: 9.50, tipo: 'bebida' },
+      'heineken_zero': { nome: 'HEINEKEN ZERO', preco: 9.50, tipo: 'bebida' },
+      // Doses e drinks
+      'cachaca_especial': { nome: 'CACHACA ESPECIAL (Dose)', preco: 5.00, tipo: 'bebida' },
+      'conhaque': { nome: 'CONHAQUE (Dose)', preco: 6.00, tipo: 'bebida' },
+      'campare': { nome: 'CAMPARI (Dose)', preco: 12.00, tipo: 'bebida' },
+      'whisky': { nome: 'WHISKY (Dose)', preco: 15.00, tipo: 'bebida' },
+      'vodka': { nome: 'VODKA (Dose)', preco: 10.00, tipo: 'bebida' },
+      'caipirinha': { nome: 'CAIPIRINHA', preco: 13.00, tipo: 'bebida' },
+      'caipivodka': { nome: 'CAIPIVODKA', preco: 14.00, tipo: 'bebida' },
+
+      // Refrigerantes
+      'lata_refri': { nome: 'LATA', preco: 6.00, tipo: 'refri' },
+      'pet_pequeno': { nome: 'PET PEQUENO', preco: 3.00, tipo: 'refri' },
+      '2litros': { nome: '2 LITROS', preco: 14.50, tipo: 'refri' },
+      '1litro_rs': { nome: '1 LITRO', preco: 9.00, tipo: 'refri' },
+      '1litro_meio': { nome: '1,5 LITRO', preco: 11.00, tipo: 'refri' },
+      'g600ml': { nome: '600ml (refri)', preco: 9.00, tipo: 'refri' },
+
+      // Outras bebidas
+      'h20': { nome: 'H2O', preco: 7.00, tipo: 'outros' },
+      'suco_laranja': { nome: 'SUCO LARANJA (Natureba)', preco: 10.00, tipo: 'outros' },
+      'suco_polpa': { nome: 'SUCO POLPA', preco: 9.00, tipo: 'outros' },
+      'redbull': { nome: 'RED BULL', preco: 12.00, tipo: 'outros' },
+      'agua_simples': { nome: 'ÁGUA', preco: 3.00, tipo: 'outros' },
+      'agua_com_gas': { nome: 'ÁGUA C/ GÁS', preco: 4.00, tipo: 'outros' },
+      'agua_tonica': { nome: 'ÁGUA TÔNICA', preco: 5.00, tipo: 'outros' },
+      'cozumel_sem_cerveja': { nome: 'COZUMEL (SEM CERVEJA)', preco: 6.00, tipo: 'outros' },
+      'cdb': { nome: 'CDB', preco: 2.00, tipo: 'outros' },
+      'oopo_sujo': { nome: 'OPO SUJO', preco: 1.00, tipo: 'outros' },
+      'copo_gelo_limao_laranja': { nome: 'COPO GELO C/ LIMÃO OU LARANJA', preco: 2.00, tipo: 'outros' },
+      'limao_esprimido_com_gelo': { nome: 'LIMÃO ESPREMIDO C/ GELO', preco: 2.00, tipo: 'outros' },
+
+      // Espetos - bovina (já listados parcialmente)
+      'boi': { nome: '001 - BOI', preco: 9.50, tipo: 'espeto' },
+      'kafta': { nome: '002 - KAFTA', preco: 9.00, tipo: 'espeto' },
+      'medalhao_kafta': { nome: '003 - MEDALHÃO DE KAFTA', preco: 9.50, tipo: 'espeto' },
+      'kibe_com_queijo': { nome: '004 - KIBE COM QUEIJO', preco: 9.00, tipo: 'espeto' },
+      'picanha_falsa': { nome: '005 - PICANHA FALSA', preco: 10.00, tipo: 'espeto' },
+      'picanha': { nome: '006 - PICANHA', preco: 15.00, tipo: 'espeto' },
+      'kafta_com_queijo': { nome: '007 - KAFTA COM QUEIJO', preco: 10.00, tipo: 'espeto' },
+
+      // Suínos
+      'porco': { nome: '008 - PORCO', preco: 8.00, tipo: 'espeto' },
+      'medalhao_porco': { nome: '009 - MEDALHÃO DE PORCO', preco: 9.00, tipo: 'espeto' },
+      'linguica_com_pimenta': { nome: '010 - LINGUIÇA COM PIMENTA', preco: 10.00, tipo: 'espeto' },
+      'linguica_pura': { nome: '011 - LINGUIÇA PURA', preco: 10.00, tipo: 'espeto' },
+      'panceta': { nome: '012 - PANCETA', preco: 9.50, tipo: 'espeto' },
+      'costelinha': { nome: '013 - COSTELINHA', preco: 10.00, tipo: 'espeto' },
+
+      // Frango (já listados parcialmente)
+      'frango': { nome: '014 - FRANGO', preco: 8.00, tipo: 'espeto' },
+      'tulipa': { nome: '015 - TULIPA', preco: 9.50, tipo: 'espeto' },
+      'coracao': { nome: '016 - CORAÇÃO', preco: 8.50, tipo: 'espeto' },
+      'medalhao_frango': { nome: '017 - MEDALHÃO DE FRANGO', preco: 9.00, tipo: 'espeto' },
+      'medalhao_coracao': { nome: '018 - MEDALHÃO DE CORAÇÃO', preco: 9.50, tipo: 'espeto' },
+
+      // Queijos (já listados)
+      'medalhao_mussarela': { nome: '019 - MEDALHÃO DE MUSSARELA', preco: 9.50, tipo: 'espeto' },
+      'queijo_coalho': { nome: '020 - QUEIJO COALHO', preco: 9.00, tipo: 'espeto' },
+      'queijo_provolone': { nome: '021 - QUEIJO PROVOLONE', preco: 9.00, tipo: 'espeto' },
+      'queijo_mussarela': { nome: '022 - QUEIJO MUSSARELA', preco: 9.00, tipo: 'espeto' },
+      'queijo_coalho_com_mel': { nome: '023 - QUEIJO COALHO C/ MEL', preco: 10.00, tipo: 'espeto' },
+
+      // Legumes (já listados)
+      'medalhao_batata': { nome: '024 - MEDALHÃO DE BATATA', preco: 8.50, tipo: 'espeto' },
+      'medalhao_quiabo': { nome: '025 - MEDALHÃO DE QUIABO', preco: 8.50, tipo: 'espeto' },
+      'medalhao_jilo': { nome: '026 - MEDALHÃO DE JILÓ', preco: 8.50, tipo: 'espeto' },
+      'medalhao_mandioca': { nome: '027 - MEDALHÃO DE MANDIOCA', preco: 8.50, tipo: 'espeto' },
+      'medalhao_palmito': { nome: '028 - MEDALHÃO DE PALMITO', preco: 9.00, tipo: 'espeto' },
+
+      // Especiais (já listados)
+      'medalhao_peixe': { nome: '029 - MEDALHÃO DE PEIXE', preco: 9.50, tipo: 'espeto' },
+      'medalhao_ovo_codorna': { nome: '030 - MEDALHÃO DE OVO DE CODORNA', preco: 8.50, tipo: 'espeto' },
+      'medalhao_kani': { nome: '031 - MEDALHÃO DE KANI', preco: 8.50, tipo: 'espeto' },
+      'medalhao_salsicha': { nome: '032 - MEDALHÃO DE SALSICHA', preco: 8.50, tipo: 'espeto' },
+      'kafta_carneiro': { nome: '033 - KAFTA DE CARNEIRO', preco: 10.00, tipo: 'espeto' },
+      'camarao': { nome: '034 - CAMARÃO', preco: 13.00, tipo: 'espeto' },
+      'especial_do_gesselo': { nome: '035 - ESPECIAL DO GESSELO', preco: 22.00, tipo: 'espeto' },
+      'pao_de_alho': { nome: '036 - PÃO DE ALHO', preco: 5.50, tipo: 'espeto' },
+      'pao_de_alho_gourmet': { nome: '037 - PÃO DE ALHO GOURMET', preco: 7.50, tipo: 'espeto' },
+
+      // Doces (já listados)
+      'romeu_e_julieta': { nome: '038 - ROMEU E JULIETA', preco: 10.00, tipo: 'doce' },
+      'banana_chocolate': { nome: '039 - BANANA C/ CHOCOLATE', preco: 10.00, tipo: 'doce' },
+      'abacaxi_canela': { nome: '040 - ABACAXI C/ CANELA', preco: 10.00, tipo: 'doce' }
+    };
+	
+	// NOVA FUNÇÃO para ser usada pela tela do garçom
+async function fazerPedido(mesaId, itensDoPedido, observacao) {
+    // Exemplo de 'itensDoPedido':
+    // [
+    //   { id: 'boi', nome: '001 - Boi', quantidade: 2, subtotal: 19.00 },
+    //   { id: 'coca_lata', nome: 'Refrigerante Lata', quantidade: 1, subtotal: 6.00 }
+    // ]
+
+    if (!mesaId || itensDoPedido.length === 0) {
+        alert("Mesa ou itens inválidos.");
+        return;
+    }
+
+    try {
+        // Chama a função 'adicionar_ou_atualizar_pedido' que criamos no Supabase
+        const { error } = await supabase.rpc('adicionar_ou_atualizar_pedido', {
+            p_mesa_id: mesaId,
+            p_novos_itens: itensDoPedido,
+            p_observacao: observacao
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        console.log(`Pedido para a mesa ${mesaId} enviado com sucesso!`);
+        // Aqui você pode limpar o carrinho de compras do garçom ou dar um feedback visual.
+        // A tela da cozinha irá se atualizar sozinha graças ao listener!
+
+    } catch (error) {
+        console.error("Erro ao enviar o pedido:", error);
+        alert(`Não foi possível enviar o pedido. Erro: ${error.message}`);
+    }
+}
+
+    // === FUNÇÕES DE ESTOQUE / MESAS / UI ===
+
+    async function carregarMesas() {
+      try {
+        const { data, error } = await supabaseClient.from('mesas_status').select('*');
+        const select = document.getElementById('mesaSelect');
+        select.innerHTML = '<option value="">Selecione a Mesa</option>';
+        if (error) {
+          console.error('Erro carregarMesas:', error);
+          // fallback: criar mesas 1..10
+          for (let i=1;i<=10;i++){
+            const opt = document.createElement('option'); opt.value = String(i); opt.text = 'Mesa ' + i; select.appendChild(opt);
+          }
+          return;
+        }
+        data.forEach(row => {
+          const opt = document.createElement('option');
+          opt.value = String(row.mesa);
+          opt.text = row.status === 'ocupada' ? `Mesa ${row.mesa} (OCUPADA)` : `Mesa ${row.mesa}`;
+          opt.disabled = row.status === 'ocupada';
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Erro carregarMesas catch:', err);
+      }
+    }
+
+    async function buscarEstoque() {
+      try {
+        const { data, error } = await supabaseClient.from('estoque').select('*');
+        if (error) throw error;
+        estoque = {};
+        data.forEach(item => { estoque[item.id] = item; });
+        aplicarEstoqueAoCardapio();
+      } catch (err) {
+        console.error('Erro buscarEstoque:', err);
+      }
+    }
+
+    function aplicarEstoqueAoCardapio() {
+      Object.keys(produtos).forEach(pid => {
+        const div = document.getElementById('div-' + pid);
+        if (!div) return;
+        const itemEst = estoque[pid];
+        if (itemEst && (itemEst.estoque_atual === null ? false : itemEst.estoque_atual <= 0)) {
+          div.classList.add('esgotado');
+        } else {
+          div.classList.remove('esgotado');
+        }
+      });
+    }
+
+    async function checkConnection() {
+      const connectionIndicator = document.getElementById('connectionStatus');
+      const enviarBtn = document.getElementById('enviarBtn');
+      try {
+        await buscarEstoque();
+        await carregarMesas();
+        connectionIndicator.style.background = '#22c55e';
+        document.getElementById('headerSubtitle').textContent = 'Sistema Online';
+        enviarBtn.disabled = false;
+        enviarBtn.textContent = 'Enviar Pedido';
+      } catch (err) {
+        console.error('checkConnection erro:', err);
+        connectionIndicator.style.background = '#dc2626';
+        document.getElementById('headerSubtitle').textContent = 'Sem conexão';
+        enviarBtn.disabled = true;
+        enviarBtn.textContent = 'Sem Conexão';
+      }
+    }
+
+    function toggleCategoria(el) {
+      el.classList.toggle('collapsed');
+    }
+
+    function changeQty(produtoId, delta) {
+      const input = document.getElementById(produtoId);
+      if (!input) return;
+      let cur = parseInt(input.value,10) || 0;
+      const novo = Math.max(0, cur + delta);
+      input.value = novo;
+      atualizarResumo();
+    }
+
+    function atualizarResumo() {
+      const resumo = document.getElementById('resumoPedido');
+      const resumoItens = document.getElementById('resumoItens');
+      const resumoTotal = document.getElementById('resumoTotal');
+      let itens = [];
+      let total = 0;
+      Object.keys(produtos).forEach(pid => {
+        const el = document.getElementById(pid);
+        if (!el) return;
+        const qty = parseInt(el.value,10) || 0;
+        if (qty > 0) {
+          const p = produtos[pid];
+          const subtotal = +(qty * p.preco).toFixed(2);
+          itens.push({ id: pid, nome: p.nome, quantidade: qty, subtotal });
+          total += subtotal;
+        }
+      });
+      if (itens.length === 0) {
+        resumo.classList.add('hidden');
+      } else {
+        resumo.classList.remove('hidden');
+        resumoItens.innerHTML = itens.map(i => `<div class="resumo-item"><span>${i.quantidade}x ${i.nome}</span><span>R$ ${i.subtotal.toFixed(2)}</span></div>`).join('');
+        resumoTotal.textContent = `Total: R$ ${total.toFixed(2)}`;
+      }
+    }
+
+// Arquivo: index.html
+// Copie e cole esta versão completa da função 'enviarPedido'
+
+async function enviarPedido() {
+    if (!navigator.onLine) {
+        showAlert('Erro: Sem conexão com a internet!', 'error');
+        return;
+    }
+
+    const mesaId = parseInt(document.getElementById('mesaSelect').value, 10);
+    const observacao = (document.getElementById('observacoes').value || '').trim();
+
+    // ##### LINHA DE DEBUG ADICIONADA #####
+    // Esta linha vai nos mostrar no console o TIPO e o VALOR da variável 'mesaId'
+    console.log('VERIFICANDO TIPO --> Tipo da mesaId:', typeof mesaId, '| Valor:', mesaId);
+    // #######################################
+
+    if (!mesaId) { // Esta verificação também falha se mesaId for NaN (Not-a-Number)
+        showAlert('Selecione uma mesa!', 'error');
+        return;
+    }
+
+    let itensDoPedido = [];
+    Object.keys(produtos).forEach(pid => {
+        const el = document.getElementById(pid);
+        if (!el) return;
+        const qty = parseInt(el.value, 10) || 0;
+        if (qty > 0) {
+            const p = produtos[pid];
+            itensDoPedido.push({
+                id: pid,
+                nome: p.nome,
+                quantidade: qty,
+                subtotal: +(qty * p.preco).toFixed(2)
+            });
+        }
+    });
+
+    if (itensDoPedido.length === 0) {
+        showAlert('Adicione pelo menos um item ao pedido!', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('enviarBtn');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const { error } = await supabaseClient.rpc('adicionar_ou_atualizar_pedido', {
+            p_mesa_id: mesaId,
+            p_novos_itens: itensDoPedido,
+            p_observacao: observacao
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        showAlert(`✅ Pedido para a Mesa ${mesaId} enviado com sucesso!`, 'success');
+        btn.textContent = 'Pedido Enviado ✅';
+        setTimeout(() => {
+            btn.textContent = 'Enviar Pedido';
+        }, 3000);
+
+        Object.keys(produtos).forEach(pid => {
+            const el = document.getElementById(pid);
+            if (el) el.value = '0';
+        });
+        document.getElementById('observacoes').value = '';
+        document.getElementById('mesaSelect').value = '';
+        atualizarResumo();
+
+    } catch (err) {
+        console.error('Erro ao enviar pedido via RPC:', err);
+        showAlert(`Erro ao enviar pedido: ${err.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+    function showAlert(msg, type='error') {
+      const c = document.getElementById('alertContainer');
+      c.innerHTML = `<div class="alert ${type}">${msg}</div>`;
+      setTimeout(()=>{ c.innerHTML = ''; },5000);
+    }
+
+    // iniciar
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // habilitar clique por teclado nas categorias
+      document.querySelectorAll('.categoria h3').forEach(h=>{
+        h.tabIndex = 0;
+        h.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); h.parentElement.classList.toggle('collapsed'); }});
+      });
+
+      checkConnection();
+      setInterval(checkConnection, 15000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espetinho do Gesselo - Cozinha</title>
+    <meta name="theme-color" content="#d97706">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); min-height: 100vh; color: #1f2937; }
+        
+        .cozinha-view .container { max-width: 480px; margin: 0 auto; background: black; min-height: 100vh; position: relative; }
+        .header { background: linear-gradient(135deg, #d97706, #f59e0b); color: black; padding: 1rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
+        .connection-status { position: absolute; top: 1rem; right: 1rem; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; } 
+
+        .nav-tabs { display: flex; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; }
+        .nav-tab { flex: 1; padding: 0.8rem; text-align: center; background: none; border: none; cursor: pointer; font-weight: 500; transition: all 0.3s; position: relative; }
+        .cozinha-view .nav-tab:nth-child(1) { display: none; }
+        .nav-tab.active { background: white; color: #d97706; border-bottom: 2px solid #d97706; }
+        .tab-content { display: none; padding: 1rem; max-height: calc(100vh - 140px); overflow-y: auto; }
+        .tab-content.active { display: block; }
+        #pedidos { display: none !important; }
+        
+        .pedido { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .pedido.novo { border-color: #ef4444; background: #fef2f2; }
+        .pedido.preparando { border-color: #f59e0b; background: #fffbeb; }
+        .pedido.pronto { border-color: #059669; background: #ecfdf5; }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .pedido.urgente { border-color: #991b1b !important; background: #fee2e2 !important; animation: blink 1s infinite; }
+
+        .mesa-info span.cliente-tag { background: #1f2937; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 8px;}
+        .pedido-itens { list-style: none; }
+        .pedido-itens li { padding: 0.25rem 0; border-bottom: 1px solid #f3f4f6; }
+        .pedido-obs { font-size: 0.9rem; color: #dc2626; margin-top: 0.5rem; padding: 0.5rem; border: 1px dashed #fecaca; border-radius: 4px;}
+
+        .filtro-controls { margin-bottom: 1rem; display: flex; gap: 8px; }
+        .filtro-btn { flex: 1; padding: 0.5rem; border: 1px solid #d97706; border-radius: 6px; background: white; color: #d97706; cursor: pointer; }
+        .filtro-btn.active { background: #d97706; color: white; }
+
+        .estoque-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+        .estoque-input { width: 60px; text-align: center; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .estoque-save-btn { background: #059669; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-top: 1rem; width: 100%; }
+
+        .btn-status { border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 0.5rem; margin-right: 0.5rem; }
+        .btn-preparo { background: #f59e0b; color: white; }
+        .btn-pronto { background: #059669; color: white; }
+        .btn-imprimir { background: #3b82f6; color: white; }
+        .btn-fechar-conta { background: #8b5cf6; color: white; }
+        .btn-force-load { margin-bottom: 1rem; padding: 0.5rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        
+        .relatorio-card { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .relatorio-card h3 { color: #d97706; margin-bottom: 0.5rem; }
+        .stat { font-size: 2rem; font-weight: bold; color: #059669; }
+        
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        #login-box { background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; }
+        #login-box h2 { color: #d97706; margin-bottom: 1rem; }
+        #login-box input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 2px solid #e5e7eb; border-radius: 8px; }
+        #login-box button { width: 100%; padding: 0.75rem; background: #d97706; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        @media (min-width: 768px) {
+            .cozinha-view .container { max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; padding: 2rem; }
+            .nav-tabs { display: none; }
+            .tab-content { display: block !important; background: gold; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; font-family: 'Courier New', monospace; font-size: 12px; }
+            .print-pedido { page-break-after: always; padding: 20px 5px; }
+            .print-header h1 { font-size: 14px; margin-bottom: 5px; }
+            .print-total strong { font-size: 14px; }
+            .print-mesa-cliente { font-size: 16px; font-weight: bold; text-align: center; margin: 10px 0; }
+            .print-tipo { font-size: 18px; font-weight: bold; text-align: center; border-bottom: 2px dashed #000; padding-bottom: 5px; margin-bottom: 10px;}
+            .print-item { display: flex; justify-content: space-between; margin: 5px 0; }
+        }
+    </style>
+</head>
+<body class="cozinha-view">
+    <div id="login-overlay">
+        <div id="login-box">
+            <h2>🔐 Acesso Cozinha</h2>
+            <p style="margin-bottom: 1rem;">Faça login para gerenciar pedidos e estoque.</p>
+            <input type="email" id="login-email" placeholder="E-mail (ex: cozinha@espetinho.com)" required>
+            <input type="password" id="login-senha" placeholder="Senha" required>
+            <button onclick="fazerLogin()">Entrar</button>
+            <p id="login-erro" style="color: red; margin-top: 1rem;"></p>
+        </div>
+    </div>
+    
+    <div class="container" style="display: none;" id="main-content">
+        <div class="header">
+            <div class="connection-status" id="connectionStatus"></div>
+            <h1>🍖 Espetinho do Gesselo</h1>
+            <p>Sistema Online</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('cozinha')">Cozinha</button>
+            <button class="nav-tab" onclick="showTab('relatorios')">Relatórios</button>
+            <button class="nav-tab" onclick="showTab('estoque')">Estoque</button>
+        </div>
+
+        <div id="pedidos" class="tab-content"></div>
+
+        <div id="cozinha" class="tab-content active">
+            <h2>Pedidos - Cozinha</h2>
+            
+            <button class="btn-force-load" onclick="forcarCargaDados()">
+                🔄 Forçar Carga de Dados
+            </button>
+            
+            <div class="filtro-controls">
+                <button class="filtro-btn active" data-filtro="todos" onclick="setFiltro('todos', this)">Todos</button>
+                <button class="filtro-btn" data-filtro="comida" onclick="setFiltro('comida', this)">Comida</button>
+                <button class="filtro-btn" data-filtro="bebida" onclick="setFiltro('bebida', this)">Bebida</button>
+            </div>
+
+            <div id="listaPedidos">
+                <p style="text-align: center; color: #6b7280; padding: 2rem;">Aguardando pedidos...</p>
+            </div>
+        </div>
+
+        <div id="relatorios" class="tab-content">
+            <h2>Relatórios do Dia</h2>
+            
+            <div class="filtro-controls" style="margin-bottom: 1.5rem;">
+                <button class="filtro-btn filtro-btn-tempo active" data-tempo="diario" onclick="atualizarRelatorios('diario', this)">Diário</button>
+                <button class="filtro-btn filtro-btn-tempo" data-tempo="semanal" onclick="atualizarRelatorios('semanal', this)">Semanal</button>
+                <button class="filtro-btn filtro-btn-tempo" data-tempo="mensal" onclick="atualizarRelatorios('mensal', this)">Mensal</button>
+            </div>
+
+            <div class="relatorio-card">
+                <h3>Total de Pedidos</h3>
+                <div class="stat" id="totalPedidos">0</div>
+            </div>
+            <div class="relatorio-card">
+                <h3>Faturamento</h3>
+                <div class="stat" id="totalFaturamento">R$ 0,00</div>
+            </div>
+            <div class="relatorio-card">
+                <h3>Pedidos Prontos</h3>
+                <div class="stat" id="pedidosProntos">0</div>
+            </div>
+        </div>
+              
+        <div id="estoque" class="tab-content">
+            <h2>📦 Gerenciamento de Estoque</h2>
+            <div id="estoqueLista">
+                <p style="text-align: center; color: #6b7280; padding: 2rem;">Carregando estoque...</p>
+            </div>
+            <button class="estoque-save-btn" onclick="salvarEstoque()">
+                💾 Salvar Alterações de Estoque
+            </button>
+            <div id="estoqueAlert"></div>
+        </div>
+    </div>
+
+<script>
+const SUPABASE_URL = 'https://ufxbltjyswbynwnaybev.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let pedidos = [];
+let filtroAtual = 'todos';
+let estoque = {};
+let pedidosSubscription = null;
+
+let produtos = { 
+    'boi': { nome: '001 - Boi', preco: 9.50, tipo: 'comida' },
+    'kafta': { nome: '002 - Kafta', preco: 9.00, tipo: 'comida' },
+    'medalhao_kafta': { nome: '003 - Medalhão de Kafta', preco: 9.50, tipo: 'comida' },
+    'picanha': { nome: '006 - Picanha', preco: 15.00, tipo: 'comida' },
+    'kafta_queijo': { nome: '007 - Kafta com Queijo', preco: 10.00, tipo: 'comida' },
+    'frango': { nome: '014 - Frango', preco: 8.00, tipo: 'comida' },
+    'coracao': { nome: '016 - Coração', preco: 8.50, tipo: 'comida' },
+    'tulipa': { nome: '015 - Tulipa', preco: 9.50, tipo: 'comida' },
+    'porco': { nome: '008 - Porco', preco: 8.00, tipo: 'comida' },
+    'panceta': { nome: '012 - Panceta', preco: 9.50, tipo: 'comida' },
+    'linguica_pura': { nome: '011 - Linguiça Pura', preco: 10.00, tipo: 'comida' },
+    'queijo_coalho': { nome: '020 - Queijo Coalho', preco: 9.00, tipo: 'comida' },
+    'queijo_coalho_mel': { nome: '023 - Queijo Coalho c/ Mel', preco: 10.00, tipo: 'comida' },
+    'pao_alho': { nome: '036 - Pão de Alho', preco: 5.50, tipo: 'comida' },
+    'original_600': { nome: 'Original 600ml', preco: 12.00, tipo: 'bebida' },
+    'stella_600': { nome: 'Stella Artois 600ml', preco: 13.00, tipo: 'bebida' },
+    'brahma_600': { nome: 'Brahma 600ml', preco: 10.00, tipo: 'bebida' },
+    'antartica_600': { nome: 'Antártica 600ml', preco: 10.00, tipo: 'bebida' },
+    'budweiser_600': { nome: 'Budweiser 600ml', preco: 11.00, tipo: 'bebida' },
+    'brahma_litrinho': { nome: 'Brahma Litrinho', preco: 4.00, tipo: 'bebida' },
+    'original_litrinho': { nome: 'Original Litrinho', preco: 4.50, tipo: 'bebida' },
+    'stella_ln': { nome: 'Stella Artois LN', preco: 9.50, tipo: 'bebida' },
+    'heineken_ln': { nome: 'Heineken LN', preco: 9.50, tipo: 'bebida' },
+    'coca_lata': { nome: 'Refrigerante Lata', preco: 6.00, tipo: 'bebida' },
+    'refri_2l': { nome: 'Refrigerante 2L', preco: 14.50, tipo: 'bebida' },
+    'agua': { nome: 'Água s/ Gás', preco: 3.00, tipo: 'bebida' },
+    'agua_gas': { nome: 'Água c/ Gás', preco: 4.00, tipo: 'bebida' }
+};
+
+// ---------- FUNÇÕES DE LOGIN ----------
+function mostrarConteudoPrincipal() {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main-content').style.display = 'grid';
+    forcarCargaDados();
+}
+
+async function fazerLogin() {
+    const email = document.getElementById('login-email').value;
+    const senha = document.getElementById('login-senha').value;
+    const erroDiv = document.getElementById('login-erro');
+    erroDiv.textContent = '';
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+        if (error) throw error;
+        mostrarConteudoPrincipal();
+    } catch (error) {
+        erroDiv.textContent = 'E-mail ou senha incorretos.';
+        console.error("Erro de login:", error);
+    }
+}
+
+// ---------- FILTROS E TABS ----------
+function setFiltro(tipo, elemento) {
+    filtroAtual = tipo;
+    document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('active'));
+    elemento.classList.add('active');
+    atualizarCozinha();
+}
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    
+    document.getElementById(tabName).classList.add('active');
+    const tabButton = document.querySelector(`.nav-tab[onclick="showTab('${tabName}')"]`);
+    if (tabButton) tabButton.classList.add('active');
+
+    if (tabName === 'cozinha') iniciarListenerPedidos();
+    else pararListenerPedidos();
+
+    if (tabName === 'relatorios') atualizarRelatorios();
+    else if (tabName === 'estoque') buscarEstoque();
+}
+
+// ---------- ESTOQUE ----------
+async function buscarEstoque() {
+    try {
+        const { data, error } = await supabase.from('estoque').select('*');
+        if (error) throw error;
+        
+        estoque = {};
+        data.forEach(item => estoque[item.id] = item);
+        atualizarEstoqueUI();
+    } catch (error) {
+        console.error('Erro ao buscar estoque:', error);
+    }
+}
+
+function atualizarEstoqueUI() {
+    const estoqueListaDiv = document.getElementById('estoqueLista');
+    let html = '';
+    let itensOrdenados = Object.keys(produtos).filter(id => estoque[id]);
+
+    if (itensOrdenados.length === 0) {
+        estoqueListaDiv.innerHTML = '<p style="text-align:center;color:#6b7280;padding:2rem;">Nenhum item rastreado.</p>';
+        return;
+    }
+
+    itensOrdenados.forEach(id => {
+        const info = produtos[id];
+        const item = estoque[id];
+        const status = item.estoque_atual <= item.estoque_minimo ? 'estoque-baixo' : '';
+        
+        html += `
+            <div class="estoque-item ${status}">
+                <div class="estoque-info">
+                    <h4>${item.nome || info.nome}</h4>
+                    <small>Mínimo: ${item.estoque_minimo}</small>
+                </div>
+                <div class="estoque-qty">
+                    <label>Atual: </label>
+                    <input type="number" class="estoque-input" data-id="${id}" value="${item.estoque_atual}">
+                </div>
+            </div>
+        `;
+    });
+    estoqueListaDiv.innerHTML = html;
+}
+
+// Descontar estoque ao marcar pedido pronto
+async function descontarEstoqueDoPedido(pedido) {
+    for (const item of pedido.itens) {
+        const produtoId = item.id;
+        const quantidadePedido = item.quantidade;
+
+        const itemEstoque = estoque[produtoId];
+        if (!itemEstoque) continue;
+
+        const novoEstoque = itemEstoque.estoque_atual - quantidadePedido;
+
+        const { error } = await supabase.from('estoque').update({ estoque_atual: novoEstoque }).eq('id', produtoId);
+        if (!error) estoque[produtoId].estoque_atual = novoEstoque;
+    }
+    atualizarEstoqueUI();
+}
+
+// ---------- PEDIDOS ----------
+function iniciarListenerPedidos() {
+    if (pedidosSubscription) return;
+    buscarPedidosAtivos();
+
+    pedidosSubscription = supabase.channel('pedidos-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, buscarPedidosAtivos)
+        .subscribe();
+}
+
+function pararListenerPedidos() {
+    if (pedidosSubscription) {
+        supabase.removeChannel(pedidosSubscription);
+        pedidosSubscription = null;
+    }
+}
+
+async function buscarPedidosAtivos() {
+    try {
+        const { data, error } = await supabase.from('pedidos')
+            .select('*')
+            .in('status', ['novo','preparando','pronto'])
+            .order('timestamp', { ascending: true });
+        if (error) throw error;
+
+        pedidos = data;
+        atualizarCozinha();
+    } catch (error) { console.error("Erro ao buscar pedidos:", error); }
+}
+
+function atualizarCozinha() {
+    const listaPedidos = document.getElementById('listaPedidos');
+    const pedidosAtivos = pedidos.filter(p => ['novo','preparando','pronto'].includes(p.status));
+
+    let pedidosFiltrados = pedidosAtivos.map(pedido => {
+        if (filtroAtual==='todos') return pedido;
+
+        const itensFiltrados = pedido.itens.filter(item => produtos[item.id]?.tipo===filtroAtual);
+        if (itensFiltrados.length>0) {
+            const novoTotal = itensFiltrados.reduce((sum,item)=>sum+item.subtotal,0);
+            return {...pedido, itens: itensFiltrados, total: novoTotal, isPartial:true};
+        }
+        return null;
+    }).filter(p => p!==null);
+
+    if (pedidosFiltrados.length===0) {
+        listaPedidos.innerHTML = '<p style="text-align:center;color:#6b7280;padding:2rem;">Nenhum pedido pendente</p>';
+        return;
+    }
+
+    const agora = Date.now();
+    listaPedidos.innerHTML = pedidosFiltrados.map(pedido => {
+        const tempoDecorrido = agora - new Date(pedido.timestamp).getTime();
+        const isUrgente = pedido.status==='novo' && tempoDecorrido>5*60*1000;
+        const classeUrgente = isUrgente?'urgente':'';
+        const clienteNum = pedido.cliente || '1';
+
+        let statusControls = '';
+        if (pedido.status==='novo'||pedido.status==='preparando') {
+            statusControls = `
+                <button class="btn-status btn-preparo" onclick="marcarEmPreparo('${pedido.id}')">
+                    ${pedido.status==='novo'?'⏳ Em Preparo':'🔄 Reiniciar Preparo'}
+                </button>
+                <button class="btn-status btn-pronto" onclick="marcarPronto('${pedido.id}')">
+                    ✓ Pedido Pronto
+                </button>
+            `;
+        } else if (pedido.status==='pronto') {
+            statusControls = `<span style="color:green;font-weight:bold;margin-right:1rem;">✅ PRONTO!</span>`;
+        }
+
+        return `
+            <div class="pedido ${pedido.status} ${classeUrgente}">
+                <div class="pedido-header">
+                    <div class="mesa-info">Mesa ${pedido.mesa} <span class="cliente-tag">Cliente ${clienteNum}</span></div>
+                    <div class="tempo">${pedido.horario}</div>
+                </div>
+                <ul class="pedido-itens">
+                    ${pedido.itens.map(item=>`<li>${item.quantidade}x ${item.nome} - R$ ${item.subtotal.toFixed(2)}</li>`).join('')}
+                </ul>
+                ${pedido.observacao?`<div class="pedido-obs">OBS: ${pedido.observacao}</div>`:''}
+                ${pedido.isPartial?
+                    `<div class="pedido-total" style="color:#1e40af;">Total Parcial (${filtroAtual}): R$ ${pedido.total.toFixed(2)}</div>`:
+                    `<div class="pedido-total">Total: R$ ${pedido.total.toFixed(2)}</div>`}
+                ${statusControls}
+                <button class="btn-status btn-imprimir" onclick="imprimirPedido('${pedido.id}')">🖨️ Comanda</button>
+                <button class="btn-status btn-fechar-conta" onclick="iniciarFuncaoFechamento('${pedido.id}')">💵 Fechar Conta (Cliente ${clienteNum})</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// ---------- STATUS PEDIDOS ----------
+async function mudarStatus(pedidoId, status) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    try { await supabase.from('pedidos').update({status}).eq('id',pedidoId); }
+    catch(e){console.error(e);}
+}
+
+// SUGESTÃO DE REFINAMENTO
+function marcarEmPreparo(id) {
+    mudarStatus(id, 'preparando'); 
+    // Não precisa de atualizarCozinha() aqui, o listener vai cuidar disso.
+}
+
+async function marcarPronto(id) {
+    await mudarStatus(id, 'pronto');
+    const pedido = pedidos.find(p => p.id === id);
+    if (pedido) await descontarEstoqueDoPedido(pedido);
+    // Não precisa de atualizarCozinha() aqui, o listener vai cuidar disso.
+}
+
+// ---------- FECHAMENTO E PAGAMENTO ----------
+function registrarPagamento() {
+    let pagamento=null,valido=false;
+    while(!valido){
+        pagamento=window.prompt("Selecione a forma de pagamento:\n1: Cartão\n2: Dinheiro\n3: PIX","1");
+        if(pagamento===null) return null;
+        switch(pagamento.trim().toLowerCase()){
+            case '1': case 'cartão': pagamento='CARTÃO (Maquininha)'; valido=true; break;
+            case '2': case 'dinheiro': pagamento='DINHEIRO'; valido=true; break;
+            case '3': case 'pix': pagamento='PIX'; valido=true; break;
+            default: alert("Opção inválida. Digite 1, 2 ou 3.");
+        }
+    }
+    return pagamento;
+}
+
+function iniciarFuncaoFechamento(pedidoId){
+    const pedido=pedidos.find(p=>p.id===pedidoId);
+    if(!pedido) return;
+    const pagamento=registrarPagamento();
+    if(!pagamento) return;
+
+    const taxaServico=pedido.total*0.10;
+    const totalFinal=pedido.total+taxaServico;
+    const clienteNum=pedido.cliente||'1';
+
+    let printArea=document.createElement('div');
+    printArea.className='print-area';
+    printArea.innerHTML=`
+        <div class="print-pedido">
+            <div class="print-header">
+                <h1>💵 CONTA - ESPETINHO DO GESSELO</h1>
+                <div class="print-mesa-cliente">Mesa ${pedido.mesa} / Cliente ${clienteNum}</div>
+            </div>
+            <div class="print-tipo">COMPROVANTE DE PAGAMENTO</div>
+            <p style="font-weight:bold;margin-bottom:5px;">--- ITENS ---</p>
+            ${pedido.itens.map(item=>`<div class="print-item"><span>${item.quantidade}x ${item.nome}</span><span>R$ ${item.subtotal.toFixed(2)}</span></div>`).join('')}
+            <div style="border-top:1px dashed #666;padding-top:10px;margin-top:10px;">
+                <div class="print-item"><strong>TOTAL CONSUMO:</strong><strong>R$ ${pedido.total.toFixed(2)}</strong></div>
+                <div class="print-item"><span>Taxa de Serviço (10%):</span><span>R$ ${taxaServico.toFixed(2)}</span></div>
+            </div>
+            <div class="print-total" style="font-size:14px;border-top:2px solid #000;padding-top:10px;margin-top:10px;"><strong>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</strong></div>
+            <p style="font-size:16px;font-weight:bold;margin-top:15px;text-align:center;color:#d97706;">PAGO COM: ${pagamento}</p>
+            <div style="text-align:center;margin-top:20px;font-size:10px;"><p>Obrigado pela preferência! Volte Sempre.</p></div>
+        </div>
+    `;
+    document.body.appendChild(printArea);
+    window.print();
+    document.body.removeChild(printArea);
+
+    mudarStatusEFormaPgto(pedidoId,'entregue',pagamento,totalFinal);
+}
+
+async function mudarStatusEFormaPgto(pedidoId,status,formaPgto,valorFinal){
+    const { data: { user } } = await supabase.auth.getUser();
+    if(!user) return;
+    let pedido=pedidos.find(p=>p.id===pedidoId);
+    if(!pedido) return;
+    try{
+        // Atualiza pedido
+        await supabase.from('pedidos').update({ status, forma_pagamento:formaPgto, valor_final:valorFinal, horario_fechamento:new Date().toISOString() }).eq('id',pedidoId);
+        // Libera mesa
+        await supabase.from('mesas_status').update({status:'livre'}).eq('mesa',pedido.mesa);
+        forcarCargaDados();
+    } catch(e){console.error('Erro ao finalizar pedido:',e);}
+}
+
+// ---------- IMPRESSÃO COMANDA ----------
+function imprimirPedido(pedidoId){
+    const pedido=pedidos.find(p=>p.id===pedidoId);
+    if(!pedido) return;
+    const clienteNum=pedido.cliente||'1';
+    let printArea=document.createElement('div');
+    printArea.className='print-area';
+    printArea.innerHTML=`
+        <div class="print-pedido">
+            <div class="print-header">
+                <h1>🍖 COMANDA - ESPETINHO DO GESSELO</h1>
+                <div class="print-mesa-cliente">Mesa ${pedido.mesa} / Cliente ${clienteNum}</div>
+            </div>
+            <div class="print-tipo" style="text-align:center;">--- ITENS ---</div>
+            ${pedido.itens.map(item=>`<div class="print-item" style="font-weight:bold;"><span>${item.quantidade}x ${item.nome}</span></div>`).join('')}
+            ${pedido.observacao?`<p style="margin-top:10px;font-weight:bold;">OBS: ${pedido.observacao}</p>`:''}
+            <div style="margin-top:20px;text-align:center;"><p>Status: ${pedido.status.toUpperCase()}</p></div>
+        </div>
+    `;
+    document.body.appendChild(printArea);
+    window.print();
+    document.body.removeChild(printArea);
+}
+
+// ---------- RELATÓRIOS ----------
+async function atualizarRelatorios(periodo='diario',elemento=null){
+    if(elemento){document.querySelectorAll('.filtro-btn-tempo').forEach(btn=>btn.classList.remove('active'));elemento.classList.add('active');}
+    try{
+        const agora=new Date();
+        const inicioDoDia=new Date(agora.getFullYear(),agora.getMonth(),agora.getDate()).getTime();
+        let tempoLimite=new Date();
+        if(periodo==='diario') tempoLimite=new Date(inicioDoDia);
+        else if(periodo==='semanal') tempoLimite=new Date(inicioDoDia-(7*24*60*60*1000));
+        else if(periodo==='mensal') tempoLimite=new Date(inicioDoDia-(30*24*60*60*1000));
+
+        const { data, error } = await supabase.from('pedidos').select('*').gte('timestamp',tempoLimite.toISOString());
+        if(error) throw error;
+
+        let totalFaturamento=0,totalPedidos=data.length,pedidosProntos=0;
+        data.forEach(p=>{
+            const valorVenda=p.valor_final||p.total;
+            if(p.status==='entregue'){totalFaturamento+=valorVenda;pedidosProntos++;}
+            else if(p.status==='pronto'){pedidosProntos++;}
+        });
+        document.getElementById('totalPedidos').textContent=totalPedidos;
+        document.getElementById('totalFaturamento').textContent=`R$ ${totalFaturamento.toFixed(2)}`;
+        document.getElementById('pedidosProntos').textContent=pedidosProntos;
+    }catch(e){console.error("Erro ao atualizar relatórios:",e);}
+}
+
+// ---------- FUNÇÃO AUXILIAR ----------
+function forcarCargaDados(){
+    if(navigator.onLine===false){alert("Sem conexão com a internet."); return;}
+    pararListenerPedidos();
+    buscarEstoque();
+    iniciarListenerPedidos();
+    atualizarRelatorios();
+    document.getElementById('listaPedidos').innerHTML='<p style="text-align:center;color:#6b7280;padding:2rem;">Sincronizando com a Nuvem...</p>';
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    supabase.auth.onAuthStateChange((event,session)=>{ if(session) mostrarConteudoPrincipal(); else document.getElementById('login-overlay').style.display='flex'; });
+    setInterval(atualizarRelatorios,10000);
+    setInterval(buscarEstoque,15000);
+});
+</script>
+
+
+</body>
+</html>
