@@ -3,559 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espetinho do Gesselo - Cozinha</title>
-    <meta name="theme-color" content="#d97706">
-    
+    <title>Cozinha e Gerenciamento</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); min-height: 100vh; color: #1f2937; }
-        
-        .cozinha-view .container { max-width: 480px; margin: 0 auto; background: black; min-height: 100vh; position: relative; }
-        .header { background: linear-gradient(135deg, #d97706, #f59e0b); color: black; padding: 1rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
-        .connection-status { position: absolute; top: 1rem; right: 1rem; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; } 
-
-        .nav-tabs { display: flex; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; }
-        .nav-tab { flex: 1; padding: 0.8rem; text-align: center; background: none; border: none; cursor: pointer; font-weight: 500; transition: all 0.3s; position: relative; }
-        .cozinha-view .nav-tab:nth-child(1) { display: none; }
-        .nav-tab.active { background: white; color: #d97706; border-bottom: 2px solid #d97706; }
-        .tab-content { display: none; padding: 1rem; max-height: calc(100vh - 140px); overflow-y: auto; }
-        .tab-content.active { display: block; }
-        #pedidos { display: none !important; }
-        
-        .pedido { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .pedido.novo { border-color: #ef4444; background: #fef2f2; }
-        .pedido.preparando { border-color: #f59e0b; background: #fffbeb; }
-        .pedido.pronto { border-color: #059669; background: #ecfdf5; }
-
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .pedido.urgente { border-color: #991b1b !important; background: #fee2e2 !important; animation: blink 1s infinite; }
-
-        .mesa-info span.cliente-tag { background: #1f2937; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 8px;}
-        .pedido-itens { list-style: none; }
-        .pedido-itens li { padding: 0.25rem 0; border-bottom: 1px solid #f3f4f6; }
-        .pedido-obs { font-size: 0.9rem; color: #dc2626; margin-top: 0.5rem; padding: 0.5rem; border: 1px dashed #fecaca; border-radius: 4px;}
-
-        .filtro-controls { margin-bottom: 1rem; display: flex; gap: 8px; }
-        .filtro-btn { flex: 1; padding: 0.5rem; border: 1px solid #d97706; border-radius: 6px; background: white; color: #d97706; cursor: pointer; }
-        .filtro-btn.active { background: #d97706; color: white; }
-
-        .estoque-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
-        .estoque-input { width: 60px; text-align: center; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        .estoque-save-btn { background: #059669; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-top: 1rem; width: 100%; }
-
-        .btn-status { border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 0.5rem; margin-right: 0.5rem; }
-        .btn-preparo { background: #f59e0b; color: white; }
-        .btn-pronto { background: #059669; color: white; }
-        .btn-imprimir { background: #3b82f6; color: white; }
-        .btn-fechar-conta { background: #8b5cf6; color: white; }
-        .btn-force-load { margin-bottom: 1rem; padding: 0.5rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
-        
-        .relatorio-card { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .relatorio-card h3 { color: #d97706; margin-bottom: 0.5rem; }
-        .stat { font-size: 2rem; font-weight: bold; color: #059669; }
-        
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        #login-box { background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; }
-        #login-box h2 { color: #d97706; margin-bottom: 1rem; }
-        #login-box input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 2px solid #e5e7eb; border-radius: 8px; }
-        #login-box button { width: 100%; padding: 0.75rem; background: #d97706; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        
-        @media (min-width: 768px) {
-            .cozinha-view .container { max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; padding: 2rem; }
-            .nav-tabs { display: none; }
-            .tab-content { display: block !important; background: gold; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        }
-        
+        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        #pedidos-container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .pedido-card { background-color: #383838; padding: 15px; border-radius: 8px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
+        .pedido-card h3 { color: #ff8c00; margin-top: 0; border-bottom: 2px solid #555; padding-bottom: 5px; }
+        .lista-itens { list-style: none; padding: 0; margin: 10px 0; }
+        .lista-itens li { padding: 3px 0; border-bottom: 1px dotted #555; font-size: 0.9em; }
+        .pedido-card button { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        .btn-pronto { background-color: #4CAF50; }
+        .btn-fechar-conta { background-color: #007bff; margin-top: 5px; }
+        .gerenciamento-col { background-color: #2c2c2c; padding: 20px; border-radius: 8px; }
+        #caixa-do-dia { margin-top: 20px; padding: 15px; border: 1px solid #ff8c00; border-radius: 4px; }
+        #caixa-do-dia h4 { color: #ff8c00; }
+        #mesas-status-container p { padding: 5px; border-left: 5px solid; margin: 5px 0; font-weight: bold; }
+        #mesas-status-container p:nth-child(odd) { background-color: #333; }
+        .adicional-select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; }
+        .item-cardapio { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #555; }
+        .item-info { flex-grow: 1; }
+        .item-preco { font-weight: bold; margin-right: 10px; color: #ff8c00; }
+        .add-btn { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .status-indicator { position: fixed; top: 10px; right: 10px; padding: 8px 12px; background-color: #4CAF50; color: white; border-radius: 4px; font-size: 0.9em; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 1000; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: white; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .notificacao-novo-pedido { position: fixed; top: 70px; right: 10px; background-color: #4CAF50; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1500; animation: slideIn 0.5s ease-out; font-weight: bold; font-size: 1.1em; display: none; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .fechar-caixa-btn { width: 100%; padding: 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1.1em; margin-top: 20px; }
+        .fechar-caixa-btn:hover { background-color: #c82333; }
+        .historico-btn { width: 100%; padding: 12px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .historico-btn:hover { background-color: #5a6268; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-content { background-color: #2c2c2c; margin: 3% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 700px; border-radius: 8px; max-height: 85vh; overflow-y: auto; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px; }
+        .close:hover { color: white; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box; }
+        .modal-content label { display: block; margin-top: 10px; font-weight: bold; color: #ff8c00; }
+        .btn-confirmar { width: 100%; padding: 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .btn-confirmar:hover { background-color: #45a049; }
+        .troco-display { background-color: #383838; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4CAF50; }
+        .troco-display h3 { color: #4CAF50; margin: 0 0 10px 0; }
+        .historico-item { background-color: #383838; padding: 12px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #4CAF50; }
+        .historico-item h4 { color: #ff8c00; margin: 0 0 8px 0; }
+        .filtros-historico { background-color: #383838; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         @media print {
-            body * { visibility: hidden; }
-            .print-area, .print-area * { visibility: visible; }
-            .print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; font-family: 'Courier New', monospace; font-size: 12px; }
-            .print-pedido { page-break-after: always; padding: 20px 5px; }
-            .print-header h1 { font-size: 14px; margin-bottom: 5px; }
-            .print-total strong { font-size: 14px; }
-            .print-mesa-cliente { font-size: 16px; font-weight: bold; text-align: center; margin: 10px 0; }
-            .print-tipo { font-size: 18px; font-weight: bold; text-align: center; border-bottom: 2px dashed #000; padding-bottom: 5px; margin-bottom: 10px;}
-            .print-item { display: flex; justify-content: space-between; margin: 5px 0; }
+            body > *:not(#comanda-impressao) { display: none !important; }
+            #comanda-impressao { display: block !important; width: 80mm; margin: 0 auto; }
+            @page { margin: 0; padding: 0; size: 80mm auto; }
         }
     </style>
 </head>
-<body class="cozinha-view">
-    <div id="login-overlay">
-        <div id="login-box">
-            <h2>🔐 Acesso Cozinha</h2>
-            <p style="margin-bottom: 1rem;">Faça login para gerenciar pedidos e estoque.</p>
-            <input type="email" id="login-email" placeholder="E-mail (ex: cozinha@espetinho.com)" required>
-            <input type="password" id="login-senha" placeholder="Senha" required>
-            <button onclick="fazerLogin()">Entrar</button>
-            <p id="login-erro" style="color: red; margin-top: 1rem;"></p>
-        </div>
-    </div>
-    
-    <div class="container" style="display: none;" id="main-content">
-        <div class="header">
-            <div class="connection-status" id="connectionStatus"></div>
-            <h1>🍖 Espetinho do Gesselo</h1>
-            <p>Sistema Online</p>
-        </div>
-
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('cozinha')">Cozinha</button>
-            <button class="nav-tab" onclick="showTab('relatorios')">Relatórios</button>
-            <button class="nav-tab" onclick="showTab('estoque')">Estoque</button>
-        </div>
-
-        <div id="pedidos" class="tab-content"></div>
-
-        <div id="cozinha" class="tab-content active">
+<body onload="initCozinha();">
+    <div class="status-indicator" id="status-indicator"><div class="status-dot"></div><span>Conectado</span></div>
+    <div class="notificacao-novo-pedido" id="notificacao-novo-pedido">Novo pedido recebido! Imprimindo...</div>
+    <div class="header"><h1 style="color: #4CAF50;">Painel de Gerenciamento - Cozinha & Caixa</h1></div>
+    <div class="grid-container">
+        <div>
             <h2>Pedidos - Cozinha</h2>
-            
-            <button class="btn-force-load" onclick="forcarCargaDados()">
-                🔄 Forçar Carga de Dados
-            </button>
-            
-            <div class="filtro-controls">
-                <button class="filtro-btn active" data-filtro="todos" onclick="setFiltro('todos', this)">Todos</button>
-                <button class="filtro-btn" data-filtro="comida" onclick="setFiltro('comida', this)">Comida</button>
-                <button class="filtro-btn" data-filtro="bebida" onclick="setFiltro('bebida', this)">Bebida</button>
-            </div>
-
-            <div id="listaPedidos">
-                <p style="text-align: center; color: #6b7280; padding: 2rem;">Aguardando pedidos...</p>
-            </div>
+            <div id="pedidos-container"><p style="text-align: center;">Carregando pedidos...</p></div>
+            <hr style="margin: 30px 0; border-color: #555;">
+            <h2>Adicionar na Mesa (Cozinha)</h2>
+            <select id="mesa-adicional-select" class="adicional-select"><option value="">Selecione a Mesa Ocupada...</option></select>
+            <div id="adicional-cardapio-container"></div>
         </div>
-
-        <div id="relatorios" class="tab-content">
-            <h2>Relatórios do Dia</h2>
-            
-            <div class="filtro-controls" style="margin-bottom: 1.5rem;">
-                <button class="filtro-btn filtro-btn-tempo active" data-tempo="diario" onclick="atualizarRelatorios('diario', this)">Diário</button>
-                <button class="filtro-btn filtro-btn-tempo" data-tempo="semanal" onclick="atualizarRelatorios('semanal', this)">Semanal</button>
-                <button class="filtro-btn filtro-btn-tempo" data-tempo="mensal" onclick="atualizarRelatorios('mensal', this)">Mensal</button>
+        <div class="gerenciamento-col">
+            <h2>Gerenciamento de Mesas</h2>
+            <div id="mesas-status-container"></div>
+            <hr style="margin: 20px 0; border-color: #555;">
+            <h2>Caixa do Dia</h2>
+            <div id="caixa-do-dia">
+                <p>Total Fechado Hoje: <strong id="total-caixa">R$ 0,00</strong></p>
+                <p>Numero de Pedidos Fechados: <strong id="contagem-pedidos">0</strong></p>
+                <div id="totais-por-forma"></div>
             </div>
-
-            <div class="relatorio-card">
-                <h3>Total de Pedidos</h3>
-                <div class="stat" id="totalPedidos">0</div>
-            </div>
-            <div class="relatorio-card">
-                <h3>Faturamento</h3>
-                <div class="stat" id="totalFaturamento">R$ 0,00</div>
-            </div>
-            <div class="relatorio-card">
-                <h3>Pedidos Prontos</h3>
-                <div class="stat" id="pedidosProntos">0</div>
-            </div>
-        </div>
-              
-        <div id="estoque" class="tab-content">
-            <h2>📦 Gerenciamento de Estoque</h2>
-            <div id="estoqueLista">
-                <p style="text-align: center; color: #6b7280; padding: 2rem;">Carregando estoque...</p>
-            </div>
-            <button class="estoque-save-btn" onclick="salvarEstoque()">
-                💾 Salvar Alterações de Estoque
-            </button>
-            <div id="estoqueAlert"></div>
+            <button class="historico-btn" onclick="abrirHistorico()">Ver Historico Completo</button>
+            <button class="fechar-caixa-btn" onclick="abrirModalFechamento()">Fechar Caixa do Dia</button>
         </div>
     </div>
-
-<script>
-const SUPABASE_URL = 'https://ufxbltjyswbynwnaybev.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-let pedidos = [];
-let filtroAtual = 'todos';
-let estoque = {};
-let pedidosSubscription = null;
-
-let produtos = { 
-    'boi': { nome: '001 - Boi', preco: 9.50, tipo: 'comida' },
-    'kafta': { nome: '002 - Kafta', preco: 9.00, tipo: 'comida' },
-    'medalhao_kafta': { nome: '003 - Medalhão de Kafta', preco: 9.50, tipo: 'comida' },
-    'picanha': { nome: '006 - Picanha', preco: 15.00, tipo: 'comida' },
-    'kafta_queijo': { nome: '007 - Kafta com Queijo', preco: 10.00, tipo: 'comida' },
-    'frango': { nome: '014 - Frango', preco: 8.00, tipo: 'comida' },
-    'coracao': { nome: '016 - Coração', preco: 8.50, tipo: 'comida' },
-    'tulipa': { nome: '015 - Tulipa', preco: 9.50, tipo: 'comida' },
-    'porco': { nome: '008 - Porco', preco: 8.00, tipo: 'comida' },
-    'panceta': { nome: '012 - Panceta', preco: 9.50, tipo: 'comida' },
-    'linguica_pura': { nome: '011 - Linguiça Pura', preco: 10.00, tipo: 'comida' },
-    'queijo_coalho': { nome: '020 - Queijo Coalho', preco: 9.00, tipo: 'comida' },
-    'queijo_coalho_mel': { nome: '023 - Queijo Coalho c/ Mel', preco: 10.00, tipo: 'comida' },
-    'pao_alho': { nome: '036 - Pão de Alho', preco: 5.50, tipo: 'comida' },
-    'original_600': { nome: 'Original 600ml', preco: 12.00, tipo: 'bebida' },
-    'stella_600': { nome: 'Stella Artois 600ml', preco: 13.00, tipo: 'bebida' },
-    'brahma_600': { nome: 'Brahma 600ml', preco: 10.00, tipo: 'bebida' },
-    'antartica_600': { nome: 'Antártica 600ml', preco: 10.00, tipo: 'bebida' },
-    'budweiser_600': { nome: 'Budweiser 600ml', preco: 11.00, tipo: 'bebida' },
-    'brahma_litrinho': { nome: 'Brahma Litrinho', preco: 4.00, tipo: 'bebida' },
-    'original_litrinho': { nome: 'Original Litrinho', preco: 4.50, tipo: 'bebida' },
-    'stella_ln': { nome: 'Stella Artois LN', preco: 9.50, tipo: 'bebida' },
-    'heineken_ln': { nome: 'Heineken LN', preco: 9.50, tipo: 'bebida' },
-    'coca_lata': { nome: 'Refrigerante Lata', preco: 6.00, tipo: 'bebida' },
-    'refri_2l': { nome: 'Refrigerante 2L', preco: 14.50, tipo: 'bebida' },
-    'agua': { nome: 'Água s/ Gás', preco: 3.00, tipo: 'bebida' },
-    'agua_gas': { nome: 'Água c/ Gás', preco: 4.00, tipo: 'bebida' }
-};
-
-// ---------- FUNÇÕES DE LOGIN ----------
-function mostrarConteudoPrincipal() {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main-content').style.display = 'grid';
-    forcarCargaDados();
-}
-
-async function fazerLogin() {
-    const email = document.getElementById('login-email').value;
-    const senha = document.getElementById('login-senha').value;
-    const erroDiv = document.getElementById('login-erro');
-    erroDiv.textContent = '';
-
-    try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
-        if (error) throw error;
-        mostrarConteudoPrincipal();
-    } catch (error) {
-        erroDiv.textContent = 'E-mail ou senha incorretos.';
-        console.error("Erro de login:", error);
-    }
-}
-
-// ---------- FILTROS E TABS ----------
-function setFiltro(tipo, elemento) {
-    filtroAtual = tipo;
-    document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('active'));
-    elemento.classList.add('active');
-    atualizarCozinha();
-}
-
-function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-    
-    document.getElementById(tabName).classList.add('active');
-    const tabButton = document.querySelector(`.nav-tab[onclick="showTab('${tabName}')"]`);
-    if (tabButton) tabButton.classList.add('active');
-
-    if (tabName === 'cozinha') iniciarListenerPedidos();
-    else pararListenerPedidos();
-
-    if (tabName === 'relatorios') atualizarRelatorios();
-    else if (tabName === 'estoque') buscarEstoque();
-}
-
-// ---------- ESTOQUE ----------
-async function buscarEstoque() {
-    try {
-        const { data, error } = await supabase.from('estoque').select('*');
-        if (error) throw error;
-        
-        estoque = {};
-        data.forEach(item => estoque[item.id] = item);
-        atualizarEstoqueUI();
-    } catch (error) {
-        console.error('Erro ao buscar estoque:', error);
-    }
-}
-
-function atualizarEstoqueUI() {
-    const estoqueListaDiv = document.getElementById('estoqueLista');
-    let html = '';
-    let itensOrdenados = Object.keys(produtos).filter(id => estoque[id]);
-
-    if (itensOrdenados.length === 0) {
-        estoqueListaDiv.innerHTML = '<p style="text-align:center;color:#6b7280;padding:2rem;">Nenhum item rastreado.</p>';
-        return;
-    }
-
-    itensOrdenados.forEach(id => {
-        const info = produtos[id];
-        const item = estoque[id];
-        const status = item.estoque_atual <= item.estoque_minimo ? 'estoque-baixo' : '';
-        
-        html += `
-            <div class="estoque-item ${status}">
-                <div class="estoque-info">
-                    <h4>${item.nome || info.nome}</h4>
-                    <small>Mínimo: ${item.estoque_minimo}</small>
-                </div>
-                <div class="estoque-qty">
-                    <label>Atual: </label>
-                    <input type="number" class="estoque-input" data-id="${id}" value="${item.estoque_atual}">
+    <div id="modal-fechar-conta" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalConta()">&times;</span>
+            <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
+            <div id="modal-itens-lista"></div>
+            <h3 style="color: #4CAF50; margin-top: 20px;">Total: R$ <span id="modal-total">0,00</span></h3>
+            <label>Forma de Pagamento:</label>
+            <select id="modal-forma-pagamento">
+                <option value="">Selecione...</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Cartao Debito">Cartao Debito</option>
+                <option value="Cartao Credito">Cartao Credito</option>
+                <option value="PIX">PIX</option>
+            </select>
+            <div id="campo-dinheiro" style="display: none;">
+                <label>Valor Recebido:</label>
+                <input type="number" id="valor-recebido" step="0.01" placeholder="Ex: 50.00" oninput="calcularTroco()">
+                <div id="troco-info" style="display: none;" class="troco-display">
+                    <h3>Troco: R$ <span id="valor-troco">0,00</span></h3>
                 </div>
             </div>
-        `;
-    });
-    estoqueListaDiv.innerHTML = html;
-}
-
-// Descontar estoque ao marcar pedido pronto
-async function descontarEstoqueDoPedido(pedido) {
-    for (const item of pedido.itens) {
-        const produtoId = item.id;
-        const quantidadePedido = item.quantidade;
-
-        const itemEstoque = estoque[produtoId];
-        if (!itemEstoque) continue;
-
-        const novoEstoque = itemEstoque.estoque_atual - quantidadePedido;
-
-        const { error } = await supabase.from('estoque').update({ estoque_atual: novoEstoque }).eq('id', produtoId);
-        if (!error) estoque[produtoId].estoque_atual = novoEstoque;
-    }
-    atualizarEstoqueUI();
-}
-
-// ---------- PEDIDOS ----------
-function iniciarListenerPedidos() {
-    if (pedidosSubscription) return;
-    buscarPedidosAtivos();
-
-    pedidosSubscription = supabase.channel('pedidos-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, buscarPedidosAtivos)
-        .subscribe();
-}
-
-function pararListenerPedidos() {
-    if (pedidosSubscription) {
-        supabase.removeChannel(pedidosSubscription);
-        pedidosSubscription = null;
-    }
-}
-
-async function buscarPedidosAtivos() {
-    try {
-        const { data, error } = await supabase.from('pedidos')
-            .select('*')
-            .in('status', ['novo','preparando','pronto'])
-            .order('timestamp', { ascending: true });
-        if (error) throw error;
-
-        pedidos = data;
-        atualizarCozinha();
-    } catch (error) { console.error("Erro ao buscar pedidos:", error); }
-}
-
-function atualizarCozinha() {
-    const listaPedidos = document.getElementById('listaPedidos');
-    const pedidosAtivos = pedidos.filter(p => ['novo','preparando','pronto'].includes(p.status));
-
-    let pedidosFiltrados = pedidosAtivos.map(pedido => {
-        if (filtroAtual==='todos') return pedido;
-
-        const itensFiltrados = pedido.itens.filter(item => produtos[item.id]?.tipo===filtroAtual);
-        if (itensFiltrados.length>0) {
-            const novoTotal = itensFiltrados.reduce((sum,item)=>sum+item.subtotal,0);
-            return {...pedido, itens: itensFiltrados, total: novoTotal, isPartial:true};
-        }
-        return null;
-    }).filter(p => p!==null);
-
-    if (pedidosFiltrados.length===0) {
-        listaPedidos.innerHTML = '<p style="text-align:center;color:#6b7280;padding:2rem;">Nenhum pedido pendente</p>';
-        return;
-    }
-
-    const agora = Date.now();
-    listaPedidos.innerHTML = pedidosFiltrados.map(pedido => {
-        const tempoDecorrido = agora - new Date(pedido.timestamp).getTime();
-        const isUrgente = pedido.status==='novo' && tempoDecorrido>5*60*1000;
-        const classeUrgente = isUrgente?'urgente':'';
-        const clienteNum = pedido.cliente || '1';
-
-        let statusControls = '';
-        if (pedido.status==='novo'||pedido.status==='preparando') {
-            statusControls = `
-                <button class="btn-status btn-preparo" onclick="marcarEmPreparo('${pedido.id}')">
-                    ${pedido.status==='novo'?'⏳ Em Preparo':'🔄 Reiniciar Preparo'}
-                </button>
-                <button class="btn-status btn-pronto" onclick="marcarPronto('${pedido.id}')">
-                    ✓ Pedido Pronto
-                </button>
-            `;
-        } else if (pedido.status==='pronto') {
-            statusControls = `<span style="color:green;font-weight:bold;margin-right:1rem;">✅ PRONTO!</span>`;
-        }
-
-        return `
-            <div class="pedido ${pedido.status} ${classeUrgente}">
-                <div class="pedido-header">
-                    <div class="mesa-info">Mesa ${pedido.mesa} <span class="cliente-tag">Cliente ${clienteNum}</span></div>
-                    <div class="tempo">${pedido.horario}</div>
-                </div>
-                <ul class="pedido-itens">
-                    ${pedido.itens.map(item=>`<li>${item.quantidade}x ${item.nome} - R$ ${item.subtotal.toFixed(2)}</li>`).join('')}
-                </ul>
-                ${pedido.observacao?`<div class="pedido-obs">OBS: ${pedido.observacao}</div>`:''}
-                ${pedido.isPartial?
-                    `<div class="pedido-total" style="color:#1e40af;">Total Parcial (${filtroAtual}): R$ ${pedido.total.toFixed(2)}</div>`:
-                    `<div class="pedido-total">Total: R$ ${pedido.total.toFixed(2)}</div>`}
-                ${statusControls}
-                <button class="btn-status btn-imprimir" onclick="imprimirPedido('${pedido.id}')">🖨️ Comanda</button>
-                <button class="btn-status btn-fechar-conta" onclick="iniciarFuncaoFechamento('${pedido.id}')">💵 Fechar Conta (Cliente ${clienteNum})</button>
-            </div>
-        `;
-    }).join('');
-}
-
-// ---------- STATUS PEDIDOS ----------
-async function mudarStatus(pedidoId, status) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    try { await supabase.from('pedidos').update({status}).eq('id',pedidoId); }
-    catch(e){console.error(e);}
-}
-
-// SUGESTÃO DE REFINAMENTO
-function marcarEmPreparo(id) {
-    mudarStatus(id, 'preparando'); 
-    // Não precisa de atualizarCozinha() aqui, o listener vai cuidar disso.
-}
-
-async function marcarPronto(id) {
-    await mudarStatus(id, 'pronto');
-    const pedido = pedidos.find(p => p.id === id);
-    if (pedido) await descontarEstoqueDoPedido(pedido);
-    // Não precisa de atualizarCozinha() aqui, o listener vai cuidar disso.
-}
-
-// ---------- FECHAMENTO E PAGAMENTO ----------
-function registrarPagamento() {
-    let pagamento=null,valido=false;
-    while(!valido){
-        pagamento=window.prompt("Selecione a forma de pagamento:\n1: Cartão\n2: Dinheiro\n3: PIX","1");
-        if(pagamento===null) return null;
-        switch(pagamento.trim().toLowerCase()){
-            case '1': case 'cartão': pagamento='CARTÃO (Maquininha)'; valido=true; break;
-            case '2': case 'dinheiro': pagamento='DINHEIRO'; valido=true; break;
-            case '3': case 'pix': pagamento='PIX'; valido=true; break;
-            default: alert("Opção inválida. Digite 1, 2 ou 3.");
-        }
-    }
-    return pagamento;
-}
-
-function iniciarFuncaoFechamento(pedidoId){
-    const pedido=pedidos.find(p=>p.id===pedidoId);
-    if(!pedido) return;
-    const pagamento=registrarPagamento();
-    if(!pagamento) return;
-
-    const taxaServico=pedido.total*0.10;
-    const totalFinal=pedido.total+taxaServico;
-    const clienteNum=pedido.cliente||'1';
-
-    let printArea=document.createElement('div');
-    printArea.className='print-area';
-    printArea.innerHTML=`
-        <div class="print-pedido">
-            <div class="print-header">
-                <h1>💵 CONTA - ESPETINHO DO GESSELO</h1>
-                <div class="print-mesa-cliente">Mesa ${pedido.mesa} / Cliente ${clienteNum}</div>
-            </div>
-            <div class="print-tipo">COMPROVANTE DE PAGAMENTO</div>
-            <p style="font-weight:bold;margin-bottom:5px;">--- ITENS ---</p>
-            ${pedido.itens.map(item=>`<div class="print-item"><span>${item.quantidade}x ${item.nome}</span><span>R$ ${item.subtotal.toFixed(2)}</span></div>`).join('')}
-            <div style="border-top:1px dashed #666;padding-top:10px;margin-top:10px;">
-                <div class="print-item"><strong>TOTAL CONSUMO:</strong><strong>R$ ${pedido.total.toFixed(2)}</strong></div>
-                <div class="print-item"><span>Taxa de Serviço (10%):</span><span>R$ ${taxaServico.toFixed(2)}</span></div>
-            </div>
-            <div class="print-total" style="font-size:14px;border-top:2px solid #000;padding-top:10px;margin-top:10px;"><strong>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</strong></div>
-            <p style="font-size:16px;font-weight:bold;margin-top:15px;text-align:center;color:#d97706;">PAGO COM: ${pagamento}</p>
-            <div style="text-align:center;margin-top:20px;font-size:10px;"><p>Obrigado pela preferência! Volte Sempre.</p></div>
+            <button class="btn-confirmar" onclick="confirmarFechamentoConta()">Confirmar e Imprimir Comprovante</button>
         </div>
-    `;
-    document.body.appendChild(printArea);
-    window.print();
-    document.body.removeChild(printArea);
-
-    mudarStatusEFormaPgto(pedidoId,'entregue',pagamento,totalFinal);
-}
-
-async function mudarStatusEFormaPgto(pedidoId,status,formaPgto,valorFinal){
-    const { data: { user } } = await supabase.auth.getUser();
-    if(!user) return;
-    let pedido=pedidos.find(p=>p.id===pedidoId);
-    if(!pedido) return;
-    try{
-        // Atualiza pedido
-        await supabase.from('pedidos').update({ status, forma_pagamento:formaPgto, valor_final:valorFinal, horario_fechamento:new Date().toISOString() }).eq('id',pedidoId);
-        // Libera mesa
-        await supabase.from('mesas_status').update({status:'livre'}).eq('mesa',pedido.mesa);
-        forcarCargaDados();
-    } catch(e){console.error('Erro ao finalizar pedido:',e);}
-}
-
-// ---------- IMPRESSÃO COMANDA ----------
-function imprimirPedido(pedidoId){
-    const pedido=pedidos.find(p=>p.id===pedidoId);
-    if(!pedido) return;
-    const clienteNum=pedido.cliente||'1';
-    let printArea=document.createElement('div');
-    printArea.className='print-area';
-    printArea.innerHTML=`
-        <div class="print-pedido">
-            <div class="print-header">
-                <h1>🍖 COMANDA - ESPETINHO DO GESSELO</h1>
-                <div class="print-mesa-cliente">Mesa ${pedido.mesa} / Cliente ${clienteNum}</div>
-            </div>
-            <div class="print-tipo" style="text-align:center;">--- ITENS ---</div>
-            ${pedido.itens.map(item=>`<div class="print-item" style="font-weight:bold;"><span>${item.quantidade}x ${item.nome}</span></div>`).join('')}
-            ${pedido.observacao?`<p style="margin-top:10px;font-weight:bold;">OBS: ${pedido.observacao}</p>`:''}
-            <div style="margin-top:20px;text-align:center;"><p>Status: ${pedido.status.toUpperCase()}</p></div>
+    </div>
+    <div id="modal-fechamento" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModal()">&times;</span>
+            <h2 style="color: #ff8c00;">Fechar Caixa do Dia</h2>
+            <div id="resumo-fechamento"></div>
+            <button class="btn-confirmar" onclick="confirmarFechamento()">Confirmar e Imprimir Comprovante</button>
         </div>
-    `;
-    document.body.appendChild(printArea);
-    window.print();
-    document.body.removeChild(printArea);
-}
-
-// ---------- RELATÓRIOS ----------
-async function atualizarRelatorios(periodo='diario',elemento=null){
-    if(elemento){document.querySelectorAll('.filtro-btn-tempo').forEach(btn=>btn.classList.remove('active'));elemento.classList.add('active');}
-    try{
-        const agora=new Date();
-        const inicioDoDia=new Date(agora.getFullYear(),agora.getMonth(),agora.getDate()).getTime();
-        let tempoLimite=new Date();
-        if(periodo==='diario') tempoLimite=new Date(inicioDoDia);
-        else if(periodo==='semanal') tempoLimite=new Date(inicioDoDia-(7*24*60*60*1000));
-        else if(periodo==='mensal') tempoLimite=new Date(inicioDoDia-(30*24*60*60*1000));
-
-        const { data, error } = await supabase.from('pedidos').select('*').gte('timestamp',tempoLimite.toISOString());
-        if(error) throw error;
-
-        let totalFaturamento=0,totalPedidos=data.length,pedidosProntos=0;
-        data.forEach(p=>{
-            const valorVenda=p.valor_final||p.total;
-            if(p.status==='entregue'){totalFaturamento+=valorVenda;pedidosProntos++;}
-            else if(p.status==='pronto'){pedidosProntos++;}
-        });
-        document.getElementById('totalPedidos').textContent=totalPedidos;
-        document.getElementById('totalFaturamento').textContent=`R$ ${totalFaturamento.toFixed(2)}`;
-        document.getElementById('pedidosProntos').textContent=pedidosProntos;
-    }catch(e){console.error("Erro ao atualizar relatórios:",e);}
-}
-
-// ---------- FUNÇÃO AUXILIAR ----------
-function forcarCargaDados(){
-    if(navigator.onLine===false){alert("Sem conexão com a internet."); return;}
-    pararListenerPedidos();
-    buscarEstoque();
-    iniciarListenerPedidos();
-    atualizarRelatorios();
-    document.getElementById('listaPedidos').innerHTML='<p style="text-align:center;color:#6b7280;padding:2rem;">Sincronizando com a Nuvem...</p>';
-}
-
-document.addEventListener('DOMContentLoaded',function(){
-    supabase.auth.onAuthStateChange((event,session)=>{ if(session) mostrarConteudoPrincipal(); else document.getElementById('login-overlay').style.display='flex'; });
-    setInterval(atualizarRelatorios,10000);
-    setInterval(buscarEstoque,15000);
-});
-</script>
-
-
+    </div>
+    <div id="modal-historico" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalHistorico()">&times;</span>
+            <h2 style="color: #ff8c00;">Historico de Pedidos</h2>
+            <div class="filtros-historico">
+                <label>Data Inicial:</label><input type="date" id="filtro-data-inicio">
+                <label>Data Final:</label><input type="date" id="filtro-data-fim">
+                <label>Mesa:</label>
+                <select id="filtro-mesa"><option value="">Todas</option></select>
+                <label>Forma de Pagamento:</label>
+                <select id="filtro-forma">
+                    <option value="">Todas</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Cartao Debito">Cartao Debito</option>
+                    <option value="Cartao Credito">Cartao Credito</option>
+                    <option value="PIX">PIX</option>
+                </select>
+                <button class="btn-confirmar" onclick="aplicarFiltrosHistorico()">Aplicar Filtros</button>
+            </div>
+            <div id="historico-container"></div>
+        </div>
+    </div>
+    <div id="comanda-impressao" style="display:none;"></div>
+    <script>
+        const SUPABASE_URL='https://ufxbltjyswbynwnaybev.supabase.co';
+        const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
+        const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+        let pedidosAtuais=[],pedidosProcessados={},mesasStatus=[],cardapioItens=[],pedidoAtualModal=null,pollingIntervalPedidos=null,pollingIntervalMesas=null,pollingIntervalCaixa=null;
+        const POLLING_INTERVAL_MS=2000;
+        function initCozinha(){carregarPedidosProcessados();startAllPolling();const hoje=new Date().toISOString().split('T')[0];document.getElementById('filtro-data-inicio').value=hoje;document.getElementById('filtro-data-fim').value=hoje;}
+        function carregarPedidosProcessados(){const stored=localStorage.getItem('pedidos_processados_cozinha');if(stored){try{pedidosProcessados=JSON.parse(stored);}catch(e){pedidosProcessados={};}}}
+        function salvarPedidosProcessados(){localStorage.setItem('pedidos_processados_cozinha',JSON.stringify(pedidosProcessados));}
+        function startAllPolling(){fetchPedidos();pollingIntervalPedidos=setInterval(()=>{fetchPedidos();},POLLING_INTERVAL_MS);fetchMesas();pollingIntervalMesas=setInterval(()=>{fetchMesas();},POLLING_INTERVAL_MS);calcularCaixaDoDia();pollingIntervalCaixa=setInterval(()=>{calcularCaixaDoDia();},5000);updateStatusIndicator(true,'Conectado');}
+        function stopAllPolling(){if(pollingIntervalPedidos)clearInterval(pollingIntervalPedidos);if(pollingIntervalMesas)clearInterval(pollingIntervalMesas);if(pollingIntervalCaixa)clearInterval(pollingIntervalCaixa);}
+        function updateStatusIndicator(success,message='Atualizando...'){const indicator=document.getElementById('status-indicator');const dot=indicator.querySelector('.status-dot');const text=indicator.querySelector('span');if(success){indicator.style.backgroundColor='#4CAF50';text.textContent=message;dot.style.display='block';}else{indicator.style.backgroundColor='#FF5733';text.textContent='Erro de conexao';dot.style.display='none';}}
+        function mostrarNotificacao(){const notif=document.getElementById('notificacao-novo-pedido');notif.style.display='block';setTimeout(()=>{notif.style.display='none';},4000);}
+        async function fetchPedidos(){try{const{data,error}=await supabaseClient.from('pedidos').select('*').neq('status','Fechado');if(error){console.error('Erro ao buscar pedidos:',error);updateStatusIndicator(false);return;}const pedidosEmPreparo=data.filter(p=>p.status==='Em Preparo');pedidosEmPreparo.forEach(pedido=>{if(!pedidosProcessados[pedido.id]){console.log('Novo pedido detectado para impressao:',pedido.id);imprimirComandaAutomatica(pedido);pedidosProcessados[pedido.id]=true;salvarPedidosProcessados();mostrarNotificacao();}});const pedidosJSON=JSON.stringify(data);const pedidosAtuaisJSON=JSON.stringify(pedidosAtuais);if(pedidosJSON!==pedidosAtuaisJSON){pedidosAtuais=data;renderPedidos();}updateStatusIndicator(true,'Conectado');}catch(err){console.error('Erro no polling de pedidos:',err);updateStatusIndicator(false);}}
+        function imprimirComandaAutomatica(pedido){const dataHora=new Date().toLocaleString('pt-BR');let comanda=`<div style="font-family:monospace;font-size:11pt;line-height:1.5;padding:10px;"><h2 style="text-align:center;margin:5px 0;font-size:16pt;">ESPETINHO GESSELO</h2><h3 style="text-align:center;margin:5px 0 15px 0;font-size:14pt;">COMANDA - MESA ${pedido.mesa}</h3><p style="border-top:2px solid black;border-bottom:2px solid black;padding:8px 0;margin:10px 0;text-align:center;font-size:10pt;">${dataHora}</p><p style="margin:10px 0;"><strong>Pedido:</strong> #${pedido.id.substring(0,8)}</p><h4 style="margin:15px 0 10px 0;font-size:12pt;border-bottom:1px solid black;padding-bottom:5px;">ITENS:</h4><ul style="list-style:none;padding:0;margin:0;">${(pedido.itens||[]).map(item=>`<li style="margin:8px 0;padding:5px 0;border-bottom:1px dashed #ccc;font-size:11pt;"><strong>${item.quantidade}x</strong> ${item.nome}</li>`).join('')}</ul>${pedido.observacao?`<div style="border:2px solid black;padding:10px;margin:15px 0;background-color:#f0f0f0;"><p style="margin:0;font-weight:bold;font-size:11pt;">OBSERVACAO:</p><p style="margin:5px 0 0 0;font-size:11pt;">${pedido.observacao}</p></div>`:''}<div style="border-top:2px solid black;padding-top:10px;margin-top:15px;"><p style="text-align:right;font-size:13pt;font-weight:bold;margin:0;">TOTAL: R$ ${pedido.total.toFixed(2).replace('.',',')}</p></div></div>`;document.getElementById('comanda-impressao').innerHTML=comanda;setTimeout(()=>window.print(),500);}
+        function renderPedidos(){const container=document.getElementById('pedidos-container');const pedidosAbertos=pedidosAtuais.filter(p=>p.status==='Aberto'||p.status==='Em Preparo'||p.status==='Pronto');container.innerHTML='';if(pedidosAbertos.length===0){container.innerHTML='<p style="color:gray;text-align:center;margin-top:20px;">Nenhum pedido em preparo.</p>';return;}pedidosAbertos.forEach(pedido=>{const div=document.createElement('div');div.className='pedido-card';const listaItens=(pedido.itens||[]).map(item=>`<li>${item.quantidade}x ${item.nome}</li>`).join('');const statusColor=pedido.status==='Pronto'?'lime':(pedido.status==='Em Preparo'?'yellow':'red');div.innerHTML=`<h3>Mesa ${pedido.mesa} - Pedido #${pedido.id.substring(0,4)}</h3><p>Status: <strong style="color:${statusColor};">${pedido.status}</strong></p><p>Total: <strong>R$ ${(pedido.total||0).toFixed(2).replace('.',',')}</strong></p><p>Observacao: ${pedido.observacao||'Nenhuma'}</p><ul class="lista-itens">${listaItens}</ul><button class="btn-pronto" onclick="marcarComoPronto('${pedido.id}','${pedido.mesa}')" ${pedido.status==='Pronto'?'disabled':''}>${pedido.status==='Pronto'?'PRONTO':'Marcar Como Pronto'}</button><button class="btn-fechar-conta" onclick="abrirModalFecharConta('${pedido.id}')">Fechar Conta</button>`;container.appendChild(div);});}
+        async function marcarComoPronto(pedidoId,mesaId){const{error:pedidoError}=await supabaseClient.from('pedidos').update({status:'Pronto'}).eq('id',pedidoId);const{error:mesaError}=await supabaseClient.from('mesas_status').update({status:'Pronto'}).eq('mesa',mesaId);if(pedidoError||mesaError){console.error('Erro ao marcar como pronto:',pedidoError||mesaError);alert('Erro ao atualizar status!');}else{await fetchPedidos();await fetchMesas();}}
+        function abrirModalFecharConta(pedidoId){const pedido=pedidosAtuais.find(p=>p.id===pedidoId);if(!pedido)return alert('Pedido nao encontrado!');pedidoAtualModal=pedido;document.getElementById('modal-mesa-num').textContent=pedido.mesa;document.getElementById('modal-total').textContent=(pedido.total||0).toFixed(2).replace('.',',');const listaItens=document.getElementById('modal-itens-lista');listaItens.innerHTML='<h4>Itens do Pedido:</h4><ul class="lista-itens">'+(pedido.itens||[]).map(item=>`<li>${item.quantidade}x ${item.nome} - R$ ${(item.quantidade*item.preco).toFixed(2).replace('.',',')}</li>`).join('')+'</ul>';document.getElementById('modal-forma-pagamento').value=pedido.forma_pagamento||'';document.getElementById('valor-recebido').value='';document.getElementById('campo-dinheiro').style.display='none';document.getElementById('troco-info').style.display='none';document.getElementById('modal-fechar-conta').style.display='block';}
+        function fecharModalConta(){document.getElementById('modal-fechar-conta').style.display='none';pedidoAtualModal=null;}
+        document.getElementById('modal-forma-pagamento').onchange=function(){const forma=this.value;const campoDinheiro=document.getElementById('campo-dinheiro');if(forma==='Dinheiro'){campoDinheiro.style.display='block';}else{campoDinheiro.style.display='none';document.getElementById('troco-info').style.display='none';}};
+        function calcularTroco(){const total=pedidoAtualModal?pedidoAtualModal.total:0;const recebido=parseFloat(document.getElementById('valor-recebido').value)||0;const troco=recebido-total;const trocoInfo=document.getElementById('troco-info');const valorTroco=document.getElementById('valor-troco');if(recebido>=total&&recebido>0){trocoInfo.style.display='block';valorTroco.textContent=troco.toFixed(2).replace('.',',');if(troco<0){trocoInfo.style.borderColor='#dc3545';valorTroco.parentElement.style.color='#dc3545';}else{trocoInfo.style.borderColor='#4CAF50';valorTroco.parentElement.style.color='#4CAF50';}}else{trocoInfo.style.display='none';}}
+        async function confirmarFechamentoConta(){if(!pedidoAtualModal)return;const formaPagamento=document.getElementById('modal-forma-pagamento').value;if(!formaPagamento)return alert('Selecione a forma de pagamento!');let valorRecebido=null,troco=0;if(formaPagamento==='Dinheiro'){valorRecebido=parseFloat(document.getElementById('valor-recebido').value);if(!valorRecebido||valorRecebido<pedidoAtualModal.total)return alert('Valor recebido deve ser maior ou igual ao total!');troco=valorRecebido-pedidoAtualModal.total;}const{error:updateError}=await supabaseClient.from('pedidos').update({status:'Fechado',forma_pagamento:formaPagamento,valor_recebido:valorRecebido,troco:troco,horario_fecha:new Date().toISOString()}).eq('id',pedidoAtualModal.id);if(updateError){console.error('Erro ao fechar conta:',updateError);return alert('Erro ao fechar a conta!');}const{error:mesaError}=await supabaseClient.from('mesas_status').update({status:'Livre',pedido_id:null}).eq('mesa',pedidoAtualModal.mesa);if(mesaError)console.error('Erro ao liberar mesa:',mesaError);imprimirComprovanteConta(pedidoAtualModal,formaPagamento,valorRecebido,troco);fecharModalConta();await fetchPedidos();await fetchMesas();await calcularCaixaDoDia();alert('Conta fechada com sucesso!');}
+        function imprimirComprovanteConta(pedido,formaPagamento,valorRecebido,troco){const dataHora=new Date().toLocaleString('pt-BR');let comprovante=`<div style="font-family:monospace;font-size:10pt;line-height:1.4;padding:10px;"><h2 style="text-align:center;margin:5px 0;">ESPETINHO GESSELO</h2><h3 style="text-align:center;margin:0 0 10px 0;">COMPROVANTE DE PAGAMENTO</h3><p style="border-top:2px solid black;border-bottom:2px solid black;padding:8px 0;margin:10px 0;text-align:center;">${dataHora}</p><p><strong>Mesa:</strong> ${pedido.mesa}</p><p><strong>Pedido:</strong> #${pedido.id.substring(0,8)}</p><h4 style="margin:15px 0 10px 0;">ITENS:</h4><ul style="list-style:none;padding:0;">${(pedido.itens||[]).map(item=>`<li style="margin:5px 0;"><span>${item.quantidade}x ${item.nome}</span><span style="float:right;">R$ ${(item.quantidade*item.preco).toFixed(2).replace('.',',')}</span></li>`).join('')}</ul>${pedido.observacao?`<p style="margin-top:10px;"><strong>Obs:</strong> ${pedido.observacao}</p>`:''}<div style="border-top:1px dashed black;padding-top:10px;margin-top:15px;"><p style="font-size:12pt;"><strong>TOTAL: R$ ${pedido.total.toFixed(2).replace('.',',')}</strong></p><p><strong>Forma de Pagamento:</strong> ${formaPagamento}</p>${formaPagamento==='Dinheiro'&&valorRecebido?`<p><strong>Valor Recebido:</strong> R$ ${valorRecebido.toFixed(2).replace('.',',')}</p><p><strong>Troco:</strong> R$ ${troco.toFixed(2).replace('.',',')}</p>`:''}</div><p style="text-align:center;margin-top:20px;font-size:9pt;">Obrigado pela preferencia!<br>Volte sempre!</p></div>`;document.getElementById('comanda-impressao').innerHTML=comprovante;setTimeout(()=>window.print(),300);}
+        async function fetchMesas(){try{const{data,error}=await supabaseClient.from('mesas_status').select('*');if(error){console.error('Erro ao buscar mesas:',error);return;}const mesasJSON=JSON.stringify(data);const mesasAtuaisJSON=JSON.stringify(mesasStatus);if(mesasJSON!==mesasAtuaisJSON){mesasStatus=data||[];renderMesasStatus();}}catch(err){console.error('Erro no polling de mesas:',err);}}
+        function renderMesasStatus(){const container=document.getElementById('mesas-status-container');const selectAdicional=document.getElementById('mesa-adicional-select');container.innerHTML='<h4>Status das Mesas:</h4>';selectAdicional.innerHTML='<option value="">Selecione a Mesa Ocupada...</option>';const mesasOcupadas=mesasStatus.filter(m=>m.status!=='Livre');mesasOcupadas.forEach(mesa=>{const p=document.createElement('p');p.textContent=`Mesa ${mesa.mesa}: ${mesa.status}`;p.style.color=mesa.status==='Pronto'?'lime':'red';p.style.borderColor=mesa.status==='Pronto'?'lime':'red';container.appendChild(p);if(mesa.pedido_id){const option=document.createElement('option');option.value=JSON.stringify({mesaId:mesa.mesa,pedidoId:mesa.pedido_id});option.textContent=`Mesa ${mesa.mesa} (${mesa.status})`;selectAdicional.appendChild(option);}});}
+        async function calcularCaixaDoDia(){try{const hoje=new Date().toISOString().split('T')[0];const{data:fechados,error}=await supabaseClient.from('pedidos').select('total, horario_fecha, forma_pagamento').eq('status','Fechado').not('horario_fecha','is',null);if(error){console.error('Erro ao buscar caixa:',error);return;}let totalCaixa=0,contagem=0,totaisPorForma={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0,'Nao Especificado':0};fechados.forEach(pedido=>{if(pedido.horario_fecha&&pedido.horario_fecha.startsWith(hoje)){totalCaixa+=pedido.total;contagem++;const forma=pedido.forma_pagamento||'Nao Especificado';if(totaisPorForma[forma]!==undefined){totaisPorForma[forma]+=pedido.total;}else{totaisPorForma['Nao Especificado']+=pedido.total;}}});document.getElementById('total-caixa').textContent=`R$ ${totalCaixa.toFixed(2).replace('.',',')}`;document.getElementById('contagem-pedidos').textContent=contagem;const totaisDiv=document.getElementById('totais-por-forma');totaisDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma de Pagamento:</h5>';for(const[forma,valor]of Object.entries(totaisPorForma)){if(valor>0){totaisDiv.innerHTML+=`<p style="margin:5px 0;">${forma}: R$ ${valor.toFixed(2).replace('.',',')}</p>`;}}}catch(err){console.error('Erro no polling de caixa:',err);}}
+        document.getElementById('mesa-adicional-select').onchange=()=>{const selectValue=document.getElementById('mesa-adicional-select').value;if(selectValue){renderAdicionalCardapio();}else{document.getElementById('adicional-cardapio-container').innerHTML='';}};
+        async function renderAdicionalCardapio(){if(cardapioItens.length===0){const{data,error}=await supabaseClient.from('cardapio').select('*').order('categoria',{ascending:true}).order('nome_item',{ascending:true});if(error){console.error(error);return;}cardapioItens=data;}const container=document.getElementById('adicional-cardapio-container');container.innerHTML='<h4>Escolha o Item:</h4>';let categorias={};cardapioItens.forEach(item=>{if(item.categoria&&item.categoria.trim()!==''){if(!categorias[item.categoria])categorias[item.categoria]=[];categorias[item.categoria].push(item);}});for(const[categoria,itensCategoria]of Object.entries(categorias)){const h5=document.createElement('h5');h5.textContent=categoria;container.appendChild(h5);itensCategoria.forEach(i=>{const itemDiv=document.createElement('div');itemDiv.className='item-cardapio';const precoFormatado=parseFloat(i.preco).toFixed(2).replace('.',',');itemDiv.innerHTML=`<span class="item-info">${i.nome_item}</span><span class="item-preco">R$ ${precoFormatado}</span><button class="add-btn" onclick="adicionarPelaCozinha(${i.id},'${i.nome_item.replace(/'/g,"\\'")}',${i.preco})">ADD</button>`;container.appendChild(itemDiv);});}}
+        async function adicionarPelaCozinha(itemId,nome,preco){const selectValue=document.getElementById('mesa-adicional-select').value;if(!selectValue)return alert('Selecione uma mesa primeiro!');const{mesaId,pedidoId}=JSON.parse(selectValue);const{data:pedido,error:fetchError}=await supabaseClient.from('pedidos').select('itens, total').eq('id',pedidoId).single();if(fetchError){console.error(fetchError);return alert('Erro ao buscar pedido!');}let itensAtuais=pedido.itens||[];let novoTotal=pedido.total||0;const itemIndex=itensAtuais.findIndex(item=>item.id===itemId);if(itemIndex>-1){itensAtuais[itemIndex].quantidade+=1;}else{itensAtuais.push({id:itemId,nome,preco,quantidade:1});}novoTotal+=preco;const{error:updateError}=await supabaseClient.from('pedidos').update({itens:itensAtuais,total:novoTotal,status:'Em Preparo'}).eq('id',pedidoId);if(updateError){console.error(updateError);return alert('Erro ao adicionar item a comanda!');}alert(`Item '${nome}' adicionado a Mesa ${mesaId}!`);await fetchPedidos();}
+        async function abrirModalFechamento(){const hoje=new Date().toISOString().split('T')[0];const{data:fechados,error}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);if(error){console.error('Erro ao buscar pedidos:',error);return alert('Erro ao carregar dados do caixa!');}let totalCaixa=0,contagem=0,totaisPorForma={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0,'Nao Especificado':0};fechados.forEach(pedido=>{if(pedido.horario_fecha&&pedido.horario_fecha.startsWith(hoje)){totalCaixa+=pedido.total;contagem++;const forma=pedido.forma_pagamento||'Nao Especificado';if(totaisPorForma[forma]!==undefined){totaisPorForma[forma]+=pedido.total;}else{totaisPorForma['Nao Especificado']+=pedido.total;}}});const resumo=document.getElementById('resumo-fechamento');resumo.innerHTML=`<div style="background-color:#383838;padding:15px;border-radius:8px;margin:20px 0;"><h3 style="color:#ff8c00;">Resumo do Dia</h3><p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p><p><strong>Total de Pedidos:</strong> ${contagem}</p><p><strong>Total Geral:</strong> R$ ${totalCaixa.toFixed(2).replace('.',',')}</p><hr style="border-color:#555;margin:15px 0;"><h4 style="color:#4CAF50;">Por Forma de Pagamento:</h4>${Object.entries(totaisPorForma).map(([forma,valor])=>valor>0?`<p>${forma}: R$ ${valor.toFixed(2).replace('.',',')}</p>`:'').join('')}</div>`;document.getElementById('modal-fechamento').style.display='block';}
+        function fecharModal(){document.getElementById('modal-fechamento').style.display='none';}
+        async function confirmarFechamento(){const hoje=new Date().toISOString().split('T')[0];const{data:fechados,error}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);if(error){console.error('Erro ao buscar pedidos:',error);return alert('Erro ao gerar comprovante!');}let totalCaixa=0,contagem=0,totaisPorForma={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0,'Nao Especificado':0},pedidosDetalhados=[];fechados.forEach(pedido=>{if(pedido.horario_fecha&&pedido.horario_fecha.startsWith(hoje)){totalCaixa+=pedido.total;contagem++;pedidosDetalhados.push(pedido);const forma=pedido.forma_pagamento||'Nao Especificado';if(totaisPorForma[forma]!==undefined){totaisPorForma[forma]+=pedido.total;}else{totaisPorForma['Nao Especificado']+=pedido.total;}}});const dataHora=new Date().toLocaleString('pt-BR');let comprovante=`<div style="font-family:monospace;font-size:10pt;line-height:1.4;padding:10px;"><h2 style="text-align:center;margin:5px 0;">ESPETINHO GESSELO</h2><h3 style="text-align:center;margin:0 0 10px 0;">FECHAMENTO DE CAIXA</h3><p style="border-top:2px solid black;border-bottom:2px solid black;padding:8px 0;margin:10px 0;text-align:center;">${dataHora}</p><h4 style="margin:15px 0 10px 0;">RESUMO DO DIA:</h4><p>Total de Pedidos Fechados: <strong>${contagem}</strong></p><p style="font-size:12pt;margin:10px 0;"><strong>TOTAL GERAL: R$ ${totalCaixa.toFixed(2).replace('.',',')}</strong></p><div style="border-top:1px dashed black;padding-top:10px;margin-top:15px;"><h4>POR FORMA DE PAGAMENTO:</h4>${Object.entries(totaisPorForma).map(([forma,valor])=>valor>0?`<p style="margin:5px 0;">${forma}: R$ ${valor.toFixed(2).replace('.',',')}</p>`:'').join('')}</div><div style="border-top:1px dashed black;padding-top:10px;margin-top:15px;"><h4>DETALHAMENTO DOS PEDIDOS:</h4>${pedidosDetalhados.map(pedido=>`<div style="margin:10px 0;padding:8px;background-color:#f5f5f5;color:black;"><p style="margin:3px 0;"><strong>Mesa ${pedido.mesa}</strong> - #${pedido.id.substring(0,8)}</p><p style="margin:3px 0;">Horario: ${new Date(pedido.horario_fecha).toLocaleString('pt-BR')}</p><p style="margin:3px 0;">Forma: ${pedido.forma_pagamento||'Nao especificado'}</p><p style="margin:3px 0;"><strong>Total: R$ ${pedido.total.toFixed(2).replace('.',',')}</strong></p></div>`).join('')}</div><div style="border-top:2px solid black;margin-top:20px;padding-top:10px;text-align:center;"><p style="margin:5px 0;">___________________________</p><p style="margin:5px 0;">Assinatura do Responsavel</p></div></div>`;document.getElementById('comanda-impressao').innerHTML=comprovante;fecharModal();setTimeout(()=>window.print(),500);alert('Comprovante gerado! Caixa fechado com sucesso.');}
+        async function abrirHistorico(){const selectMesa=document.getElementById('filtro-mesa');selectMesa.innerHTML='<option value="">Todas</option>';for(let i=1;i<=20;i++){selectMesa.innerHTML+=`<option value="${i}">Mesa ${i}</option>`;}await aplicarFiltrosHistorico();document.getElementById('modal-historico').style.display='block';}
+        function fecharModalHistorico(){document.getElementById('modal-historico').style.display='none';}
+        async function aplicarFiltrosHistorico(){const dataInicio=document.getElementById('filtro-data-inicio').value;const dataFim=document.getElementById('filtro-data-fim').value;const mesa=document.getElementById('filtro-mesa').value;const forma=document.getElementById('filtro-forma').value;let query=supabaseClient.from('pedidos').select('*').eq('status','Fechado').order('horario_fecha',{ascending:false});if(dataInicio){query=query.gte('horario_fecha',`${dataInicio}T00:00:00`);}if(dataFim){query=query.lte('horario_fecha',`${dataFim}T23:59:59`);}if(mesa){query=query.eq('mesa',parseInt(mesa));}if(forma){query=query.eq('forma_pagamento',forma);}const{data:historico,error}=await query;if(error){console.error('Erro ao buscar historico:',error);return alert('Erro ao carregar historico!');}const container=document.getElementById('historico-container');if(historico.length===0){container.innerHTML='<p style="text-align:center;color:gray;margin-top:20px;">Nenhum pedido encontrado com os filtros selecionados.</p>';return;}let totalGeral=0;historico.forEach(p=>totalGeral+=p.total);container.innerHTML=`<div style="background-color:#383838;padding:15px;border-radius:8px;margin-bottom:20px;"><h3 style="color:#4CAF50;">Total Encontrado: R$ ${totalGeral.toFixed(2).replace('.',',')}</h3><p>Quantidade de Pedidos: ${historico.length}</p></div>`;historico.forEach(pedido=>{const div=document.createElement('div');div.className='historico-item';const itensLista=(pedido.itens||[]).map(item=>`${item.quantidade}x ${item.nome}`).join(', ');div.innerHTML=`<h4>Mesa ${pedido.mesa} - #${pedido.id.substring(0,8)}</h4><p><strong>Data:</strong> ${new Date(pedido.horario_fecha).toLocaleString('pt-BR')}</p><p><strong>Forma:</strong> ${pedido.forma_pagamento||'Nao especificado'}</p><p><strong>Total:</strong> R$ ${pedido.total.toFixed(2).replace('.',',')}</p>${pedido.valor_recebido?`<p><strong>Recebido:</strong> R$ ${pedido.valor_recebido.toFixed(2).replace('.',',')} | <strong>Troco:</strong> R$ ${pedido.troco.toFixed(2).replace('.',',')}</p>`:''}<p><strong>Itens:</strong> ${itensLista}</p>${pedido.observacao?`<p><strong>Obs:</strong> ${pedido.observacao}</p>`:''}`;container.appendChild(div);});}
+        window.addEventListener('beforeunload',()=>{stopAllPolling();});
+        window.onclick=function(event){const modalFechamento=document.getElementById('modal-fechamento');const modalConta=document.getElementById('modal-fechar-conta');const modalHistorico=document.getElementById('modal-historico');if(event.target==modalFechamento)fecharModal();if(event.target==modalConta)fecharModalConta();if(event.target==modalHistorico)fecharModalHistorico();}
+    </script>
 </body>
 </html>
