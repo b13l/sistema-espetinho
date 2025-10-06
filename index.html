@@ -16,11 +16,12 @@
         #login-view button { padding: 10px 20px; background-color: #ff8c00; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
 
         #mesas-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; text-align: center; }
-        .mesa-btn { padding: 30px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.2s; }
+        .mesa-btn { padding: 30px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.2s; position: relative; }
         .mesa-btn.livre { background-color: #4CAF50; color: white; }
         .mesa-btn.ocupada { background-color: #FF5733; color: white; }
         .mesa-btn.em_preparo { background-color: #FFC300; color: black; }
         .mesa-btn.pronto { background-color: #00bcd4; color: white; }
+        .mesa-badge { position: absolute; top: 5px; right: 5px; background-color: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
         
         #pdv-view { display: flex; gap: 20px; }
         .cardapio-col { flex: 2; overflow-y: auto; max-height: 80vh; padding-right: 10px; }
@@ -63,34 +64,9 @@
         </div>
 
         <div id="mesas-view" style="display:none;">
-            <h2>Escolha a Mesa</h2>
         </div>
 
         <div id="pdv-view" style="display:none;">
-            <div>
-                <button onclick="showMesasView()">← Voltar para Mesas</button>
-                <h2 id="pdv-mesa-titulo">Cardapio (Mesa X)</h2>
-            </div>
-            
-            <div class="cardapio-col">
-                <input type="text" id="busca-input" placeholder="Buscar no Cardapio..." onkeyup="carregarCardapio()" style="width: 95%; padding: 10px; margin-bottom: 15px; background-color: #444; color: white; border: 1px solid #555; border-radius: 4px;">
-                <div id="cardapio-view">
-                </div>
-            </div>
-
-            <div class="comanda-col">
-                <h3>Comanda Atual</h3>
-                <ul id="itens-comanda">
-                </ul>
-                <div id="total-comanda">Total: R$ 0,00</div>
-                
-                <h4>Observacao da Comanda</h4>
-                <textarea id="observacao" placeholder="Ex: Sem pimenta, pouca cebola..."></textarea>
-                
-                <div class="action-buttons">
-                    <button class="enviar-btn" onclick="enviarComandaParaCozinha()">Enviar Comanda para Cozinha</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -110,6 +86,7 @@
         let GLOBAL_MESA_ID = null;
         let GLOBAL_COMANDA_ID = null;
         let GLOBAL_ORDER_ITEMS = [];
+        let GLOBAL_COMANDAS_DA_MESA = [];
         
         let pollingInterval = null;
         const POLLING_INTERVAL_MS = 2000;
@@ -125,6 +102,8 @@
             document.getElementById('login-view').style.display = 'none';
             document.getElementById('mesas-view').style.display = 'grid';
             document.getElementById('pdv-view').style.display = 'none';
+            document.getElementById('pdv-view').innerHTML = ''; // Limpar PDV
+            document.getElementById('mesas-view').innerHTML = '<h2 style="grid-column: 1 / -1; text-align: center; color: #ff8c00;">Escolha a Mesa</h2>';
             carregarMesas();
             startPolling();
         }
@@ -132,10 +111,49 @@
         function showPdvView(mesaId) {
             document.getElementById('login-view').style.display = 'none';
             document.getElementById('mesas-view').style.display = 'none';
-            document.getElementById('pdv-view').style.display = 'flex';
-            document.getElementById('pdv-mesa-titulo').textContent = `Cardapio (Mesa ${mesaId})`;
+            const pdvView = document.getElementById('pdv-view');
+            pdvView.style.display = 'flex';
+            
+            const numComandas = GLOBAL_COMANDAS_DA_MESA.length;
+            const comandaAtualIdx = GLOBAL_COMANDAS_DA_MESA.findIndex(c => c.id === GLOBAL_COMANDA_ID);
+            
+            pdvView.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="voltarSelecaoComanda()" style="background-color: #555; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        ← Voltar
+                    </button>
+                    <span style="font-size: 1.5em; color: #ff8c00;">
+                        Mesa ${mesaId} - Comanda #${comandaAtualIdx + 1}
+                    </span>
+                </div>
+                
+                <div style="display: flex; gap: 20px;">
+                    <div class="cardapio-col">
+                        <input type="text" id="busca-input" placeholder="Buscar no Cardapio..." onkeyup="carregarCardapio()" style="width: 95%; padding: 10px; margin-bottom: 15px; background-color: #444; color: white; border: 1px solid #555; border-radius: 4px;">
+                        <div id="cardapio-view"></div>
+                    </div>
+
+                    <div class="comanda-col">
+                        <h3>Comanda Atual</h3>
+                        <ul id="itens-comanda"></ul>
+                        <div id="total-comanda">Total: R$ 0,00</div>
+                        
+                        <h4>Observacao da Comanda</h4>
+                        <textarea id="observacao" placeholder="Ex: Sem pimenta, pouca cebola..."></textarea>
+                        
+                        <div class="action-buttons">
+                            <button class="enviar-btn" onclick="enviarComandaParaCozinha()">Enviar Comanda para Cozinha</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
             carregarCardapio();
             renderComanda();
+        }
+
+        function voltarSelecaoComanda() {
+            selecionarMesa(GLOBAL_MESA_ID);
         }
 
         function startPolling() {
@@ -193,15 +211,38 @@
                     return;
                 }
 
-                const container = document.getElementById('mesas-view');
-                container.innerHTML = '';
+                const { data: comandas } = await supabaseClient
+                    .from('pedidos')
+                    .select('mesa, id')
+                    .in('status', ['Aberto', 'Em Preparo', 'Pronto']);
 
-                data.forEach(mesa => {
+                const comandasPorMesa = {};
+                if (comandas) {
+                    comandas.forEach(c => {
+                        if (!comandasPorMesa[c.mesa]) comandasPorMesa[c.mesa] = 0;
+                        comandasPorMesa[c.mesa]++;
+                    });
+                }
+
+                const container = document.getElementById('mesas-view');
+                
+                // Limpar apenas os botões, manter o título
+                const botoesMesas = container.querySelectorAll('.mesa-btn');
+                botoesMesas.forEach(btn => btn.remove());
+
+                // Ordenar mesas numericamente
+                const mesasOrdenadas = data.sort((a, b) => parseInt(a.mesa) - parseInt(b.mesa));
+
+                mesasOrdenadas.forEach(mesa => {
                     const button = document.createElement('button');
                     const statusClass = mesa.status.toLowerCase().replace(' ', '_');
                     button.className = `mesa-btn ${statusClass}`;
-                    button.textContent = `Mesa ${mesa.mesa} (${mesa.status})`;
-                    button.onclick = () => openComanda(mesa.mesa, mesa.status, mesa.pedido_id);
+                    
+                    const numComandas = comandasPorMesa[mesa.mesa] || 0;
+                    const badgeHTML = numComandas > 0 ? `<span class="mesa-badge">${numComandas}</span>` : '';
+                    
+                    button.innerHTML = `${badgeHTML}Mesa ${mesa.mesa}<br><small>(${mesa.status})</small>`;
+                    button.onclick = () => selecionarMesa(mesa.mesa);
                     container.appendChild(button);
                 });
 
@@ -212,79 +253,125 @@
             }
         }
 
-        async function openComanda(mesaId, status, pedidoId) {
+        async function selecionarMesa(mesaId) {
             GLOBAL_MESA_ID = mesaId;
-            GLOBAL_ORDER_ITEMS = [];
-            document.getElementById('observacao').value = '';
+            
+            const { data: comandas, error } = await supabaseClient
+                .from('pedidos')
+                .select('*')
+                .eq('mesa', mesaId)
+                .in('status', ['Aberto', 'Em Preparo', 'Pronto'])
+                .order('horario', { ascending: false });
 
-            if (status === 'Livre') {
-                const { data: newPedido, error: pedidoError } = await supabaseClient
-                    .from('pedidos')
-                    .insert({ 
-                        mesa: mesaId, 
-                        status: 'Aberto', 
-                        itens: [], 
-                        total: 0,
-                        horario: new Date().toISOString(),
-                        data: new Date().toISOString().split('T')[0] 
-                    })
-                    .select()
-                    .single();
-
-                if (pedidoError) {
-                    alert('Erro ao criar nova comanda!');
-                    console.error('Erro ao criar comanda:', pedidoError);
-                    return;
-                }
-
-                GLOBAL_COMANDA_ID = newPedido.id;
-
-                const { error: mesaError } = await supabaseClient
-                    .from('mesas_status')
-                    .update({ status: 'Ocupada', pedido_id: newPedido.id })
-                    .eq('mesa', mesaId);
-
-                if (mesaError) {
-                    console.error('Erro ao atualizar status da mesa:', mesaError);
-                }
-
-            } else {
-                GLOBAL_COMANDA_ID = pedidoId;
-
-                const { data: currentPedidos, error: fetchError } = await supabaseClient
-                    .from('pedidos')
-                    .select('itens, observacao')
-                    .eq('id', pedidoId);
-
-                if (fetchError) {
-                    alert('Erro ao carregar comanda existente!');
-                    console.error('Erro ao buscar comanda:', fetchError);
-                    return;
-                }
-                
-                const currentPedido = currentPedidos[0]; 
-
-                if (!currentPedido) {
-                    alert("Comanda existente nao foi encontrada. A mesa sera liberada automaticamente.");
-
-                    const { error: mesaError } = await supabaseClient
-                        .from('mesas_status')
-                        .update({ status: 'Livre', pedido_id: null })
-                        .eq('mesa', GLOBAL_MESA_ID);
-                    
-                    if (mesaError) {
-                        console.error('Erro ao tentar liberar mesa com pedido ausente:', mesaError);
-                    }
-                    
-                    showMesasView();
-                    return;
-                }
-
-                GLOBAL_ORDER_ITEMS = currentPedido.itens || [];
-                document.getElementById('observacao').value = currentPedido.observacao || '';
+            if (error) {
+                console.error('Erro ao buscar comandas:', error);
             }
 
-            showPdvView(mesaId);
+            GLOBAL_COMANDAS_DA_MESA = comandas || [];
+            
+            // SEMPRE mostrar a tela de seleção, mesmo sem comandas
+            mostrarSelecaoComanda();
+        }
+
+        function mostrarSelecaoComanda() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('mesas-view').style.display = 'none';
+            const pdvView = document.getElementById('pdv-view');
+            pdvView.style.display = 'flex';
+            
+            pdvView.innerHTML = `
+                <div style="width: 100%; background-color: #2c2c2c; padding: 30px; border-radius: 8px;">
+                    <button onclick="showMesasView()" style="background-color: #555; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">← Voltar para Mesas</button>
+                    <h2 style="color: #ff8c00; margin-bottom: 20px;">Mesa ${GLOBAL_MESA_ID} - Selecione ou Crie uma Comanda</h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+                        ${GLOBAL_COMANDAS_DA_MESA.map((comanda, idx) => {
+                            const totalItens = (comanda.itens || []).reduce((sum, i) => sum + i.quantidade, 0);
+                            return `
+                                <button onclick="abrirComanda('${comanda.id}')" 
+                                        style="padding: 20px; background-color: #383838; border: 2px solid #ff8c00; border-radius: 8px; cursor: pointer; text-align: left; color: white; font-family: Arial;">
+                                    <h3 style="color: #ff8c00; margin: 0 0 10px 0;">Comanda #${idx + 1}</h3>
+                                    <p style="margin: 5px 0;">Total: <strong>R$ ${(comanda.total || 0).toFixed(2)}</strong></p>
+                                    <p style="margin: 5px 0; color: #aaa; font-size: 0.9em;">${totalItens} itens</p>
+                                    <p style="margin: 5px 0; color: #aaa; font-size: 0.9em;">Status: ${comanda.status}</p>
+                                </button>
+                            `;
+                        }).join('')}
+                        
+                        <button onclick="criarNovaComanda(${GLOBAL_MESA_ID})" 
+                                style="padding: 20px; background-color: #4CAF50; border: none; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; color: white; font-size: 1.1em;">
+                            ➕ Nova Comanda
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function criarNovaComanda(mesaId) {
+            const { data: newPedido, error: pedidoError } = await supabaseClient
+                .from('pedidos')
+                .insert({ 
+                    mesa: mesaId, 
+                    status: 'Aberto', 
+                    itens: [], 
+                    total: 0,
+                    horario: new Date().toISOString(),
+                    data: new Date().toISOString().split('T')[0] 
+                })
+                .select()
+                .single();
+
+            if (pedidoError) {
+                alert('Erro ao criar nova comanda!');
+                console.error('Erro ao criar comanda:', pedidoError);
+                return;
+            }
+
+            GLOBAL_COMANDA_ID = newPedido.id;
+            GLOBAL_ORDER_ITEMS = [];
+
+            const { error: mesaError } = await supabaseClient
+                .from('mesas_status')
+                .update({ status: 'Ocupada', pedido_id: newPedido.id })
+                .eq('mesa', mesaId);
+
+            if (mesaError) {
+                console.error('Erro ao atualizar status da mesa:', mesaError);
+            }
+            
+            // Recarregar as comandas da mesa
+            await selecionarMesa(mesaId);
+            
+            // Abrir a nova comanda
+            abrirComanda(newPedido.id);
+        }
+
+        async function abrirComanda(comandaId) {
+            GLOBAL_COMANDA_ID = comandaId;
+
+            const { data: pedido, error: fetchError } = await supabaseClient
+                .from('pedidos')
+                .select('itens, observacao')
+                .eq('id', comandaId)
+                .single();
+
+            if (fetchError || !pedido) {
+                alert('Erro ao carregar comanda existente!');
+                console.error('Erro ao buscar comanda:', fetchError);
+                return;
+            }
+
+            GLOBAL_ORDER_ITEMS = pedido.itens || [];
+
+            showPdvView(GLOBAL_MESA_ID);
+            
+            // Atualizar observação depois que o elemento existir
+            setTimeout(() => {
+                const obsTextarea = document.getElementById('observacao');
+                if (obsTextarea) {
+                    obsTextarea.value = pedido.observacao || '';
+                }
+            }, 100);
         }
 
         async function carregarCardapio() {
