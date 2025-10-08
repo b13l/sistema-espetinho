@@ -5,37 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cozinha e Gerenciamento</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Áudio para alerta sonoro -->
+    <audio id="alertSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" type="audio/wav">
+    </audio>
+    
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; }
         .header { text-align: center; margin-bottom: 30px; }
         .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        
+        /* PEDIDOS DA COZINHA */
         #pedidos-container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .pedido-card { background-color: #383838; padding: 15px; border-radius: 8px; width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
+        .pedido-card { background-color: #383838; padding: 15px; border-radius: 8px; width: 320px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
         .pedido-card h3 { color: #ff8c00; margin-top: 0; border-bottom: 2px solid #555; padding-bottom: 5px; }
         .lista-itens { list-style: none; padding: 0; margin: 10px 0; }
         .lista-itens li { padding: 3px 0; border-bottom: 1px dotted #555; font-size: 0.9em; }
         .pedido-card button { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; }
         .btn-pronto { background-color: #4CAF50; }
         .btn-fechar-conta { background-color: #007bff; margin-top: 5px; }
+        
+        /* MESAS EM GRID */
+        .mesas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .mesa-item { padding: 25px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; text-align: center; transition: all 0.3s; position: relative; }
+        .mesa-item.livre { background-color: #4CAF50; color: white; }
+        .mesa-item.ocupada { background-color: #FF5733; color: white; }
+        .mesa-item.em_preparo { background-color: #FFC300; color: black; }
+        .mesa-item.pronto { background-color: #00bcd4; color: white; }
+        .mesa-item:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        
+        /* CAIXA E GERENCIAMENTO */
         .gerenciamento-col { background-color: #2c2c2c; padding: 20px; border-radius: 8px; }
         #caixa-do-dia { margin-top: 20px; padding: 15px; border: 1px solid #ff8c00; border-radius: 4px; }
         #caixa-do-dia h4 { color: #ff8c00; }
-        #mesas-status-container p { padding: 5px; border-left: 5px solid; margin: 5px 0; font-weight: bold; }
-        #mesas-status-container p:nth-child(odd) { background-color: #333; }
-        .adicional-select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; }
-        .item-cardapio { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #555; }
+        .caixa-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-caixa { flex: 1; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn-baixar-pdf { background-color: #28a745; color: white; }
+        .btn-limpar-caixa { background-color: #dc3545; color: white; }
+        .btn-baixar-pdf:hover { background-color: #218838; }
+        .btn-limpar-caixa:hover { background-color: #c82333; }
+        
+        /* ADICIONAR ITEM */
+        .adicionar-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #555; }
+        .mesa-selecionada-info { background-color: #ff8c00; padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .comanda-selecionada-info { background-color: #4CAF50; padding: 8px; border-radius: 4px; margin-bottom: 10px; text-align: center; font-size: 0.9em; }
+        .item-cardapio { display: flex; justify-content: space-between; align-items: center; padding: 8px; margin: 5px 0; background-color: #383838; border-radius: 4px; }
         .item-info { flex-grow: 1; }
         .item-preco { font-weight: bold; margin-right: 10px; color: #ff8c00; }
-        .add-btn { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .add-btn { background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        /* INDICADORES */
         .status-indicator { position: fixed; top: 10px; right: 10px; padding: 8px 12px; background-color: #4CAF50; color: white; border-radius: 4px; font-size: 0.9em; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 1000; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: white; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .notificacao-novo-pedido { position: fixed; top: 70px; right: 10px; background-color: #4CAF50; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1500; animation: slideIn 0.5s ease-out; font-weight: bold; font-size: 1.1em; display: none; }
-        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .fechar-caixa-btn { width: 100%; padding: 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1.1em; margin-top: 20px; }
-        .fechar-caixa-btn:hover { background-color: #c82333; }
-        .historico-btn { width: 100%; padding: 12px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .historico-btn:hover { background-color: #5a6268; }
+        
+        /* ALERTA SONORO */
+        .alert-indicator { position: fixed; top: 10px; left: 10px; padding: 8px 12px; background-color: #ff8c00; color: white; border-radius: 4px; font-size: 0.9em; display: none; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 1000; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.3; } }
+        
+        /* MODAIS */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); overflow-y: auto; }
         .modal-content { background-color: #2c2c2c; margin: 3% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 700px; border-radius: 8px; max-height: 85vh; overflow-y: auto; }
         .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px; }
@@ -43,12 +73,17 @@
         .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box; }
         .modal-content label { display: block; margin-top: 10px; font-weight: bold; color: #ff8c00; }
         .btn-confirmar { width: 100%; padding: 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 20px; }
-        .btn-confirmar:hover { background-color: #45a049; }
         .troco-display { background-color: #383838; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4CAF50; }
         .troco-display h3 { color: #4CAF50; margin: 0 0 10px 0; }
-        .historico-item { background-color: #383838; padding: 12px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #4CAF50; }
-        .historico-item h4 { color: #ff8c00; margin: 0 0 8px 0; }
-        .filtros-historico { background-color: #383838; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        
+        /* NOVO: MODAL FECHAR CAIXA */
+        #modal-fechar-caixa .modal-content { max-width: 500px; }
+        
+        /* NOVO: SELEÇÃO DE COMANDA */
+        .comanda-option { background: #383838; margin: 5px 0; padding: 10px; border-radius: 4px; cursor: pointer; border: 1px solid #555; }
+        .comanda-option:hover { border-color: #ff8c00; }
+        .comanda-option.selecionada { border-color: #4CAF50; background: #2d4a2d; }
+        
         @media print {
             body > *:not(#comanda-impressao) { display: none !important; }
             #comanda-impressao { display: block !important; width: 80mm; margin: 0 auto; }
@@ -58,31 +93,49 @@
 </head>
 <body onload="initCozinha();">
     <div class="status-indicator" id="status-indicator"><div class="status-dot"></div><span>Conectado</span></div>
-    <div class="notificacao-novo-pedido" id="notificacao-novo-pedido">Novo pedido recebido! Imprimindo...</div>
+    <div class="alert-indicator" id="alert-indicator"><div class="status-dot"></div><span>🔔 Novo Pedido!</span></div>
+    
     <div class="header"><h1 style="color: #4CAF50;">Painel de Gerenciamento - Cozinha & Caixa</h1></div>
+    
     <div class="grid-container">
         <div>
             <h2>Pedidos - Cozinha</h2>
             <div id="pedidos-container"><p style="text-align: center;">Carregando pedidos...</p></div>
-            <hr style="margin: 30px 0; border-color: #555;">
-            <h2>Adicionar na Mesa (Cozinha)</h2>
-            <select id="mesa-adicional-select" class="adicional-select"><option value="">Selecione a Mesa Ocupada...</option></select>
-            <div id="adicional-cardapio-container"></div>
         </div>
+        
         <div class="gerenciamento-col">
-            <h2>Gerenciamento de Mesas</h2>
-            <div id="mesas-status-container"></div>
-            <hr style="margin: 20px 0; border-color: #555;">
-            <h2>Caixa do Dia</h2>
+            <h2>💰 Caixa do Dia</h2>
             <div id="caixa-do-dia">
                 <p>Total Fechado Hoje: <strong id="total-caixa">R$ 0,00</strong></p>
-                <p>Numero de Pedidos Fechados: <strong id="contagem-pedidos">0</strong></p>
+                <p>Número de Pedidos: <strong id="contagem-pedidos">0</strong></p>
                 <div id="totais-por-forma"></div>
             </div>
-            <button class="historico-btn" onclick="abrirHistorico()">Ver Historico Completo</button>
-            <button class="fechar-caixa-btn" onclick="abrirModalFechamento()">Fechar Caixa do Dia</button>
+            <div class="caixa-actions">
+                <button class="btn-caixa btn-baixar-pdf" onclick="baixarCaixaPDF()">📥 Baixar PDF</button>
+                <button class="btn-caixa btn-limpar-caixa" onclick="limparCaixaDoDia()">🗑️ Limpar Caixa</button>
+            </div>
+            <button class="btn-caixa" style="width: 100%; margin-top: 15px; background-color: #007bff; color: white;" onclick="abrirModalFechamentoCaixa()">💰 Fechar Caixa do Dia</button>
         </div>
     </div>
+    
+    <hr style="margin: 40px 0; border-color: #555;">
+    
+    <div class="grid-container">
+        <div>
+            <h2>📋 Status das Mesas</h2>
+            <div class="mesas-grid" id="mesas-grid"></div>
+        </div>
+        
+        <div class="gerenciamento-col adicionar-section">
+            <h2>➕ Adicionar Item na Mesa</h2>
+            <div id="mesa-selecionada-info" style="display: none;" class="mesa-selecionada-info"></div>
+            <div id="comanda-selecionada-info" style="display: none;" class="comanda-selecionada-info"></div>
+            <div id="selecao-comandas" style="display: none; margin-bottom: 15px;"></div>
+            <div id="adicional-cardapio-container"></div>
+        </div>
+    </div>
+    
+    <!-- MODAL FECHAR CONTA -->
     <div id="modal-fechar-conta" class="modal">
         <div class="modal-content">
             <span class="close" onclick="fecharModalConta()">&times;</span>
@@ -93,8 +146,8 @@
             <select id="modal-forma-pagamento">
                 <option value="">Selecione...</option>
                 <option value="Dinheiro">Dinheiro</option>
-                <option value="Cartao Debito">Cartao Debito</option>
-                <option value="Cartao Credito">Cartao Credito</option>
+                <option value="Cartao Debito">Cartão Débito</option>
+                <option value="Cartao Credito">Cartão Crédito</option>
                 <option value="PIX">PIX</option>
             </select>
             <div id="campo-dinheiro" style="display: none;">
@@ -104,77 +157,739 @@
                     <h3>Troco: R$ <span id="valor-troco">0,00</span></h3>
                 </div>
             </div>
-            <button class="btn-confirmar" onclick="confirmarFechamentoConta()">Confirmar e Imprimir Comprovante</button>
+            <button class="btn-confirmar" onclick="confirmarFechamentoConta()">Confirmar e Imprimir</button>
         </div>
     </div>
-    <div id="modal-fechamento" class="modal">
+    
+    <!-- MODAL FECHAR CAIXA -->
+    <div id="modal-fechar-caixa" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="fecharModal()">&times;</span>
+            <span class="close" onclick="fecharModalFecharCaixa()">&times;</span>
             <h2 style="color: #ff8c00;">Fechar Caixa do Dia</h2>
-            <div id="resumo-fechamento"></div>
-            <button class="btn-confirmar" onclick="confirmarFechamento()">Confirmar e Imprimir Comprovante</button>
+            <div id="resumo-caixa"></div>
+            <button class="btn-confirmar" onclick="confirmarFechamentoCaixa()">Confirmar Fechamento</button>
         </div>
     </div>
-    <div id="modal-historico" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModalHistorico()">&times;</span>
-            <h2 style="color: #ff8c00;">Historico de Pedidos</h2>
-            <div class="filtros-historico">
-                <label>Data Inicial:</label><input type="date" id="filtro-data-inicio">
-                <label>Data Final:</label><input type="date" id="filtro-data-fim">
-                <label>Mesa:</label>
-                <select id="filtro-mesa"><option value="">Todas</option></select>
-                <label>Forma de Pagamento:</label>
-                <select id="filtro-forma">
-                    <option value="">Todas</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartao Debito">Cartao Debito</option>
-                    <option value="Cartao Credito">Cartao Credito</option>
-                    <option value="PIX">PIX</option>
-                </select>
-                <button class="btn-confirmar" onclick="aplicarFiltrosHistorico()">Aplicar Filtros</button>
-            </div>
-            <div id="historico-container"></div>
-        </div>
-    </div>
+    
     <div id="comanda-impressao" style="display:none;"></div>
+    
     <script>
         const SUPABASE_URL='https://ufxbltjyswbynwnaybev.supabase.co';
         const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
         const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-        let pedidosAtuais=[],pedidosProcessados={},mesasStatus=[],cardapioItens=[],pedidoAtualModal=null,pollingIntervalPedidos=null,pollingIntervalMesas=null,pollingIntervalCaixa=null;
-        const POLLING_INTERVAL_MS=2000;
-        function initCozinha(){carregarPedidosProcessados();startAllPolling();const hoje=new Date().toISOString().split('T')[0];document.getElementById('filtro-data-inicio').value=hoje;document.getElementById('filtro-data-fim').value=hoje;}
-        function carregarPedidosProcessados(){const stored=localStorage.getItem('pedidos_processados_cozinha');if(stored){try{pedidosProcessados=JSON.parse(stored);}catch(e){pedidosProcessados={};}}}
-        function salvarPedidosProcessados(){localStorage.setItem('pedidos_processados_cozinha',JSON.stringify(pedidosProcessados));}
-        function startAllPolling(){fetchPedidos();pollingIntervalPedidos=setInterval(()=>{fetchPedidos();},POLLING_INTERVAL_MS);fetchMesas();pollingIntervalMesas=setInterval(()=>{fetchMesas();},POLLING_INTERVAL_MS);calcularCaixaDoDia();pollingIntervalCaixa=setInterval(()=>{calcularCaixaDoDia();},5000);updateStatusIndicator(true,'Conectado');}
-        function stopAllPolling(){if(pollingIntervalPedidos)clearInterval(pollingIntervalPedidos);if(pollingIntervalMesas)clearInterval(pollingIntervalMesas);if(pollingIntervalCaixa)clearInterval(pollingIntervalCaixa);}
-        function updateStatusIndicator(success,message='Atualizando...'){const indicator=document.getElementById('status-indicator');const dot=indicator.querySelector('.status-dot');const text=indicator.querySelector('span');if(success){indicator.style.backgroundColor='#4CAF50';text.textContent=message;dot.style.display='block';}else{indicator.style.backgroundColor='#FF5733';text.textContent='Erro de conexao';dot.style.display='none';}}
-        function mostrarNotificacao(){const notif=document.getElementById('notificacao-novo-pedido');notif.style.display='block';setTimeout(()=>{notif.style.display='none';},4000);}
-        async function fetchPedidos(){try{const{data,error}=await supabaseClient.from('pedidos').select('*').neq('status','Fechado');if(error){console.error('Erro ao buscar pedidos:',error);updateStatusIndicator(false);return;}const pedidosEmPreparo=data.filter(p=>p.status==='Em Preparo');pedidosEmPreparo.forEach(pedido=>{if(!pedidosProcessados[pedido.id]){console.log('Novo pedido detectado para impressao:',pedido.id);imprimirComandaAutomatica(pedido);pedidosProcessados[pedido.id]=true;salvarPedidosProcessados();mostrarNotificacao();}});const pedidosJSON=JSON.stringify(data);const pedidosAtuaisJSON=JSON.stringify(pedidosAtuais);if(pedidosJSON!==pedidosAtuaisJSON){pedidosAtuais=data;renderPedidos();}updateStatusIndicator(true,'Conectado');}catch(err){console.error('Erro no polling de pedidos:',err);updateStatusIndicator(false);}}
-        function imprimirComandaAutomatica(pedido){const dataHora=new Date().toLocaleString('pt-BR');let comanda=`<div style="font-family:monospace;font-size:11pt;line-height:1.5;padding:10px;"><h2 style="text-align:center;margin:5px 0;font-size:16pt;">ESPETINHO GESSELO</h2><h3 style="text-align:center;margin:5px 0 15px 0;font-size:14pt;">COMANDA - MESA ${pedido.mesa}</h3><p style="border-top:2px solid black;border-bottom:2px solid black;padding:8px 0;margin:10px 0;text-align:center;font-size:10pt;">${dataHora}</p><p style="margin:10px 0;"><strong>Pedido:</strong> #${pedido.id.substring(0,8)}</p><h4 style="margin:15px 0 10px 0;font-size:12pt;border-bottom:1px solid black;padding-bottom:5px;">ITENS:</h4><ul style="list-style:none;padding:0;margin:0;">${(pedido.itens||[]).map(item=>`<li style="margin:8px 0;padding:5px 0;border-bottom:1px dashed #ccc;font-size:11pt;"><strong>${item.quantidade}x</strong> ${item.nome}</li>`).join('')}</ul>${pedido.observacao?`<div style="border:2px solid black;padding:10px;margin:15px 0;background-color:#f0f0f0;"><p style="margin:0;font-weight:bold;font-size:11pt;">OBSERVACAO:</p><p style="margin:5px 0 0 0;font-size:11pt;">${pedido.observacao}</p></div>`:''}<div style="border-top:2px solid black;padding-top:10px;margin-top:15px;"><p style="text-align:right;font-size:13pt;font-weight:bold;margin:0;">TOTAL: R$ ${pedido.total.toFixed(2).replace('.',',')}</p></div></div>`;document.getElementById('comanda-impressao').innerHTML=comanda;setTimeout(()=>window.print(),500);}
-        function renderPedidos(){const container=document.getElementById('pedidos-container');const pedidosAbertos=pedidosAtuais.filter(p=>p.status==='Aberto'||p.status==='Em Preparo'||p.status==='Pronto');container.innerHTML='';if(pedidosAbertos.length===0){container.innerHTML='<p style="color:gray;text-align:center;margin-top:20px;">Nenhum pedido em preparo.</p>';return;}pedidosAbertos.forEach(pedido=>{const div=document.createElement('div');div.className='pedido-card';const listaItens=(pedido.itens||[]).map(item=>`<li>${item.quantidade}x ${item.nome}</li>`).join('');const statusColor=pedido.status==='Pronto'?'lime':(pedido.status==='Em Preparo'?'yellow':'red');div.innerHTML=`<h3>Mesa ${pedido.mesa} - Pedido #${pedido.id.substring(0,4)}</h3><p>Status: <strong style="color:${statusColor};">${pedido.status}</strong></p><p>Total: <strong>R$ ${(pedido.total||0).toFixed(2).replace('.',',')}</strong></p><p>Observacao: ${pedido.observacao||'Nenhuma'}</p><ul class="lista-itens">${listaItens}</ul><button class="btn-pronto" onclick="marcarComoPronto('${pedido.id}','${pedido.mesa}')" ${pedido.status==='Pronto'?'disabled':''}>${pedido.status==='Pronto'?'PRONTO':'Marcar Como Pronto'}</button><button class="btn-fechar-conta" onclick="abrirModalFecharConta('${pedido.id}')">Fechar Conta</button>`;container.appendChild(div);});}
-        async function marcarComoPronto(pedidoId,mesaId){const{error:pedidoError}=await supabaseClient.from('pedidos').update({status:'Pronto'}).eq('id',pedidoId);const{error:mesaError}=await supabaseClient.from('mesas_status').update({status:'Pronto'}).eq('mesa',mesaId);if(pedidoError||mesaError){console.error('Erro ao marcar como pronto:',pedidoError||mesaError);alert('Erro ao atualizar status!');}else{await fetchPedidos();await fetchMesas();}}
-        function abrirModalFecharConta(pedidoId){const pedido=pedidosAtuais.find(p=>p.id===pedidoId);if(!pedido)return alert('Pedido nao encontrado!');pedidoAtualModal=pedido;document.getElementById('modal-mesa-num').textContent=pedido.mesa;document.getElementById('modal-total').textContent=(pedido.total||0).toFixed(2).replace('.',',');const listaItens=document.getElementById('modal-itens-lista');listaItens.innerHTML='<h4>Itens do Pedido:</h4><ul class="lista-itens">'+(pedido.itens||[]).map(item=>`<li>${item.quantidade}x ${item.nome} - R$ ${(item.quantidade*item.preco).toFixed(2).replace('.',',')}</li>`).join('')+'</ul>';document.getElementById('modal-forma-pagamento').value=pedido.forma_pagamento||'';document.getElementById('valor-recebido').value='';document.getElementById('campo-dinheiro').style.display='none';document.getElementById('troco-info').style.display='none';document.getElementById('modal-fechar-conta').style.display='block';}
-        function fecharModalConta(){document.getElementById('modal-fechar-conta').style.display='none';pedidoAtualModal=null;}
-        document.getElementById('modal-forma-pagamento').onchange=function(){const forma=this.value;const campoDinheiro=document.getElementById('campo-dinheiro');if(forma==='Dinheiro'){campoDinheiro.style.display='block';}else{campoDinheiro.style.display='none';document.getElementById('troco-info').style.display='none';}};
-        function calcularTroco(){const total=pedidoAtualModal?pedidoAtualModal.total:0;const recebido=parseFloat(document.getElementById('valor-recebido').value)||0;const troco=recebido-total;const trocoInfo=document.getElementById('troco-info');const valorTroco=document.getElementById('valor-troco');if(recebido>=total&&recebido>0){trocoInfo.style.display='block';valorTroco.textContent=troco.toFixed(2).replace('.',',');if(troco<0){trocoInfo.style.borderColor='#dc3545';valorTroco.parentElement.style.color='#dc3545';}else{trocoInfo.style.borderColor='#4CAF50';valorTroco.parentElement.style.color='#4CAF50';}}else{trocoInfo.style.display='none';}}
-        async function confirmarFechamentoConta(){if(!pedidoAtualModal)return;const formaPagamento=document.getElementById('modal-forma-pagamento').value;if(!formaPagamento)return alert('Selecione a forma de pagamento!');let valorRecebido=null,troco=0;if(formaPagamento==='Dinheiro'){valorRecebido=parseFloat(document.getElementById('valor-recebido').value);if(!valorRecebido||valorRecebido<pedidoAtualModal.total)return alert('Valor recebido deve ser maior ou igual ao total!');troco=valorRecebido-pedidoAtualModal.total;}const{error:updateError}=await supabaseClient.from('pedidos').update({status:'Fechado',forma_pagamento:formaPagamento,valor_recebido:valorRecebido,troco:troco,horario_fecha:new Date().toISOString()}).eq('id',pedidoAtualModal.id);if(updateError){console.error('Erro ao fechar conta:',updateError);return alert('Erro ao fechar a conta!');}const{error:mesaError}=await supabaseClient.from('mesas_status').update({status:'Livre',pedido_id:null}).eq('mesa',pedidoAtualModal.mesa);if(mesaError)console.error('Erro ao liberar mesa:',mesaError);imprimirComprovanteConta(pedidoAtualModal,formaPagamento,valorRecebido,troco);fecharModalConta();await fetchPedidos();await fetchMesas();await calcularCaixaDoDia();alert('Conta fechada com sucesso!');}
-        function imprimirComprovanteConta(pedido,formaPagamento,valorRecebido,troco){const dataHora=new Date().toLocaleString('pt-BR');let comprovante=`<div style="font-family:monospace;font-size:10pt;line-height:1.4;padding:10px;"><h2 style="text-align:center;margin:5px 0;">ESPETINHO GESSELO</h2><h3 style="text-align:center;margin:0 0 10px 0;">COMPROVANTE DE PAGAMENTO</h3><p style="border-top:2px solid black;border-bottom:2px solid black;padding:8px 0;margin:10px 0;text-align:center;">${dataHora}</p><p><strong>Mesa:</strong> ${pedido.mesa}</p><p><strong>Pedido:</strong> #${pedido.id.substring(0,8)}</p><h4 style="margin:15px 0 10px 0;">ITENS:</h4><ul style="list-style:none;padding:0;">${(pedido.itens||[]).map(item=>`<li style="margin:5px 0;"><span>${item.quantidade}x ${item.nome}</span><span style="float:right;">R$ ${(item.quantidade*item.preco).toFixed(2).replace('.',',')}</span></li>`).join('')}</ul>${pedido.observacao?`<p style="margin-top:10px;"><strong>Obs:</strong> ${pedido.observacao}</p>`:''}<div style="border-top:1px dashed black;padding-top:10px;margin-top:15px;"><p style="font-size:12pt;"><strong>TOTAL: R$ ${pedido.total.toFixed(2).replace('.',',')}</strong></p><p><strong>Forma de Pagamento:</strong> ${formaPagamento}</p>${formaPagamento==='Dinheiro'&&valorRecebido?`<p><strong>Valor Recebido:</strong> R$ ${valorRecebido.toFixed(2).replace('.',',')}</p><p><strong>Troco:</strong> R$ ${troco.toFixed(2).replace('.',',')}</p>`:''}</div><p style="text-align:center;margin-top:20px;font-size:9pt;">Obrigado pela preferencia!<br>Volte sempre!</p></div>`;document.getElementById('comanda-impressao').innerHTML=comprovante;setTimeout(()=>window.print(),300);}
-        async function fetchMesas(){try{const{data,error}=await supabaseClient.from('mesas_status').select('*');if(error){console.error('Erro ao buscar mesas:',error);return;}const mesasJSON=JSON.stringify(data);const mesasAtuaisJSON=JSON.stringify(mesasStatus);if(mesasJSON!==mesasAtuaisJSON){mesasStatus=data||[];renderMesasStatus();}}catch(err){console.error('Erro no polling de mesas:',err);}}
-        function renderMesasStatus(){const container=document.getElementById('mesas-status-container');const selectAdicional=document.getElementById('mesa-adicional-select');container.innerHTML='<h4>Status das Mesas:</h4>';selectAdicional.innerHTML='<option value="">Selecione a Mesa Ocupada...</option>';const mesasOcupadas=mesasStatus.filter(m=>m.status!=='Livre');mesasOcupadas.forEach(mesa=>{const p=document.createElement('p');p.textContent=`Mesa ${mesa.mesa}: ${mesa.status}`;p.style.color=mesa.status==='Pronto'?'lime':'red';p.style.borderColor=mesa.status==='Pronto'?'lime':'red';container.appendChild(p);if(mesa.pedido_id){const option=document.createElement('option');option.value=JSON.stringify({mesaId:mesa.mesa,pedidoId:mesa.pedido_id});option.textContent=`Mesa ${mesa.mesa} (${mesa.status})`;selectAdicional.appendChild(option);}});}
-        async function calcularCaixaDoDia(){try{const hoje=new Date().toISOString().split('T')[0];const{data:fechados,error}=await supabaseClient.from('pedidos').select('total, horario_fecha, forma_pagamento').eq('status','Fechado').not('horario_fecha','is',null);if(error){console.error('Erro ao buscar caixa:',error);return;}let totalCaixa=0,contagem=0,totaisPorForma={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0,'Nao Especificado':0};fechados.forEach(pedido=>{if(pedido.horario_fecha&&pedido.horario_fecha.startsWith(hoje)){totalCaixa+=pedido.total;contagem++;const forma=pedido.forma_pagamento||'Nao Especificado';if(totaisPorForma[forma]!==undefined){totaisPorForma[forma]+=pedido.total;}else{totaisPorForma['Nao Especificado']+=pedido.total;}}});document.getElementById('total-caixa').textContent=`R$ ${totalCaixa.toFixed(2).replace('.',',')}`;document.getElementById('contagem-pedidos').textContent=contagem;const totaisDiv=document.getElementById('totais-por-forma');totaisDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma de Pagamento:</h5>';for(const[forma,valor]of Object.entries(totaisPorForma)){if(valor>0){totaisDiv.innerHTML+=`<p style="margin:5px 0;">${forma}: R$ ${valor.toFixed(2).replace('.',',')}</p>`;}}}catch(err){console.error('Erro no polling de caixa:',err);}}
-        document.getElementById('mesa-adicional-select').onchange=()=>{const selectValue=document.getElementById('mesa-adicional-select').value;if(selectValue){renderAdicionalCardapio();}else{document.getElementById('adicional-cardapio-container').innerHTML='';}};
-        async function renderAdicionalCardapio(){if(cardapioItens.length===0){const{data,error}=await supabaseClient.from('cardapio').select('*').order('categoria',{ascending:true}).order('nome_item',{ascending:true});if(error){console.error(error);return;}cardapioItens=data;}const container=document.getElementById('adicional-cardapio-container');container.innerHTML='<h4>Escolha o Item:</h4>';let categorias={};cardapioItens.forEach(item=>{if(item.categoria&&item.categoria.trim()!==''){if(!categorias[item.categoria])categorias[item.categoria]=[];categorias[item.categoria].push(item);}});for(const[categoria,itensCategoria]of Object.entries(categorias)){const h5=document.createElement('h5');h5.textContent=categoria;container.appendChild(h5);itensCategoria.forEach(i=>{const itemDiv=document.createElement('div');itemDiv.className='item-cardapio';const precoFormatado=parseFloat(i.preco).toFixed(2).replace('.',',');itemDiv.innerHTML=`<span class="item-info">${i.nome_item}</span><span class="item-preco">R$ ${precoFormatado}</span><button class="add-btn" onclick="adicionarPelaCozinha(${i.id},'${i.nome_item.replace(/'/g,"\\'")}',${i.preco})">ADD</button>`;container.appendChild(itemDiv);});}}
-        async function adicionarPelaCozinha(itemId,nome,preco){const selectValue=document.getElementById('mesa-adicional-select').value;if(!selectValue)return alert('Selecione uma mesa primeiro!');const{mesaId,pedidoId}=JSON.parse(selectValue);const{data:pedido,error:fetchError}=await supabaseClient.from('pedidos').select('itens, total').eq('id',pedidoId).single();if(fetchError){console.error(fetchError);return alert('Erro ao buscar pedido!');}let itensAtuais=pedido.itens||[];let novoTotal=pedido.total||0;const itemIndex=itensAtuais.findIndex(item=>item.id===itemId);if(itemIndex>-1){itensAtuais[itemIndex].quantidade+=1;}else{itensAtuais.push({id:itemId,nome,preco,quantidade:1});}novoTotal+=preco;const{error:updateError}=await supabaseClient.from('pedidos').update({itens:itensAtuais,total:novoTotal,status:'Em Preparo'}).eq('id',pedidoId);if(updateError){console.error(updateError);return alert('Erro ao adicionar item a comanda!');}alert(`Item '${nome}' adicionado a Mesa ${mesaId}!`);await fetchPedidos();}
-        async function abrirModalFechamento(){const hoje=new Date().toISOString().split('T')[0];const{data:fechados,error}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);if(error){console.error('Erro ao buscar pedidos:',error);return alert('Erro ao carregar dados do caixa!');}let totalCaixa=0,contagem=0,totaisPorForma={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0,'Nao Especificado':0};fechados.forEach(pedido=>{if(pedido.horario_fecha&&pedido.horario_fecha.startsWith(hoje)){totalCaixa+=pedido.total;contagem++;const forma=pedido.forma_pagamento||'Nao Especificado';if(totaisPorForma[forma]!==undefined){totaisPorForma[forma]+=pedido.total;}else{totaisPorForma['Nao Especificado']+=pedido.total;}}});const resumo=document.getElementById('resumo-fechamento');resumo.innerHTML=`<div style="background-color:#383838;padding:15px;border-radius:8px;margin:20px 0;"><h3 style="color:#ff8c00;">Resumo do Dia</h3><p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p><p><strong>Total de Pedidos:</strong> ${contagem}</p><p><strong>Total Geral:</strong> R$ ${totalCaixa.toFixed(2).replace('.',',')}</p><hr style="border-color:#555;margin:15px 0;"><h4 style="color:#4CAF50;">Por Forma de Pagamento:</h4>${Object.entries(totaisPorForma).map(([forma,valor])=>valor>0?`<p>${forma}: R$ ${valor.toFixed(2).replace('.',',')}</p>`:'').join('')}</div>`;document.getElementById('modal-fechamento').style.display='block';}
-        function fecharModal(){document.getElementById('modal-fechamento').style.display='none';}
-        async function confirmarFechamento(){const hoje=new Date().toISOString().split('T')[0];const{data:fechados,error}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);if(error){console.error('Erro ao buscar pedidos:',error);return alert('Erro ao gerar comprovante!');}let totalCaixa=0,contagem=0,totaisPorForma={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0,'Nao Especificado':0},pedidosDetalhados=[];fechados.forEach(pedido=>{if(pedido.horario_fecha&&pedido.horario_fecha.startsWith(hoje)){totalCaixa+=pedido.total;contagem++;pedidosDetalhados.push(pedido);const forma=pedido.forma_pagamento||'Nao Especificado';if(totaisPorForma[forma]!==undefined){totaisPorForma[forma]+=pedido.total;}else{totaisPorForma['Nao Especificado']+=pedido.total;}}});const dataHora=new Date().toLocaleString('pt-BR');let comprovante=`<div style="font-family:monospace;font-size:10pt;line-height:1.4;padding:10px;"><h2 style="text-align:center;margin:5px 0;">ESPETINHO GESSELO</h2><h3 style="text-align:center;margin:0 0 10px 0;">FECHAMENTO DE CAIXA</h3><p style="border-top:2px solid black;border-bottom:2px solid black;padding:8px 0;margin:10px 0;text-align:center;">${dataHora}</p><h4 style="margin:15px 0 10px 0;">RESUMO DO DIA:</h4><p>Total de Pedidos Fechados: <strong>${contagem}</strong></p><p style="font-size:12pt;margin:10px 0;"><strong>TOTAL GERAL: R$ ${totalCaixa.toFixed(2).replace('.',',')}</strong></p><div style="border-top:1px dashed black;padding-top:10px;margin-top:15px;"><h4>POR FORMA DE PAGAMENTO:</h4>${Object.entries(totaisPorForma).map(([forma,valor])=>valor>0?`<p style="margin:5px 0;">${forma}: R$ ${valor.toFixed(2).replace('.',',')}</p>`:'').join('')}</div><div style="border-top:1px dashed black;padding-top:10px;margin-top:15px;"><h4>DETALHAMENTO DOS PEDIDOS:</h4>${pedidosDetalhados.map(pedido=>`<div style="margin:10px 0;padding:8px;background-color:#f5f5f5;color:black;"><p style="margin:3px 0;"><strong>Mesa ${pedido.mesa}</strong> - #${pedido.id.substring(0,8)}</p><p style="margin:3px 0;">Horario: ${new Date(pedido.horario_fecha).toLocaleString('pt-BR')}</p><p style="margin:3px 0;">Forma: ${pedido.forma_pagamento||'Nao especificado'}</p><p style="margin:3px 0;"><strong>Total: R$ ${pedido.total.toFixed(2).replace('.',',')}</strong></p></div>`).join('')}</div><div style="border-top:2px solid black;margin-top:20px;padding-top:10px;text-align:center;"><p style="margin:5px 0;">___________________________</p><p style="margin:5px 0;">Assinatura do Responsavel</p></div></div>`;document.getElementById('comanda-impressao').innerHTML=comprovante;fecharModal();setTimeout(()=>window.print(),500);alert('Comprovante gerado! Caixa fechado com sucesso.');}
-        async function abrirHistorico(){const selectMesa=document.getElementById('filtro-mesa');selectMesa.innerHTML='<option value="">Todas</option>';for(let i=1;i<=20;i++){selectMesa.innerHTML+=`<option value="${i}">Mesa ${i}</option>`;}await aplicarFiltrosHistorico();document.getElementById('modal-historico').style.display='block';}
-        function fecharModalHistorico(){document.getElementById('modal-historico').style.display='none';}
-        async function aplicarFiltrosHistorico(){const dataInicio=document.getElementById('filtro-data-inicio').value;const dataFim=document.getElementById('filtro-data-fim').value;const mesa=document.getElementById('filtro-mesa').value;const forma=document.getElementById('filtro-forma').value;let query=supabaseClient.from('pedidos').select('*').eq('status','Fechado').order('horario_fecha',{ascending:false});if(dataInicio){query=query.gte('horario_fecha',`${dataInicio}T00:00:00`);}if(dataFim){query=query.lte('horario_fecha',`${dataFim}T23:59:59`);}if(mesa){query=query.eq('mesa',parseInt(mesa));}if(forma){query=query.eq('forma_pagamento',forma);}const{data:historico,error}=await query;if(error){console.error('Erro ao buscar historico:',error);return alert('Erro ao carregar historico!');}const container=document.getElementById('historico-container');if(historico.length===0){container.innerHTML='<p style="text-align:center;color:gray;margin-top:20px;">Nenhum pedido encontrado com os filtros selecionados.</p>';return;}let totalGeral=0;historico.forEach(p=>totalGeral+=p.total);container.innerHTML=`<div style="background-color:#383838;padding:15px;border-radius:8px;margin-bottom:20px;"><h3 style="color:#4CAF50;">Total Encontrado: R$ ${totalGeral.toFixed(2).replace('.',',')}</h3><p>Quantidade de Pedidos: ${historico.length}</p></div>`;historico.forEach(pedido=>{const div=document.createElement('div');div.className='historico-item';const itensLista=(pedido.itens||[]).map(item=>`${item.quantidade}x ${item.nome}`).join(', ');div.innerHTML=`<h4>Mesa ${pedido.mesa} - #${pedido.id.substring(0,8)}</h4><p><strong>Data:</strong> ${new Date(pedido.horario_fecha).toLocaleString('pt-BR')}</p><p><strong>Forma:</strong> ${pedido.forma_pagamento||'Nao especificado'}</p><p><strong>Total:</strong> R$ ${pedido.total.toFixed(2).replace('.',',')}</p>${pedido.valor_recebido?`<p><strong>Recebido:</strong> R$ ${pedido.valor_recebido.toFixed(2).replace('.',',')} | <strong>Troco:</strong> R$ ${pedido.troco.toFixed(2).replace('.',',')}</p>`:''}<p><strong>Itens:</strong> ${itensLista}</p>${pedido.observacao?`<p><strong>Obs:</strong> ${pedido.observacao}</p>`:''}`;container.appendChild(div);});}
-        window.addEventListener('beforeunload',()=>{stopAllPolling();});
-        window.onclick=function(event){const modalFechamento=document.getElementById('modal-fechamento');const modalConta=document.getElementById('modal-fechar-conta');const modalHistorico=document.getElementById('modal-historico');if(event.target==modalFechamento)fecharModal();if(event.target==modalConta)fecharModalConta();if(event.target==modalHistorico)fecharModalHistorico();}
+        
+        let pedidosAtuais=[],mesasStatus=[],cardapioItens=[],pedidoAtualModal=null,mesaSelecionadaAdicionar=null;
+        let pollingIntervalPedidos=null,pollingIntervalMesas=null,pollingIntervalCaixa=null;
+        
+        // 🆕 VARIÁVEIS OTIMIZADAS PARA IMPRESSÃO AUTOMÁTICA
+        let ultimaImpressaoTimestamp = null;
+        let impressaoInterval = null;
+        let impressoesProcessadas = new Set();
+        let isPrinting = false; // 🆕 PARA EVITAR CONCORRÊNCIA
+        
+        // 🆕 VARIÁVEIS PARA ADICIONAR ITENS POR COMANDA
+        let comandasDaMesaSelecionada = [];
+        let comandaSelecionadaParaAdicionar = null;
+        
+        function initCozinha(){
+            startAllPolling();
+            iniciarImpressaoAutomatica();
+            
+            // 🆕 CARREGAR TIMESTAMP ATUAL PARA SÓ PEGAR IMPRESSÕES FUTURAS
+            ultimaImpressaoTimestamp = new Date().toISOString();
+            console.log('Cozinha iniciada - Só processará impressões após:', ultimaImpressaoTimestamp);
+        }
+        
+        function startAllPolling(){
+            fetchPedidos();
+            pollingIntervalPedidos=setInterval(fetchPedidos,3000);
+            fetchMesas();
+            pollingIntervalMesas=setInterval(fetchMesas,3000);
+            calcularCaixaDoDia();
+            pollingIntervalCaixa=setInterval(calcularCaixaDoDia,5000);
+            updateStatusIndicator(true);
+        }
+        
+        function updateStatusIndicator(success){
+            const indicator=document.getElementById('status-indicator');
+            if(success){
+                indicator.style.backgroundColor='#4CAF50';
+            }else{
+                indicator.style.backgroundColor='#FF5733';
+            }
+        }
+        
+        // 🆕 FUNÇÃO PARA TOCAR ALERTA SONORO
+        function tocarAlertaSonoro() {
+            try {
+                const audio = document.getElementById('alertSound');
+                audio.volume = 0.7;
+                audio.play().catch(e => console.log('Erro ao tocar áudio:', e));
+                
+                // Mostrar alerta visual
+                const alertIndicator = document.getElementById('alert-indicator');
+                alertIndicator.style.display = 'flex';
+                setTimeout(() => {
+                    alertIndicator.style.display = 'none';
+                }, 3000);
+            } catch (error) {
+                console.log('Erro no alerta sonoro:', error);
+            }
+        }
+        
+        async function fetchPedidos(){
+            try{
+                const{data,error}=await supabaseClient.from('pedidos').select('*').neq('status','Fechado').order('horario', { ascending: true });
+                if(error)throw error;
+                
+                const tinhaPedidos = pedidosAtuais.length > 0;
+                const novosPedidos = data.filter(newPedido => 
+                    !pedidosAtuais.some(oldPedido => oldPedido.id === newPedido.id)
+                );
+                
+                pedidosAtuais=data;
+                renderPedidos();
+                updateStatusIndicator(true);
+                
+                if (tinhaPedidos && novosPedidos.length > 0) {
+                    tocarAlertaSonoro();
+                }
+            }catch(err){
+                console.error('Erro:',err);
+                updateStatusIndicator(false);
+            }
+        }
+        
+        function renderPedidos(){
+            const container=document.getElementById('pedidos-container');
+            const pedidosAbertos=pedidosAtuais.filter(p=>p.status==='Aberto'||p.status==='Em Preparo'||p.status==='Pronto');
+            container.innerHTML='';
+            if(pedidosAbertos.length===0){
+                container.innerHTML='<p style="color:gray;text-align:center;">Nenhum pedido em preparo.</p>';
+                return;
+            }
+            pedidosAbertos.forEach(pedido=>{
+                const div=document.createElement('div');
+                div.className='pedido-card';
+                const listaItens=(pedido.itens||[]).map(item=>`<li>${item.quantidade}x ${item.nome}</li>`).join('');
+                const statusColor=pedido.status==='Pronto'?'lime':(pedido.status==='Em Preparo'?'yellow':'red');
+                
+                const horario = pedido.horario ? new Date(pedido.horario).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '--:--';
+                
+                const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+                
+                div.innerHTML=`
+                    <h3>Mesa ${pedido.mesa} - ${nomeComanda} - #${pedido.id.substring(0,4)}</h3>
+                    <p><strong>Horário:</strong> ${horario}</p>
+                    <p><strong>Status:</strong> <strong style="color:${statusColor};">${pedido.status}</strong></p>
+                    <p><strong>Total:</strong> R$ ${(pedido.total||0).toFixed(2).replace('.',',')}</p>
+                    <p><strong>Obs:</strong> ${pedido.observacao||'Nenhuma'}</p>
+                    <ul class="lista-itens">${listaItens}</ul>
+                    <button class="btn-pronto" onclick="marcarComoPronto('${pedido.id}','${pedido.mesa}')" ${pedido.status==='Pronto'?'disabled':''}>${pedido.status==='Pronto'?'✓ PRONTO':'Marcar Pronto'}</button>
+                    <button class="btn-fechar-conta" onclick="abrirModalFecharConta('${pedido.id}')">Fechar Conta</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        async function marcarComoPronto(pedidoId,mesaId){
+            await supabaseClient.from('pedidos').update({status:'Pronto'}).eq('id',pedidoId);
+            await supabaseClient.from('mesas_status').update({status:'Pronto'}).eq('mesa',mesaId);
+            fetchPedidos();
+            fetchMesas();
+        }
+        
+        async function fetchMesas(){
+            try{
+                const{data,error}=await supabaseClient.from('mesas_status').select('*').order('mesa',{ascending:true});
+                if(error)throw error;
+                mesasStatus=data||[];
+                renderMesas();
+            }catch(err){
+                console.error('Erro:',err);
+            }
+        }
+        
+        function renderMesas(){
+            const container=document.getElementById('mesas-grid');
+            container.innerHTML='';
+            
+            const mesasOrdenadas=mesasStatus.sort((a,b)=>parseInt(a.mesa)-parseInt(b.mesa));
+            
+            mesasOrdenadas.forEach(mesa=>{
+                const button=document.createElement('button');
+                const statusClass=mesa.status.toLowerCase().replace(' ','_');
+                button.className=`mesa-item ${statusClass}`;
+                button.textContent=`Mesa ${mesa.mesa}\n(${mesa.status})`;
+                button.onclick=()=>selecionarMesaParaAdicionar(mesa);
+                container.appendChild(button);
+            });
+        }
+        
+        async function selecionarMesaParaAdicionar(mesa){
+            if(mesa.status==='Livre'){
+                alert('Esta mesa está livre. Não há comanda para adicionar itens.');
+                return;
+            }
+            
+            mesaSelecionadaAdicionar=mesa;
+            document.getElementById('mesa-selecionada-info').style.display='block';
+            document.getElementById('mesa-selecionada-info').textContent=`Mesa ${mesa.mesa} Selecionada (${mesa.status})`;
+            
+            await carregarComandasDaMesa(mesa.mesa);
+            carregarCardapioAdicionar();
+        }
+        
+        async function carregarComandasDaMesa(mesaId) {
+            const { data: comandas, error } = await supabaseClient
+                .from('pedidos')
+                .select('*')
+                .eq('mesa', mesaId)
+                .neq('status', 'Fechado')
+                .order('horario', { ascending: true });
+
+            if (error) {
+                console.error('Erro ao carregar comandas:', error);
+                return;
+            }
+
+            comandasDaMesaSelecionada = comandas || [];
+            renderSelecaoComandas();
+        }
+        
+        function renderSelecaoComandas() {
+            const container = document.getElementById('selecao-comandas');
+            const infoContainer = document.getElementById('comanda-selecionada-info');
+            
+            if (comandasDaMesaSelecionada.length === 0) {
+                container.innerHTML = '<p style="color: #ccc; text-align: center;">Nenhuma comanda ativa</p>';
+                infoContainer.style.display = 'none';
+                comandaSelecionadaParaAdicionar = null;
+                return;
+            }
+            
+            container.style.display = 'block';
+            container.innerHTML = '<h4>Selecione a Comanda:</h4>';
+            
+            comandasDaMesaSelecionada.forEach(comanda => {
+                const div = document.createElement('div');
+                div.className = 'comanda-option';
+                if (comandaSelecionadaParaAdicionar && comandaSelecionadaParaAdicionar.id === comanda.id) {
+                    div.classList.add('selecionada');
+                }
+                
+                const nome = comanda.nome_comanda || 'Comanda Principal';
+                const total = comanda.total || 0;
+                const status = comanda.status || 'Aberto';
+                
+                div.innerHTML = `
+                    <strong>${nome}</strong>
+                    <div style="font-size: 0.8em; color: #ccc;">
+                        Status: ${status} | Total: R$ ${total.toFixed(2)} | Itens: ${(comanda.itens || []).length}
+                    </div>
+                `;
+                
+                div.onclick = () => selecionarComandaParaAdicionar(comanda);
+                container.appendChild(div);
+            });
+            
+            if (!comandaSelecionadaParaAdicionar && comandasDaMesaSelecionada.length > 0) {
+                selecionarComandaParaAdicionar(comandasDaMesaSelecionada[0]);
+            }
+        }
+        
+        function selecionarComandaParaAdicionar(comanda) {
+            comandaSelecionadaParaAdicionar = comanda;
+            const nome = comanda.nome_comanda || 'Comanda Principal';
+            
+            document.getElementById('comanda-selecionada-info').style.display = 'block';
+            document.getElementById('comanda-selecionada-info').textContent = `Comanda Selecionada: ${nome}`;
+            
+            const options = document.querySelectorAll('.comanda-option');
+            options.forEach(opt => opt.classList.remove('selecionada'));
+            event.currentTarget.classList.add('selecionada');
+        }
+        
+        async function carregarCardapioAdicionar(){
+            if(cardapioItens.length===0){
+                const{data}=await supabaseClient.from('cardapio').select('*').order('categoria').order('nome_item');
+                cardapioItens=data||[];
+            }
+            const container=document.getElementById('adicional-cardapio-container');
+            container.innerHTML='';
+            
+            if (!mesaSelecionadaAdicionar) {
+                container.innerHTML = '<p style="color: #ccc; text-align: center;">Selecione uma mesa primeiro</p>';
+                return;
+            }
+            
+            let categorias={};
+            cardapioItens.forEach(item=>{
+                if(item.categoria){
+                    if(!categorias[item.categoria])categorias[item.categoria]=[];
+                    categorias[item.categoria].push(item);
+                }
+            });
+            for(const[categoria,itens]of Object.entries(categorias)){
+                const h4=document.createElement('h4');
+                h4.textContent=categoria;
+                h4.style.color='#ff8c00';
+                h4.style.marginTop='15px';
+                container.appendChild(h4);
+                itens.forEach(i=>{
+                    const div=document.createElement('div');
+                    div.className='item-cardapio';
+                    div.innerHTML=`
+                        <span class="item-info">${i.nome_item}</span>
+                        <span class="item-preco">R$ ${i.preco.toFixed(2).replace('.',',')}</span>
+                        <button class="add-btn" onclick="adicionarItem(${i.id},'${i.nome_item.replace(/'/g,"\\'")}',${i.preco})">+</button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
+        
+        // 🆕 FUNÇÃO CORRIGIDA: ADICIONAR ITEM SEM IMPRIMIR
+        async function adicionarItem(itemId,nome,preco){
+            if(!mesaSelecionadaAdicionar){
+                alert('Selecione uma mesa primeiro!');
+                return;
+            }
+            
+            if(!comandaSelecionadaParaAdicionar){
+                alert('Selecione uma comanda primeiro!');
+                return;
+            }
+            
+            const{data:pedido,error}=await supabaseClient.from('pedidos').select('itens,total').eq('id',comandaSelecionadaParaAdicionar.id).single();
+            if(!pedido){
+                alert('Erro ao buscar pedido!');
+                return;
+            }
+            
+            let itens=pedido.itens||[];
+            const idx=itens.findIndex(i=>i.id===itemId);
+            
+            if(idx>-1){
+                itens[idx].quantidade+=1;
+            }else{
+                itens.push({id:itemId,nome,preco,quantidade:1});
+            }
+            
+            const novoTotal=(pedido.total||0)+preco;
+            
+            await supabaseClient.from('pedidos').update({
+                itens,
+                total:novoTotal,
+                status:'Em Preparo'
+            }).eq('id',comandaSelecionadaParaAdicionar.id);
+            
+            alert(`${nome} adicionado à comanda ${comandaSelecionadaParaAdicionar.nome_comanda || 'Principal'}!`);
+            fetchPedidos();
+            
+            await carregarComandasDaMesa(mesaSelecionadaAdicionar.mesa);
+        }
+        
+        async function calcularCaixaDoDia(){
+            try{
+                const hoje=new Date().toISOString().split('T')[0];
+                const{data}=await supabaseClient.from('pedidos').select('total,forma_pagamento,horario_fecha').eq('status','Fechado').not('horario_fecha','is',null);
+                let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0};
+                (data||[]).forEach(p=>{
+                    if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
+                        total+=p.total;
+                        count++;
+                        if(formas[p.forma_pagamento]!==undefined){
+                            formas[p.forma_pagamento]+=p.total;
+                        }
+                    }
+                });
+                document.getElementById('total-caixa').textContent=`R$ ${total.toFixed(2).replace('.',',')}`;
+                document.getElementById('contagem-pedidos').textContent=count;
+                const formasDiv=document.getElementById('totais-por-forma');
+                formasDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma:</h5>'+Object.entries(formas).map(([f,v])=>v>0?`<p>${f}: R$ ${v.toFixed(2).replace('.',',')}</p>`:'').join('');
+            }catch(err){
+                console.error(err);
+            }
+        }
+        
+        function abrirModalFecharConta(pedidoId){
+            const pedido=pedidosAtuais.find(p=>p.id===pedidoId);
+            if(!pedido)return;
+            pedidoAtualModal=pedido;
+            document.getElementById('modal-mesa-num').textContent=pedido.mesa;
+            document.getElementById('modal-total').textContent=(pedido.total||0).toFixed(2).replace('.',',');
+            
+            const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+            document.getElementById('modal-itens-lista').innerHTML=`
+                <h4>${nomeComanda}</h4>
+                <ul class="lista-itens">${(pedido.itens||[]).map(i=>`<li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2).replace('.',',')}</li>`).join('')}</ul>
+            `;
+            
+            document.getElementById('modal-forma-pagamento').value='';
+            document.getElementById('valor-recebido').value='';
+            document.getElementById('campo-dinheiro').style.display='none';
+            document.getElementById('troco-info').style.display='none';
+            document.getElementById('modal-fechar-conta').style.display='block';
+        }
+        
+        function fecharModalConta(){
+            document.getElementById('modal-fechar-conta').style.display='none';
+            pedidoAtualModal=null;
+        }
+        
+        document.getElementById('modal-forma-pagamento').onchange=function(){
+            document.getElementById('campo-dinheiro').style.display=this.value==='Dinheiro'?'block':'none';
+            document.getElementById('troco-info').style.display='none';
+        };
+        
+        function calcularTroco(){
+            const total=pedidoAtualModal?pedidoAtualModal.total:0;
+            const recebido=parseFloat(document.getElementById('valor-recebido').value)||0;
+            const troco=recebido-total;
+            if(recebido>=total&&recebido>0){
+                document.getElementById('troco-info').style.display='block';
+                document.getElementById('valor-troco').textContent=troco.toFixed(2).replace('.',',');
+            }else{
+                document.getElementById('troco-info').style.display='none';
+            }
+        }
+        
+        async function confirmarFechamentoConta(){
+            if(!pedidoAtualModal)return;
+            const forma=document.getElementById('modal-forma-pagamento').value;
+            if(!forma)return alert('Selecione a forma de pagamento!');
+            let valorRecebido=null,troco=0;
+            if(forma==='Dinheiro'){
+                valorRecebido=parseFloat(document.getElementById('valor-recebido').value);
+                if(!valorRecebido||valorRecebido<pedidoAtualModal.total)return alert('Valor insuficiente!');
+                troco=valorRecebido-pedidoAtualModal.total;
+            }
+            
+            const { data: comandasRestantes } = await supabaseClient
+                .from('pedidos')
+                .select('id')
+                .eq('mesa', pedidoAtualModal.mesa)
+                .neq('status', 'Fechado');
+            
+            await supabaseClient.from('pedidos').update({
+                status:'Fechado',
+                forma_pagamento:forma,
+                valor_recebido:valorRecebido,
+                troco:troco,
+                horario_fecha:new Date().toISOString()
+            }).eq('id',pedidoAtualModal.id);
+            
+            const comandasAbertasRestantes = comandasRestantes ? comandasRestantes.filter(c => c.id !== pedidoAtualModal.id) : [];
+            if (comandasAbertasRestantes.length === 0) {
+                await supabaseClient.from('mesas_status')
+                    .update({ status: 'Livre', pedido_id: null })
+                    .eq('mesa', pedidoAtualModal.mesa);
+            }
+            
+            imprimirComprovante(pedidoAtualModal,forma,valorRecebido,troco);
+            fecharModalConta();
+            fetchPedidos();
+            fetchMesas();
+            calcularCaixaDoDia();
+            alert('Conta fechada!');
+        }
+        
+        function imprimirComprovante(pedido,forma,recebido,troco){
+            const dataHora=new Date().toLocaleString('pt-BR');
+            const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+            
+            let html=`
+                <div style="font-family:monospace;padding:10px;">
+                    <h2 style="text-align:center;">ESPETINHO GESSELO</h2>
+                    <h3 style="text-align:center;">COMPROVANTE</h3>
+                    <p style="text-align:center;">${dataHora}</p>
+                    <p><strong>Mesa:</strong> ${pedido.mesa}</p>
+                    <p><strong>Comanda:</strong> ${nomeComanda}</p>
+                    <h4>ITENS:</h4>
+                    <ul style="list-style:none;padding:0;">
+                        ${(pedido.itens||[]).map(i=>`<li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</li>`).join('')}
+                    </ul>
+                    <p><b>TOTAL: R$ ${pedido.total.toFixed(2)}</b></p>
+                    <p><b>Forma: ${forma}</b></p>
+                    ${forma==='Dinheiro'&&recebido?`
+                        <p><b>Recebido: R$ ${recebido.toFixed(2)}</b></p>
+                        <p><b>Troco: R$ ${troco.toFixed(2)}</b></p>
+                    `:''}
+                    <p style="text-align:center;margin-top:20px;">Obrigado!</p>
+                </div>
+            `;
+            document.getElementById('comanda-impressao').innerHTML=html;
+            setTimeout(()=>window.print(),300);
+        }
+        
+        // 🆕 FUNÇÕES OTIMIZADAS PARA IMPRESSÃO AUTOMÁTICA
+        async function verificarNovasImpressoes() {
+            if (isPrinting) {
+                console.log('Já está imprimindo, aguardando...');
+                return;
+            }
+            
+            try {
+                isPrinting = true;
+                
+                let query = supabaseClient
+                    .from('impressoes_cozinha')
+                    .select('*')
+                    .order('data_hora', { ascending: true });
+
+                // 🆕 USAR TIMESTAMP EM VEZ DE ID PARA MAIOR ROBUSTEZ
+                if (ultimaImpressaoTimestamp) {
+                    query = query.gt('data_hora', ultimaImpressaoTimestamp);
+                }
+
+                const { data, error } = await query;
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    console.log(`🆕 ${data.length} nova(s) impressão(ões) encontrada(s)`);
+                    
+                    for (const novaImpressao of data) {
+                        // 🆕 ATUALIZAR TIMESTAMP PARA A MAIS RECENTE
+                        ultimaImpressaoTimestamp = novaImpressao.data_hora;
+                        
+                        // 🆕 VERIFICAR SE JÁ FOI PROCESSADA (BACKUP)
+                        if (impressoesProcessadas.has(novaImpressao.id)) {
+                            console.log(`Impressão ${novaImpressao.id} já processada, pulando...`);
+                            continue;
+                        }
+                        
+                        impressoesProcessadas.add(novaImpressao.id);
+                        
+                        console.log('🖨️ Imprimindo comanda:', novaImpressao.id, 'Mesa:', novaImpressao.mesa);
+                        
+                        // 🆕 TOCAR ALERTA SONORO IMEDIATAMENTE
+                        tocarAlertaSonoro();
+                        
+                        // 🆕 IMPRIMIR COM DELAY MÍNIMO
+                        await imprimirComandaCozinha(novaImpressao);
+                        
+                        // 🆕 APAGAR DO BANCO COM CONFIRMAÇÃO
+                        await apagarImpressaoComConfirmacao(novaImpressao.id);
+                        
+                        // 🆕 PEQUENA PAUSA ENTRE IMPRESSÕES
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Erro ao verificar novas impressões:', error);
+            } finally {
+                isPrinting = false;
+            }
+        }
+
+        // 🆕 FUNÇÃO ROBUSTA PARA APAGAR IMPRESSÃO
+        async function apagarImpressaoComConfirmacao(impressaoId) {
+            let tentativas = 3;
+            
+            while (tentativas > 0) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('impressoes_cozinha')
+                        .delete()
+                        .eq('id', impressaoId);
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    console.log('✅ Impressão apagada do banco:', impressaoId);
+                    return;
+                } catch (error) {
+                    console.error(`❌ Tentativa ${4 - tentativas} falhou ao apagar impressão ${impressaoId}:`, error);
+                    tentativas--;
+                    
+                    if (tentativas > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+            }
+            
+            console.error('❌ Não foi possível apagar a impressão após 3 tentativas:', impressaoId);
+        }
+
+        function imprimirComandaCozinha(impressao) {
+            return new Promise((resolve) => {
+                console.log('📄 Preparando impressão...');
+                document.getElementById('comanda-impressao').innerHTML = impressao.conteudo;
+                
+                setTimeout(() => {
+                    console.log('🖨️ Acionando impressora...');
+                    window.print();
+                    
+                    setTimeout(() => {
+                        document.getElementById('comanda-impressao').innerHTML = '';
+                        console.log('✅ Impressão concluída');
+                        resolve();
+                    }, 800);
+                }, 300);
+            });
+        }
+
+        function iniciarImpressaoAutomatica() {
+            if (impressaoInterval) return;
+            
+            // 🆕 VERIFICAR MAIS RÁPIDO (1 SEGUNDO)
+            impressaoInterval = setInterval(verificarNovasImpressoes, 1000);
+            console.log('🚀 Impressão automática iniciada - Verificando a cada 1 segundo');
+        }
+
+        function pararImpressaoAutomatica() {
+            if (impressaoInterval) {
+                clearInterval(impressaoInterval);
+                impressaoInterval = null;
+            }
+        }
+        
+        // 🆕 LIMPEZA PERIÓDICA DO SET DE IMPRESSÕES PROCESSADAS
+        setInterval(() => {
+            if (impressoesProcessadas.size > 100) {
+                console.log('🧹 Limpando set de impressões processadas...');
+                impressoesProcessadas.clear();
+            }
+        }, 60000); // A cada 1 minuto
+        
+        // 🆕 FUNÇÕES PARA FECHAR CAIXA
+        function abrirModalFechamentoCaixa() {
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            const total = document.getElementById('total-caixa').textContent;
+            const pedidos = document.getElementById('contagem-pedidos').textContent;
+            const formasDiv = document.getElementById('totais-por-forma').innerHTML;
+            
+            document.getElementById('resumo-caixa').innerHTML = `
+                <h3 style="color: #4CAF50;">Resumo do Caixa - ${hoje}</h3>
+                <p><strong>Total Fechado:</strong> ${total}</p>
+                <p><strong>Número de Pedidos:</strong> ${pedidos}</p>
+                <div>${formasDiv}</div>
+                <p style="margin-top: 15px; color: #ff8c00;"><strong>Confirme o fechamento do caixa do dia.</strong></p>
+            `;
+            document.getElementById('modal-fechar-caixa').style.display = 'block';
+        }
+        
+        function fecharModalFecharCaixa() {
+            document.getElementById('modal-fechar-caixa').style.display = 'none';
+        }
+        
+        async function confirmarFechamentoCaixa() {
+            try {
+                await baixarCaixaPDF();
+                await limparCaixaDoDia();
+                fecharModalFecharCaixa();
+                alert('Caixa fechado com sucesso! Relatório salvo.');
+            } catch (error) {
+                alert('Erro ao fechar caixa: ' + error.message);
+            }
+        }
+        
+        async function baixarCaixaPDF(){
+            const hoje=new Date().toISOString().split('T')[0];
+            const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
+            let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0};
+            const pedidosHoje=[];
+            (data||[]).forEach(p=>{
+                if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
+                    total+=p.total;
+                    count++;
+                    pedidosHoje.push(p);
+                    if(formas[p.forma_pagamento]!==undefined){
+                        formas[p.forma_pagamento]+=p.total;
+                    }
+                }
+            });
+            
+            const{jsPDF}=window.jspdf;
+            const doc=new jsPDF();
+            doc.setFontSize(18);
+            doc.text('ESPETINHO GESSELO',105,20,{align:'center'});
+            doc.setFontSize(14);
+            doc.text('RELATÓRIO DE CAIXA',105,30,{align:'center'});
+            doc.setFontSize(10);
+            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`,20,45);
+            doc.text(`Total: R$ ${total.toFixed(2)}`,20,55);
+            doc.text(`Pedidos: ${count}`,20,65);
+            
+            let y=80;
+            doc.setFontSize(12);
+            doc.text('Por Forma de Pagamento:',20,y);
+            y+=10;
+            doc.setFontSize(10);
+            for(const[forma,valor]of Object.entries(formas)){
+                if(valor>0){
+                    doc.text(`${forma}: R$ ${valor.toFixed(2)}`,25,y);
+                    y+=8;
+                }
+            }
+            
+            y+=10;
+            doc.setFontSize(12);
+            doc.text('Detalhamento:',20,y);
+            y+=10;
+            doc.setFontSize(9);
+            pedidosHoje.forEach(p=>{
+                if(y>270){
+                    doc.addPage();
+                    y=20;
+                }
+                const nomeComanda = p.nome_comanda || 'Principal';
+                doc.text(`Mesa ${p.mesa} - ${nomeComanda} - R$ ${p.total.toFixed(2)} - ${p.forma_pagamento||'N/A'}`,25,y);
+                y+=6;
+            });
+            
+            doc.save(`caixa_${hoje}.pdf`);
+        }
+        
+        async function limparCaixaDoDia(){
+            if(!confirm('ATENÇÃO: Isso irá DELETAR todos os pedidos fechados de hoje do banco de dados! Certifique-se de ter feito backup. Deseja continuar?'))return;
+            if(!confirm('Tem ABSOLUTA CERTEZA? Esta ação NÃO pode ser desfeita!'))return;
+            
+            try{
+                const hoje=new Date().toISOString().split('T')[0];
+                
+                const{data:pedidosHoje}=await supabaseClient
+                    .from('pedidos')
+                    .select('id,horario_fecha')
+                    .eq('status','Fechado')
+                    .not('horario_fecha','is',null);
+                
+                const idsParaDeletar=pedidosHoje
+                    .filter(p=>p.horario_fecha&&p.horario_fecha.startsWith(hoje))
+                    .map(p=>p.id);
+                
+                if(idsParaDeletar.length===0){
+                    alert('Não há pedidos fechados hoje para limpar.');
+                    return;
+                }
+                
+                const{error}=await supabaseClient
+                    .from('pedidos')
+                    .delete()
+                    .in('id',idsParaDeletar);
+                
+                if(error)throw error;
+                
+                alert(`✓ ${idsParaDeletar.length} pedidos foram removidos do sistema!`);
+                calcularCaixaDoDia();
+            }catch(err){
+                console.error('Erro ao limpar caixa:',err);
+                alert('Erro ao limpar caixa! '+err.message);
+            }
+        }
+        
+        window.addEventListener('beforeunload',()=>{
+            clearInterval(pollingIntervalPedidos);
+            clearInterval(pollingIntervalMesas);
+            clearInterval(pollingIntervalCaixa);
+            pararImpressaoAutomatica();
+        });
     </script>
 </body>
 </html>
