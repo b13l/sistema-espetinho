@@ -5,25 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDV Espetinho Gesselo</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <audio id="alertSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" type="audio/wav">
+</audio>
     
     <style>
+        /* ESTILOS CSS BÁSICOS */
         body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 0; }
-        .container { max-width: 1000px; margin: 50px auto; padding: 20px; background-color: #2c2c2c; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #2c2c2c; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); }
         .header { text-align: center; margin-bottom: 30px; }
         
+        /* ESTILOS DE LOGIN */
         #login-view { text-align: center; padding: 50px; }
         #login-view input { padding: 10px; margin: 10px 0; width: 80%; max-width: 300px; border: none; border-radius: 4px; }
         #login-view button { padding: 10px 20px; background-color: #ff8c00; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
 
-        #mesas-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; text-align: center; }
-        .mesa-btn { padding: 30px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.2s; position: relative; }
+        /* ESTILOS DE MESAS - AGORA COM NUMERAÇÃO ORGANIZADA */
+        #mesas-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; text-align: center; }
+        .mesa-container { position: relative; }
+        .mesa-btn { padding: 25px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: background-color 0.2s; width: 100%; position: relative; }
         .mesa-btn.livre { background-color: #4CAF50; color: white; }
         .mesa-btn.ocupada { background-color: #FF5733; color: white; }
         .mesa-btn.em_preparo { background-color: #FFC300; color: black; }
         .mesa-btn.pronto { background-color: #00bcd4; color: white; }
-        .mesa-badge { position: absolute; top: 5px; right: 5px; background-color: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
+        .badge-comandas { position: absolute; top: -8px; right: -8px; background: #ff4081; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 0.8em; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         
-        #pdv-view { display: flex; gap: 20px; }
+        /* NOVO: SELEÇÃO DE COMANDA */
+        #comanda-selection-view { display: none; text-align: center; padding: 20px; }
+        .comanda-option { background: #383838; margin: 10px auto; padding: 15px; border-radius: 8px; cursor: pointer; max-width: 400px; border: 2px solid #555; }
+        .comanda-option:hover { border-color: #ff8c00; }
+        .comanda-option.nova { background: #2d4a2d; border-color: #4CAF50; }
+        
+        /* ESTILOS DO PDV */
+        #pdv-view { display: none; gap: 20px; }
+        .pdv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .comanda-info { background: #383838; padding: 10px 15px; border-radius: 8px; }
         .cardapio-col { flex: 2; overflow-y: auto; max-height: 80vh; padding-right: 10px; }
         .comanda-col { flex: 1; background-color: #383838; padding: 15px; border-radius: 8px; }
         
@@ -33,6 +50,7 @@
         .item-preco { font-weight: bold; margin-right: 10px; color: #ff8c00; }
         .add-btn { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         
+        /* ESTILOS DA COMANDA */
         #itens-comanda { list-style: none; padding: 0; margin: 10px 0; }
         #itens-comanda li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #555; }
         .remover-btn { background-color: #FF5733; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; margin-left: 5px; }
@@ -40,11 +58,38 @@
         #total-comanda { font-size: 1.2em; font-weight: bold; margin-top: 15px; border-top: 2px solid #555; padding-top: 10px; }
         #observacao { width: 95%; padding: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; margin-bottom: 15px; }
         
-        .action-buttons button { width: 100%; padding: 15px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
-        .enviar-btn { background-color: #007bff; color: white; }
-        .enviar-btn:hover { background-color: #0056b3; }
+        /* ESTILOS DE BOTÕES DE AÇÃO */
+        .action-buttons button { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .imprimir-btn { background-color: #007bff; color: white; }
+        .fechar-btn { background-color: #dc3545; color: white; }
+        .nova-comanda-btn { background-color: #ff8c00; color: white; margin-bottom: 10px; }
 
+        /* INDICADOR DE ATUALIZAÇÃO */
         .status-indicator { position: fixed; top: 10px; right: 10px; padding: 5px 10px; background-color: #4CAF50; color: white; border-radius: 4px; font-size: 0.8em; }
+
+        /* MODAL PARA EDITAR NOME DA COMANDA */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: #2c2c2c; margin: 15% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .close-modal { color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer; }
+        .close-modal:hover { color: white; }
+        .modal-input { width: 100%; padding: 10px; margin: 10px 0; background: #444; border: 1px solid #555; border-radius: 4px; color: white; }
+
+        /* ESTILOS DE IMPRESSÃO */
+        @media print {
+            body > *:not(#comanda-para-impressao) {
+                display: none;
+            }
+            #comanda-para-impressao {
+                display: block !important;
+                width: 80mm;
+                margin: 0 auto;
+            }
+            @page {
+                margin: 0;
+                padding: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -64,14 +109,73 @@
         </div>
 
         <div id="mesas-view" style="display:none;">
+            <h2>Escolha a Mesa</h2>
         </div>
 
-        <div id="pdv-view" style="display:none;">
+        <!-- NOVA VIEW: SELEÇÃO DE COMANDA -->
+        <div id="comanda-selection-view">
+            <h2>Selecione a Comanda - Mesa <span id="mesa-selecionada-numero"></span></h2>
+            <div id="comandas-list"></div>
+            <div class="comanda-option nova" onclick="criarNovaComanda()">
+                <h3>➕ Nova Comanda</h3>
+                <p>Criar uma nova comanda para esta mesa</p>
+            </div>
+            <button onclick="showMesasView()" style="margin-top: 20px; padding: 10px 20px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">← Voltar</button>
+        </div>
+
+        <div id="pdv-view">
+            <div class="pdv-header">
+                <div>
+                    <button onclick="showComandaSelectionView()">← Voltar para Mesas</button>
+                    <div class="comanda-info">
+                        <h2 id="pdv-mesa-titulo">Cardápio (Mesa X)</h2>
+                        <div style="font-size: 0.9em; color: #ccc;">
+                            Comanda: <span id="comanda-nome-display">Principal</span>
+                            <button onclick="editarNomeComanda()" style="margin-left: 10px; padding: 2px 8px; background: #666; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em;">Editar</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="nova-comanda-btn" onclick="abrirNovaComandaNaMesmaMesa()">➕ Nova Comanda nesta Mesa</button>
+            </div>
+            
+            <div class="cardapio-col">
+                <input type="text" id="busca-input" placeholder="Buscar no Cardápio..." onkeyup="carregarCardapio()" style="width: 95%; padding: 10px; margin-bottom: 15px; background-color: #444; color: white; border: 1px solid #555; border-radius: 4px;">
+                <div id="cardapio-view">
+                </div>
+            </div>
+
+            <div class="comanda-col">
+                <h3>Comanda Atual</h3>
+                <ul id="itens-comanda">
+                </ul>
+                <div id="total-comanda">Total: R$ 0,00</div>
+                
+                <h4>Observação da Comanda</h4>
+                <textarea id="observacao" placeholder="Ex: Sem pimenta, pouca cebola..."></textarea>
+                
+                <div class="action-buttons">
+                    <button class="imprimir-btn" onclick="enviarParaCozinha()">🖨️ Enviar para Cozinha</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
+    <!-- MODAL PARA EDITAR NOME DA COMANDA -->
+    <div id="modal-editar-nome" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Nome da Comanda</h3>
+                <span class="close-modal" onclick="fecharModalEditarNome()">&times;</span>
+            </div>
+            <input type="text" id="novo-nome-comanda" class="modal-input" placeholder="Ex: Comanda Principal, Aniversariante...">
+            <button onclick="salvarNomeComanda()" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar Nome</button>
+        </div>
+    </div>
+    
+    <div id="comanda-para-impressao" style="display:none;"></div>
 
+    <script>
+        // --- CONFIGURAÇÕES GLOBAIS ---
         const SUPABASE_URL = 'https://ufxbltjyswbynwnaybev.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
 
@@ -83,85 +187,70 @@
             }
         });
         
+        // Variáveis Globais para o PDV
         let GLOBAL_MESA_ID = null;
         let GLOBAL_COMANDA_ID = null;
         let GLOBAL_ORDER_ITEMS = [];
-        let GLOBAL_COMANDAS_DA_MESA = [];
+        let GLOBAL_COMANDA_NOME = "Principal";
         
+        // VARIÁVEIS PARA MÚLTIPLAS COMANDA
+        let GLOBAL_MESA_COMANDAS = [];
+        
+        // VARIÁVEIS PARA POLLING
         let pollingInterval = null;
         const POLLING_INTERVAL_MS = 2000;
+
+        // --- FUNÇÕES DE NAVEGAÇÃO ---
 
         function showLoginView() {
             stopPolling();
             document.getElementById('login-view').style.display = 'block';
             document.getElementById('mesas-view').style.display = 'none';
+            document.getElementById('comanda-selection-view').style.display = 'none';
             document.getElementById('pdv-view').style.display = 'none';
         }
 
         function showMesasView() {
             document.getElementById('login-view').style.display = 'none';
             document.getElementById('mesas-view').style.display = 'grid';
+            document.getElementById('comanda-selection-view').style.display = 'none';
             document.getElementById('pdv-view').style.display = 'none';
-            document.getElementById('pdv-view').innerHTML = ''; // Limpar PDV
-            document.getElementById('mesas-view').innerHTML = '<h2 style="grid-column: 1 / -1; text-align: center; color: #ff8c00;">Escolha a Mesa</h2>';
             carregarMesas();
             startPolling();
+        }
+
+        function showComandaSelectionView() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('mesas-view').style.display = 'none';
+            document.getElementById('comanda-selection-view').style.display = 'block';
+            document.getElementById('pdv-view').style.display = 'none';
+            carregarComandasDaMesa(GLOBAL_MESA_ID);
         }
 
         function showPdvView(mesaId) {
             document.getElementById('login-view').style.display = 'none';
             document.getElementById('mesas-view').style.display = 'none';
-            const pdvView = document.getElementById('pdv-view');
-            pdvView.style.display = 'flex';
-            
-            const numComandas = GLOBAL_COMANDAS_DA_MESA.length;
-            const comandaAtualIdx = GLOBAL_COMANDAS_DA_MESA.findIndex(c => c.id === GLOBAL_COMANDA_ID);
-            
-            pdvView.innerHTML = `
-                <div style="margin-bottom: 20px;">
-                    <button onclick="voltarSelecaoComanda()" style="background-color: #555; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
-                        ← Voltar
-                    </button>
-                    <span style="font-size: 1.5em; color: #ff8c00;">
-                        Mesa ${mesaId} - Comanda #${comandaAtualIdx + 1}
-                    </span>
-                </div>
-                
-                <div style="display: flex; gap: 20px;">
-                    <div class="cardapio-col">
-                        <input type="text" id="busca-input" placeholder="Buscar no Cardapio..." onkeyup="carregarCardapio()" style="width: 95%; padding: 10px; margin-bottom: 15px; background-color: #444; color: white; border: 1px solid #555; border-radius: 4px;">
-                        <div id="cardapio-view"></div>
-                    </div>
-
-                    <div class="comanda-col">
-                        <h3>Comanda Atual</h3>
-                        <ul id="itens-comanda"></ul>
-                        <div id="total-comanda">Total: R$ 0,00</div>
-                        
-                        <h4>Observacao da Comanda</h4>
-                        <textarea id="observacao" placeholder="Ex: Sem pimenta, pouca cebola..."></textarea>
-                        
-                        <div class="action-buttons">
-                            <button class="enviar-btn" onclick="enviarComandaParaCozinha()">Enviar Comanda para Cozinha</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
+            document.getElementById('comanda-selection-view').style.display = 'none';
+            document.getElementById('pdv-view').style.display = 'flex';
+            document.getElementById('pdv-mesa-titulo').textContent = `Cardápio (Mesa ${mesaId})`;
+            document.getElementById('comanda-nome-display').textContent = GLOBAL_COMANDA_NOME;
             carregarCardapio();
             renderComanda();
         }
 
-        function voltarSelecaoComanda() {
-            selecionarMesa(GLOBAL_MESA_ID);
-        }
+        // --- FUNÇÕES DE POLLING ---
 
         function startPolling() {
             if (pollingInterval) return;
             
             pollingInterval = setInterval(async () => {
-                await carregarMesas();
-                updateStatusIndicator(true);
+                try {
+                    await carregarMesas();
+                    updateStatusIndicator(true);
+                } catch (error) {
+                    console.error('Erro no polling:', error);
+                    updateStatusIndicator(false);
+                }
             }, POLLING_INTERVAL_MS);
         }
 
@@ -183,9 +272,145 @@
             }
         }
 
+        // --- FUNÇÕES DE MÚLTIPLAS COMANDA ---
+
+        async function carregarComandasDaMesa(mesaId) {
+            document.getElementById('mesa-selecionada-numero').textContent = mesaId;
+            
+            const { data: comandas, error } = await supabaseClient
+                .from('pedidos')
+                .select('*')
+                .eq('mesa', mesaId)
+                .neq('status', 'Fechado')
+                .order('horario', { ascending: true }); // Ordenar por horário de chegada
+
+            if (error) {
+                console.error('Erro ao carregar comandas:', error);
+                return;
+            }
+
+            GLOBAL_MESA_COMANDAS = comandas || [];
+            renderComandasList();
+        }
+
+        function renderComandasList() {
+            const container = document.getElementById('comandas-list');
+            container.innerHTML = '';
+
+            if (GLOBAL_MESA_COMANDAS.length === 0) {
+                container.innerHTML = '<p style="color: #ccc; margin: 20px 0;">Nenhuma comanda aberta</p>';
+                return;
+            }
+
+            GLOBAL_MESA_COMANDAS.forEach(comanda => {
+                const div = document.createElement('div');
+                div.className = 'comanda-option';
+                div.onclick = () => selecionarComanda(comanda);
+                
+                const total = comanda.total || 0;
+                const status = comanda.status || 'Aberto';
+                const nome = comanda.nome_comanda || 'Comanda Principal';
+                
+                // Formatar horário
+                const horario = comanda.horario ? new Date(comanda.horario).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '--:--';
+                
+                div.innerHTML = `
+                    <h3>${nome}</h3>
+                    <p><strong>Status:</strong> ${status} | <strong>Total:</strong> R$ ${total.toFixed(2).replace('.', ',')}</p>
+                    <p><strong>Horário:</strong> ${horario} | <strong>Itens:</strong> ${(comanda.itens || []).length}</p>
+                    <p style="font-size: 0.8em; color: #ccc;">ID: ${comanda.id.substring(0, 8)}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function selecionarComanda(comanda) {
+            GLOBAL_COMANDA_ID = comanda.id;
+            GLOBAL_ORDER_ITEMS = comanda.itens || [];
+            GLOBAL_COMANDA_NOME = comanda.nome_comanda || 'Principal';
+            document.getElementById('observacao').value = comanda.observacao || '';
+            showPdvView(comanda.mesa);
+        }
+
+        async function criarNovaComanda() {
+            const { data: newPedido, error } = await supabaseClient
+                .from('pedidos')
+                .insert({ 
+                    mesa: GLOBAL_MESA_ID, 
+                    status: 'Aberto', 
+                    itens: [], 
+                    total: 0,
+                    nome_comanda: `Comanda ${GLOBAL_MESA_COMANDAS.length + 1}`,
+                    horario: new Date().toISOString(),
+                    data: new Date().toISOString().split('T')[0] 
+                })
+                .select()
+                .single();
+
+            if (error) {
+                alert('Erro ao criar nova comanda!');
+                console.error(error);
+                return;
+            }
+
+            GLOBAL_COMANDA_ID = newPedido.id;
+            GLOBAL_ORDER_ITEMS = [];
+            GLOBAL_COMANDA_NOME = newPedido.nome_comanda;
+            showPdvView(GLOBAL_MESA_ID);
+        }
+
+        function abrirNovaComandaNaMesmaMesa() {
+            showComandaSelectionView();
+        }
+
+        // --- FUNÇÃO EDITAR NOME DA COMANDA ---
+
+        function editarNomeComanda() {
+            document.getElementById('novo-nome-comanda').value = GLOBAL_COMANDA_NOME;
+            document.getElementById('modal-editar-nome').style.display = 'block';
+        }
+
+        function fecharModalEditarNome() {
+            document.getElementById('modal-editar-nome').style.display = 'none';
+        }
+
+        async function salvarNomeComanda() {
+            const novoNome = document.getElementById('novo-nome-comanda').value.trim();
+            if (!novoNome) {
+                alert('Digite um nome para a comanda!');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('pedidos')
+                .update({ nome_comanda: novoNome })
+                .eq('id', GLOBAL_COMANDA_ID);
+
+            if (error) {
+                alert('Erro ao atualizar nome da comanda!');
+                console.error(error);
+                return;
+            }
+
+            GLOBAL_COMANDA_NOME = novoNome;
+            document.getElementById('comanda-nome-display').textContent = novoNome;
+            fecharModalEditarNome();
+            alert('Nome da comanda atualizado!');
+        }
+
+        // --- FUNÇÕES DE AUTENTICAÇÃO ---
+
         async function fazerLogin() {
             const email = document.getElementById('email-login').value;
             const senha = document.getElementById('senha-login').value;
+
+            if (!email || !senha) {
+                alert('Por favor, preencha email e senha.');
+                return;
+            }
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
 
@@ -193,10 +418,11 @@
                 alert(`Erro no Login: ${error.message}`);
                 console.error(error);
             } else {
-                alert('Login bem-sucedido!');
                 showMesasView();
             }
         }
+
+        // --- FUNÇÕES DE MESAS ---
 
         async function carregarMesas() {
             try {
@@ -211,39 +437,32 @@
                     return;
                 }
 
-                const { data: comandas } = await supabaseClient
-                    .from('pedidos')
-                    .select('mesa, id')
-                    .in('status', ['Aberto', 'Em Preparo', 'Pronto']);
-
-                const comandasPorMesa = {};
-                if (comandas) {
-                    comandas.forEach(c => {
-                        if (!comandasPorMesa[c.mesa]) comandasPorMesa[c.mesa] = 0;
-                        comandasPorMesa[c.mesa]++;
-                    });
-                }
-
                 const container = document.getElementById('mesas-view');
-                
-                // Limpar apenas os botões, manter o título
-                const botoesMesas = container.querySelectorAll('.mesa-btn');
-                botoesMesas.forEach(btn => btn.remove());
+                container.innerHTML = '<h2>Escolha a Mesa</h2>';
 
-                // Ordenar mesas numericamente
                 const mesasOrdenadas = data.sort((a, b) => parseInt(a.mesa) - parseInt(b.mesa));
 
                 mesasOrdenadas.forEach(mesa => {
+                    const mesaContainer = document.createElement('div');
+                    mesaContainer.className = 'mesa-container';
+                    
                     const button = document.createElement('button');
                     const statusClass = mesa.status.toLowerCase().replace(' ', '_');
                     button.className = `mesa-btn ${statusClass}`;
                     
-                    const numComandas = comandasPorMesa[mesa.mesa] || 0;
-                    const badgeHTML = numComandas > 0 ? `<span class="mesa-badge">${numComandas}</span>` : '';
+                    // 🆕 MOSTRAR STATUS NO TEXTO DO BOTÃO
+                    button.textContent = `Mesa ${mesa.mesa}\n(${mesa.status})`;
+                    button.onclick = () => abrirMesa(mesa.mesa, mesa.status, mesa.pedido_id);
                     
-                    button.innerHTML = `${badgeHTML}Mesa ${mesa.mesa}<br><small>(${mesa.status})</small>`;
-                    button.onclick = () => selecionarMesa(mesa.mesa);
-                    container.appendChild(button);
+                    if (mesa.status !== 'Livre') {
+                        const badge = document.createElement('div');
+                        badge.className = 'badge-comandas';
+                        badge.textContent = '1+';
+                        mesaContainer.appendChild(badge);
+                    }
+                    
+                    mesaContainer.appendChild(button);
+                    container.appendChild(mesaContainer);
                 });
 
                 updateStatusIndicator(true);
@@ -253,61 +472,17 @@
             }
         }
 
-        async function selecionarMesa(mesaId) {
+        async function abrirMesa(mesaId, status, pedidoId) {
             GLOBAL_MESA_ID = mesaId;
             
-            const { data: comandas, error } = await supabaseClient
-                .from('pedidos')
-                .select('*')
-                .eq('mesa', mesaId)
-                .in('status', ['Aberto', 'Em Preparo', 'Pronto'])
-                .order('horario', { ascending: false });
-
-            if (error) {
-                console.error('Erro ao buscar comandas:', error);
+            if (status === 'Livre') {
+                await criarPrimeiraComanda(mesaId);
+            } else {
+                showComandaSelectionView();
             }
-
-            GLOBAL_COMANDAS_DA_MESA = comandas || [];
-            
-            // SEMPRE mostrar a tela de seleção, mesmo sem comandas
-            mostrarSelecaoComanda();
         }
 
-        function mostrarSelecaoComanda() {
-            document.getElementById('login-view').style.display = 'none';
-            document.getElementById('mesas-view').style.display = 'none';
-            const pdvView = document.getElementById('pdv-view');
-            pdvView.style.display = 'flex';
-            
-            pdvView.innerHTML = `
-                <div style="width: 100%; background-color: #2c2c2c; padding: 30px; border-radius: 8px;">
-                    <button onclick="showMesasView()" style="background-color: #555; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 20px;">← Voltar para Mesas</button>
-                    <h2 style="color: #ff8c00; margin-bottom: 20px;">Mesa ${GLOBAL_MESA_ID} - Selecione ou Crie uma Comanda</h2>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
-                        ${GLOBAL_COMANDAS_DA_MESA.map((comanda, idx) => {
-                            const totalItens = (comanda.itens || []).reduce((sum, i) => sum + i.quantidade, 0);
-                            return `
-                                <button onclick="abrirComanda('${comanda.id}')" 
-                                        style="padding: 20px; background-color: #383838; border: 2px solid #ff8c00; border-radius: 8px; cursor: pointer; text-align: left; color: white; font-family: Arial;">
-                                    <h3 style="color: #ff8c00; margin: 0 0 10px 0;">Comanda #${idx + 1}</h3>
-                                    <p style="margin: 5px 0;">Total: <strong>R$ ${(comanda.total || 0).toFixed(2)}</strong></p>
-                                    <p style="margin: 5px 0; color: #aaa; font-size: 0.9em;">${totalItens} itens</p>
-                                    <p style="margin: 5px 0; color: #aaa; font-size: 0.9em;">Status: ${comanda.status}</p>
-                                </button>
-                            `;
-                        }).join('')}
-                        
-                        <button onclick="criarNovaComanda(${GLOBAL_MESA_ID})" 
-                                style="padding: 20px; background-color: #4CAF50; border: none; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; color: white; font-size: 1.1em;">
-                            ➕ Nova Comanda
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function criarNovaComanda(mesaId) {
+        async function criarPrimeiraComanda(mesaId) {
             const { data: newPedido, error: pedidoError } = await supabaseClient
                 .from('pedidos')
                 .insert({ 
@@ -315,6 +490,7 @@
                     status: 'Aberto', 
                     itens: [], 
                     total: 0,
+                    nome_comanda: 'Comanda Principal',
                     horario: new Date().toISOString(),
                     data: new Date().toISOString().split('T')[0] 
                 })
@@ -329,6 +505,7 @@
 
             GLOBAL_COMANDA_ID = newPedido.id;
             GLOBAL_ORDER_ITEMS = [];
+            GLOBAL_COMANDA_NOME = 'Comanda Principal';
 
             const { error: mesaError } = await supabaseClient
                 .from('mesas_status')
@@ -338,43 +515,15 @@
             if (mesaError) {
                 console.error('Erro ao atualizar status da mesa:', mesaError);
             }
-            
-            // Recarregar as comandas da mesa
-            await selecionarMesa(mesaId);
-            
-            // Abrir a nova comanda
-            abrirComanda(newPedido.id);
+
+            showPdvView(mesaId);
         }
 
-        async function abrirComanda(comandaId) {
-            GLOBAL_COMANDA_ID = comandaId;
-
-            const { data: pedido, error: fetchError } = await supabaseClient
-                .from('pedidos')
-                .select('itens, observacao')
-                .eq('id', comandaId)
-                .single();
-
-            if (fetchError || !pedido) {
-                alert('Erro ao carregar comanda existente!');
-                console.error('Erro ao buscar comanda:', fetchError);
-                return;
-            }
-
-            GLOBAL_ORDER_ITEMS = pedido.itens || [];
-
-            showPdvView(GLOBAL_MESA_ID);
-            
-            // Atualizar observação depois que o elemento existir
-            setTimeout(() => {
-                const obsTextarea = document.getElementById('observacao');
-                if (obsTextarea) {
-                    obsTextarea.value = pedido.observacao || '';
-                }
-            }, 100);
-        }
+        // --- FUNÇÕES DE CARDÁPIO E BUSCA ---
 
         async function carregarCardapio() {
+            console.log('Carregando cardápio...');
+            
             const buscaInput = document.getElementById('busca-input');
             const buscaTermo = buscaInput ? buscaInput.value.toLowerCase().trim() : '';
 
@@ -389,12 +538,20 @@
                 .order('nome_item', { ascending: true });
 
             if (error) { 
-                console.error('Erro ao carregar cardapio:', error); 
-                document.getElementById('cardapio-view').innerHTML = '<p class="error">Erro ao carregar cardapio.</p>';
+                console.error('Erro ao carregar cardápio:', error); 
+                document.getElementById('cardapio-view').innerHTML = '<p style="color: #ff4444; padding: 20px; text-align: center;">Erro ao carregar cardápio. Verifique a conexão.</p>';
                 return; 
             }
 
+            console.log('Itens carregados:', itens);
+
             const container = document.getElementById('cardapio-view');
+            
+            if (!itens || itens.length === 0) {
+                container.innerHTML = '<p style="color: #ccc; padding: 20px; text-align: center;">Nenhum item encontrado no cardápio.</p>';
+                return;
+            }
+
             container.innerHTML = '';
 
             let categorias = {};
@@ -405,25 +562,40 @@
                 }
             });
 
-            for (const [categoria, itensCategoria] of Object.entries(categorias)) {
-                const h3 = document.createElement('h3');
-                h3.textContent = categoria;
-                container.appendChild(h3);
-
-                itensCategoria.forEach(i => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'item-cardapio';
-                    const precoFormatado = parseFloat(i.preco).toFixed(2).replace('.', ','); 
-                    
-                    itemDiv.innerHTML = `
-                        <span class="item-info">${i.nome_item}</span> 
-                        <span class="item-preco">R$ ${precoFormatado}</span>
-                        <button class="add-btn" onclick="addToCommand(${i.id}, '${i.nome_item.replace(/'/g, "\\'")}', ${i.preco})">ADD</button>
-                    `;
-                    container.appendChild(itemDiv);
+            if (Object.keys(categorias).length === 0) {
+                itens.forEach(i => {
+                    adicionarItemCardapio(container, i);
                 });
+            } else {
+                for (const [categoria, itensCategoria] of Object.entries(categorias)) {
+                    const h3 = document.createElement('h3');
+                    h3.textContent = categoria;
+                    h3.style.color = '#ff8c00';
+                    h3.style.marginTop = '20px';
+                    h3.style.marginBottom = '10px';
+                    container.appendChild(h3);
+
+                    itensCategoria.forEach(i => {
+                        adicionarItemCardapio(container, i);
+                    });
+                }
             }
         }
+
+        function adicionarItemCardapio(container, item) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item-cardapio';
+            const precoFormatado = parseFloat(item.preco).toFixed(2).replace('.', ','); 
+            
+            itemDiv.innerHTML = `
+                <span class="item-info">${item.nome_item}</span> 
+                <span class="item-preco">R$ ${precoFormatado}</span>
+                <button class="add-btn" onclick="addToCommand(${item.id}, '${item.nome_item.replace(/'/g, "\\'")}', ${item.preco})">ADD</button>
+            `;
+            container.appendChild(itemDiv);
+        }
+
+        // --- FUNÇÕES DE MANIPULAÇÃO DA COMANDA ---
 
         function addToCommand(id, nome, preco) {
             const itemIndex = GLOBAL_ORDER_ITEMS.findIndex(item => item.id === id);
@@ -468,31 +640,35 @@
             document.getElementById('total-comanda').textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
-        async function enviarComandaParaCozinha() { 
+        // --- FUNÇÕES DE ENVIO PARA COZINHA ---
+
+        async function enviarParaCozinha() { 
             if (GLOBAL_ORDER_ITEMS.length === 0) {
-                alert("Nao ha itens para enviar.");
+                alert("Não há itens para enviar para cozinha.");
                 return;
             }
 
             const totalComanda = parseFloat(document.getElementById('total-comanda').textContent.replace('Total: R$ ', '').replace(',', '.'));
             const observacao = document.getElementById('observacao').value.trim();
 
+            // 🆕 ATUALIZAR STATUS PARA "EM PREPARO"
             const { error: saveError } = await supabaseClient
                 .from('pedidos')
                 .update({ 
                     itens: GLOBAL_ORDER_ITEMS, 
                     observacao: observacao,
                     total: totalComanda,
-                    status: 'Em Preparo' 
+                    status: 'Em Preparo'
                 })
                 .eq('id', GLOBAL_COMANDA_ID);
 
             if (saveError) {
-                console.error('Erro ao salvar o pedido:', saveError);
+                console.error('Erro ao enviar pedido para cozinha:', saveError);
                 alert('Erro ao enviar pedido para a cozinha!');
                 return;
             }
 
+            // 🆕 ATUALIZAR STATUS DA MESA
             const { error: mesaError } = await supabaseClient
                 .from('mesas_status')
                 .update({ status: 'Em Preparo' })
@@ -502,19 +678,103 @@
                 console.error('Erro ao atualizar status da mesa:', mesaError);
             }
 
-            alert(`✓ Comanda da Mesa ${GLOBAL_MESA_ID} enviada para a cozinha com sucesso!`);
-            showMesasView();
+            // 🆕 IMPRIMIR NA COZINHA (SEM ABRIR TELA DE IMPRESSÃO NO GARÇOM)
+            await imprimirNaCozinha();
+
+            alert('Pedido enviado para cozinha com sucesso!');
+            
+            // 🆕 VOLTAR PARA MESAS APÓS ENVIAR
+            setTimeout(() => {
+                showMesasView();
+                carregarMesas();
+            }, 1000);
         }
 
+        // 🆕 FUNÇÃO PARA IMPRIMIR NA COZINHA
+        async function imprimirNaCozinha() {
+            const mesaId = GLOBAL_MESA_ID; 
+            const total = document.getElementById('total-comanda').textContent;
+            const dataHora = new Date().toLocaleString('pt-BR');
+            const observacao = document.getElementById('observacao').value.trim();
+            const nomeComanda = GLOBAL_COMANDA_NOME;
+            
+            let printContent = `
+                <div style="font-family: monospace; font-size: 10pt; line-height: 1.4;">
+                    <h3 style="text-align: center; margin: 5px 0;">ESPETINHO GESSELO</h3>
+                    <h4 style="text-align: center; margin: 0 0 10px 0;">COMANDA - MESA ${mesaId}</h4>
+                    <p style="text-align: center; margin: 0 0 5px 0;"><strong>${nomeComanda}</strong></p>
+                    <p style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">Data: ${dataHora}</p>
+                    
+                    <ul style="list-style: none; padding: 0;">
+                    ${GLOBAL_ORDER_ITEMS.map(item => `
+                        <li style="margin-bottom: 3px;">
+                            <span>${item.quantidade}x</span>
+                            <span style="display: inline-block; width: 60%;">${item.nome}</span>
+                            <span style="float: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</span>
+                        </li>
+                    `).join('')}
+                    </ul>
+                    
+                    ${observacao ? `<p style="border-top: 1px dashed black; padding-top: 5px; margin-top: 10px;">OBS: ${observacao}</p>` : ''}
+                    
+                    <h4 style="border-top: 1px dashed black; padding-top: 5px; margin-top: 10px; text-align: right;">${total}</h4>
+                </div>
+            `;
+
+            // 🆕 ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE
+            const { error } = await supabaseClient
+                .from('impressoes_cozinha')
+                .insert({
+                    mesa: mesaId,
+                    comanda_nome: nomeComanda,
+                    conteudo: printContent,
+                    itens: GLOBAL_ORDER_ITEMS,
+                    total: total,
+                    observacao: observacao,
+                    data_hora: new Date().toISOString()
+                });
+
+            if (error) {
+                console.error('Erro ao enviar para impressão na cozinha:', error);
+                // Fallback: salvar em localStorage para a cozinha ler
+                localStorage.setItem('ultima_impressao_cozinha', JSON.stringify({
+                    mesa: mesaId,
+                    comanda_nome: nomeComanda,
+                    conteudo: printContent,
+                    data_hora: new Date().toISOString()
+                }));
+            }
+        }
+
+        // --- INICIALIZAÇÃO ---
         document.addEventListener('DOMContentLoaded', () => {
             supabaseClient.auth.getSession().then(({ data: { session } }) => {
                 if (session) {
+                    console.log('Usuário logado, mostrando mesas...');
                     showMesasView();
+                    
+                    setTimeout(() => {
+                        console.log('Testando carregamento do cardápio...');
+                        carregarCardapio().then(() => {
+                            console.log('Cardápio carregado com sucesso!');
+                        }).catch(error => {
+                            console.error('Erro ao carregar cardápio:', error);
+                        });
+                    }, 1000);
+                    
                 } else {
+                    console.log('Usuário não logado, mostrando login...');
                     showLoginView();
                 }
             });
         });
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal-editar-nome');
+            if (event.target === modal) {
+                fecharModalEditarNome();
+            }
+        }
     </script>
 </body>
 </html>
