@@ -37,7 +37,7 @@
         .comanda-option:hover { border-color: #ff8c00; }
         .comanda-option.nova { background: #2d4a2d; border-color: #4CAF50; }
         
-        /* ESTILOS DO PDV */
+        /* ESTILOS DO PDV - DESKTOP */
         #pdv-view { display: none; gap: 20px; }
         .pdv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .comanda-info { background: #383838; padding: 10px 15px; border-radius: 8px; }
@@ -90,6 +90,72 @@
                 padding: 0;
             }
         }
+        
+        /* -------------------------------------- */
+        /* NOVO: ESTILOS PARA DISPOSITIVOS MÓVEIS */
+        /* -------------------------------------- */
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                padding: 10px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            
+            /* MESAS: Otimização para celular */
+            #mesas-view {
+                /* Minmax ajustado para caber mais mesas em telas pequenas, no mínimo 120px */
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 8px;
+            }
+            
+            /* PDV: Colunas empilhadas */
+            #pdv-view {
+                flex-direction: column; /* Empilha o cardápio e a comanda */
+            }
+
+            .cardapio-col {
+                order: 2; /* Move o cardápio para baixo */
+                max-height: 60vh; /* Limita a altura para deixar espaço para a comanda */
+                padding-right: 0;
+                margin-top: 15px;
+            }
+
+            .comanda-col {
+                order: 1; /* Move a comanda (resumo) para o topo */
+                min-height: auto;
+            }
+            
+            .pdv-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .pdv-header > div:first-child {
+                margin-bottom: 10px;
+            }
+            
+            .nova-comanda-btn {
+                width: 100%;
+                margin-top: 5px;
+            }
+
+            /* INPUT DE BUSCA: Ocupa toda a largura */
+            #busca-input {
+                width: 98%; 
+            }
+            
+            /* ITENS DO CARDÁPIO: Ajuste o espaçamento */
+            .item-cardapio {
+                padding: 10px 0;
+                font-size: 0.9em;
+            }
+            
+            /* COMANDA: Ajuste o tamanho da fonte */
+            #itens-comanda li {
+                font-size: 0.9em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -112,7 +178,6 @@
             <h2>Escolha a Mesa</h2>
         </div>
 
-        <!-- NOVA VIEW: SELEÇÃO DE COMANDA -->
         <div id="comanda-selection-view">
             <h2>Selecione a Comanda - Mesa <span id="mesa-selecionada-numero"></span></h2>
             <div id="comandas-list"></div>
@@ -160,7 +225,6 @@
         </div>
     </div>
 
-    <!-- MODAL PARA EDITAR NOME DA COMANDA -->
     <div id="modal-editar-nome" class="modal">
         <div class="modal-content">
             <div class="modal-header">
