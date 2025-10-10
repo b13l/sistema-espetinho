@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
-    <!-- Áudio para alerta sonoro -->
     <audio id="alertSound" preload="auto">
         <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" type="audio/wav">
     </audio>
@@ -76,14 +75,26 @@
         .troco-display { background-color: #383838; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4CAF50; }
         .troco-display h3 { color: #4CAF50; margin: 0 0 10px 0; }
         
-        /* NOVO: MODAL FECHAR CAIXA */
-        #modal-fechar-caixa .modal-content { max-width: 500px; }
+        /* NOVO: MODAIS FECHAR CAIXA E DESBLOQUEIO */
+        #modal-fechar-caixa .modal-content, #modal-desbloqueio .modal-content { max-width: 500px; }
         
         /* NOVO: SELEÇÃO DE COMANDA */
         .comanda-option { background: #383838; margin: 5px 0; padding: 10px; border-radius: 4px; cursor: pointer; border: 1px solid #555; }
         .comanda-option:hover { border-color: #ff8c00; }
         .comanda-option.selecionada { border-color: #4CAF50; background: #2d4a2d; }
         
+        /* NOVO: ESTILOS PARA OS BOTÕES DE BLOQUEIO/DESBLOQUEIO */
+        #btn-bloquear-caixa { background-color: #6c757d; color: white; margin-top: 15px; }
+        #btn-desbloquear-caixa { background-color: #ffc107; color: black; margin-top: 15px; }
+        
+        /* NOVO: CLASSE DE BLUR */
+        .blurry {
+            filter: blur(5px);
+            user-select: none;
+            pointer-events: none;
+            transition: filter 0.5s;
+        }
+
         @media print {
             body > *:not(#comanda-impressao) { display: none !important; }
             #comanda-impressao { display: block !important; width: 80mm; margin: 0 auto; }
@@ -106,15 +117,21 @@
         <div class="gerenciamento-col">
             <h2>💰 Caixa do Dia</h2>
             <div id="caixa-do-dia">
-                <p>Total Fechado Hoje: <strong id="total-caixa">R$ 0,00</strong></p>
-                <p>Número de Pedidos: <strong id="contagem-pedidos">0</strong></p>
-                <div id="totais-por-forma"></div>
+                <div id="caixa-content">
+                    <p>Total Fechado Hoje: <strong id="total-caixa">R$ 0,00</strong></p>
+                    <p>Número de Pedidos: <strong id="contagem-pedidos">0</strong></p>
+                    <div id="totais-por-forma"></div>
+                </div>
             </div>
-            <div class="caixa-actions">
+            
+            <div class="caixa-actions" id="caixa-actions-container">
                 <button class="btn-caixa btn-baixar-pdf" onclick="baixarCaixaPDF()">📥 Baixar PDF</button>
                 <button class="btn-caixa btn-limpar-caixa" onclick="limparCaixaDoDia()">🗑️ Limpar Caixa</button>
             </div>
-            <button class="btn-caixa" style="width: 100%; margin-top: 15px; background-color: #007bff; color: white;" onclick="abrirModalFechamentoCaixa()">💰 Fechar Caixa do Dia</button>
+            
+            <button class="btn-caixa" id="btn-fechar-caixa" style="width: 100%; margin-top: 15px; background-color: #007bff; color: white;" onclick="abrirModalFechamentoCaixa()">💰 Fechar Caixa do Dia</button>
+            <button class="btn-caixa" id="btn-bloquear-caixa" style="width: 100%;" onclick="bloquearCaixaManualmente()">🔒 Bloquear Caixa</button>
+            <button class="btn-caixa" id="btn-desbloquear-caixa" style="width: 100%; display: none;" onclick="abrirModalDesbloqueio()">🔓 Desbloquear Caixa (Senha)</button>
         </div>
     </div>
     
@@ -135,13 +152,14 @@
         </div>
     </div>
     
-    <!-- MODAL FECHAR CONTA -->
     <div id="modal-fechar-conta" class="modal">
         <div class="modal-content">
             <span class="close" onclick="fecharModalConta()">&times;</span>
             <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
             <div id="modal-itens-lista"></div>
-            <h3 style="color: #4CAF50; margin-top: 20px;">Total: R$ <span id="modal-total">0,00</span></h3>
+            <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
+            <h3 style="color: #ffc107;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
+            <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
             <label>Forma de Pagamento:</label>
             <select id="modal-forma-pagamento">
                 <option value="">Selecione...</option>
@@ -161,13 +179,24 @@
         </div>
     </div>
     
-    <!-- MODAL FECHAR CAIXA -->
     <div id="modal-fechar-caixa" class="modal">
         <div class="modal-content">
             <span class="close" onclick="fecharModalFecharCaixa()">&times;</span>
             <h2 style="color: #ff8c00;">Fechar Caixa do Dia</h2>
             <div id="resumo-caixa"></div>
             <button class="btn-confirmar" onclick="confirmarFechamentoCaixa()">Confirmar Fechamento</button>
+        </div>
+    </div>
+
+    <div id="modal-desbloqueio" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <span class="close" onclick="fecharModalDesbloqueio()">&times;</span>
+            <h2 style="color: #ffc107;">Desbloqueio de Caixa</h2>
+            <p>Insira a senha para liberar as ações do caixa.</p>
+            <label for="input-senha-desbloqueio" style="margin-top: 20px;">Senha:</label>
+            <input type="password" id="input-senha-desbloqueio" placeholder="Digite a senha de desbloqueio" required>
+            <button class="btn-confirmar" style="background-color: #ffc107; color: black;" onclick="verificarSenhaDesbloqueio()">Desbloquear</button>
+            <p id="mensagem-erro-desbloqueio" style="color: #dc3545; margin-top: 10px; display: none;">Senha incorreta. Tente novamente.</p>
         </div>
     </div>
     
@@ -178,29 +207,48 @@
         const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
         const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
         
+        // ⚠️ MUDE ESTA SENHA PARA ALGO SEGURO!
+        const SENHA_DESBLOQUEIO = '888888'; 
+        
         let pedidosAtuais=[],mesasStatus=[],cardapioItens=[],pedidoAtualModal=null,mesaSelecionadaAdicionar=null;
         let pollingIntervalPedidos=null,pollingIntervalMesas=null,pollingIntervalCaixa=null;
         
-        // 🆕 VARIÁVEIS OTIMIZADAS PARA IMPRESSÃO AUTOMÁTICA
         let ultimaImpressaoTimestamp = null;
         let impressaoInterval = null;
         let impressoesProcessadas = new Set();
-        let isPrinting = false; // 🆕 PARA EVITAR CONCORRÊNCIA
+        let isPrinting = false;
         
-        // 🆕 VARIÁVEIS PARA ADICIONAR ITENS POR COMANDA
         let comandasDaMesaSelecionada = [];
         let comandaSelecionadaParaAdicionar = null;
+
+        let totalCom10Percent = 0;
+        let taxaServico = 0;
+        // 🆕 INICIA SEMPRE BLOQUEADO AO CARREGAR A PÁGINA
+        let caixaFechadaHoje = true; 
         
         function initCozinha(){
             startAllPolling();
             iniciarImpressaoAutomatica();
+            calcularCaixaDoDia();
             
-            // 🆕 CARREGAR TIMESTAMP ATUAL PARA SÓ PEGAR IMPRESSÕES FUTURAS
+            // 🆕 Configura o evento 'Enter' para o modal de desbloqueio
+            document.getElementById('input-senha-desbloqueio').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verificarSenhaDesbloqueio();
+                }
+            });
+            
+            // 🆕 Aplica o estado inicial de bloqueio/blur
+            updateCaixaBlockStatus();
+
             ultimaImpressaoTimestamp = new Date().toISOString();
             console.log('Cozinha iniciada - Só processará impressões após:', ultimaImpressaoTimestamp);
         }
         
         function startAllPolling(){
+            // Garante que o polling não rode duplicado
+            if (pollingIntervalPedidos) return; 
+
             fetchPedidos();
             pollingIntervalPedidos=setInterval(fetchPedidos,3000);
             fetchMesas();
@@ -219,14 +267,12 @@
             }
         }
         
-        // 🆕 FUNÇÃO PARA TOCAR ALERTA SONORO
         function tocarAlertaSonoro() {
             try {
                 const audio = document.getElementById('alertSound');
                 audio.volume = 0.7;
                 audio.play().catch(e => console.log('Erro ao tocar áudio:', e));
                 
-                // Mostrar alerta visual
                 const alertIndicator = document.getElementById('alert-indicator');
                 alertIndicator.style.display = 'flex';
                 setTimeout(() => {
@@ -392,16 +438,21 @@
                     </div>
                 `;
                 
-                div.onclick = () => selecionarComandaParaAdicionar(comanda);
+                div.onclick = (event) => {
+                    selecionarComandaParaAdicionar(comanda, event.currentTarget);
+                }
                 container.appendChild(div);
             });
             
             if (!comandaSelecionadaParaAdicionar && comandasDaMesaSelecionada.length > 0) {
-                selecionarComandaParaAdicionar(comandasDaMesaSelecionada[0]);
+                const firstOption = container.querySelector('.comanda-option');
+                if (firstOption) {
+                    selecionarComandaParaAdicionar(comandasDaMesaSelecionada[0], firstOption);
+                }
             }
         }
         
-        function selecionarComandaParaAdicionar(comanda) {
+        function selecionarComandaParaAdicionar(comanda, element) {
             comandaSelecionadaParaAdicionar = comanda;
             const nome = comanda.nome_comanda || 'Comanda Principal';
             
@@ -410,7 +461,9 @@
             
             const options = document.querySelectorAll('.comanda-option');
             options.forEach(opt => opt.classList.remove('selecionada'));
-            event.currentTarget.classList.add('selecionada');
+            if (element) {
+                element.classList.add('selecionada');
+            }
         }
         
         async function carregarCardapioAdicionar(){
@@ -452,7 +505,6 @@
             }
         }
         
-        // 🆕 FUNÇÃO CORRIGIDA: ADICIONAR ITEM SEM IMPRIMIR
         async function adicionarItem(itemId,nome,preco){
             if(!mesaSelecionadaAdicionar){
                 alert('Selecione uma mesa primeiro!');
@@ -511,6 +563,9 @@
                 document.getElementById('contagem-pedidos').textContent=count;
                 const formasDiv=document.getElementById('totais-por-forma');
                 formasDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma:</h5>'+Object.entries(formas).map(([f,v])=>v>0?`<p>${f}: R$ ${v.toFixed(2).replace('.',',')}</p>`:'').join('');
+                
+                // 🆕 Garantir que o status de bloqueio seja aplicado no polling
+                updateCaixaBlockStatus();
             }catch(err){
                 console.error(err);
             }
@@ -520,8 +575,16 @@
             const pedido=pedidosAtuais.find(p=>p.id===pedidoId);
             if(!pedido)return;
             pedidoAtualModal=pedido;
+            
+            // 🆕 Implementação da Taxa de Serviço (10%)
+            const subtotal = (pedido.total || 0); 
+            taxaServico = subtotal * 0.10;
+            totalCom10Percent = subtotal + taxaServico;
+            
             document.getElementById('modal-mesa-num').textContent=pedido.mesa;
-            document.getElementById('modal-total').textContent=(pedido.total||0).toFixed(2).replace('.',',');
+            document.getElementById('modal-subtotal').textContent=subtotal.toFixed(2).replace('.',',');
+            document.getElementById('modal-taxa-servico').textContent=taxaServico.toFixed(2).replace('.',',');
+            document.getElementById('modal-total').textContent=totalCom10Percent.toFixed(2).replace('.',',');
             
             const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
             document.getElementById('modal-itens-lista').innerHTML=`
@@ -539,6 +602,8 @@
         function fecharModalConta(){
             document.getElementById('modal-fechar-conta').style.display='none';
             pedidoAtualModal=null;
+            totalCom10Percent = 0;
+            taxaServico = 0;
         }
         
         document.getElementById('modal-forma-pagamento').onchange=function(){
@@ -547,7 +612,7 @@
         };
         
         function calcularTroco(){
-            const total=pedidoAtualModal?pedidoAtualModal.total:0;
+            const total=totalCom10Percent;
             const recebido=parseFloat(document.getElementById('valor-recebido').value)||0;
             const troco=recebido-total;
             if(recebido>=total&&recebido>0){
@@ -562,11 +627,14 @@
             if(!pedidoAtualModal)return;
             const forma=document.getElementById('modal-forma-pagamento').value;
             if(!forma)return alert('Selecione a forma de pagamento!');
+            
+            const totalFinal = totalCom10Percent;
             let valorRecebido=null,troco=0;
+            
             if(forma==='Dinheiro'){
                 valorRecebido=parseFloat(document.getElementById('valor-recebido').value);
-                if(!valorRecebido||valorRecebido<pedidoAtualModal.total)return alert('Valor insuficiente!');
-                troco=valorRecebido-pedidoAtualModal.total;
+                if(!valorRecebido||valorRecebido<totalFinal)return alert('Valor insuficiente!');
+                troco=valorRecebido-totalFinal;
             }
             
             const { data: comandasRestantes } = await supabaseClient
@@ -580,6 +648,8 @@
                 forma_pagamento:forma,
                 valor_recebido:valorRecebido,
                 troco:troco,
+                total: totalFinal, // O total final com 10%
+                taxa_servico: taxaServico, // Valor da taxa de serviço
                 horario_fecha:new Date().toISOString()
             }).eq('id',pedidoAtualModal.id);
             
@@ -590,7 +660,7 @@
                     .eq('mesa', pedidoAtualModal.mesa);
             }
             
-            imprimirComprovante(pedidoAtualModal,forma,valorRecebido,troco);
+            imprimirComprovante(pedidoAtualModal, forma, valorRecebido, troco, taxaServico, totalFinal);
             fecharModalConta();
             fetchPedidos();
             fetchMesas();
@@ -598,9 +668,10 @@
             alert('Conta fechada!');
         }
         
-        function imprimirComprovante(pedido,forma,recebido,troco){
+        function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal){
             const dataHora=new Date().toLocaleString('pt-BR');
             const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+            const subtotal = totalFinal - taxaServico;
             
             let html=`
                 <div style="font-family:monospace;padding:10px;">
@@ -613,7 +684,9 @@
                     <ul style="list-style:none;padding:0;">
                         ${(pedido.itens||[]).map(i=>`<li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</li>`).join('')}
                     </ul>
-                    <p><b>TOTAL: R$ ${pedido.total.toFixed(2)}</b></p>
+                    <p><b>SUBTOTAL: R$ ${subtotal.toFixed(2)}</b></p>
+                    <p><b>Taxa de Serviço (10%): R$ ${taxaServico.toFixed(2)}</b></p>
+                    <p><b>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</b></p>
                     <p><b>Forma: ${forma}</b></p>
                     ${forma==='Dinheiro'&&recebido?`
                         <p><b>Recebido: R$ ${recebido.toFixed(2)}</b></p>
@@ -626,7 +699,6 @@
             setTimeout(()=>window.print(),300);
         }
         
-        // 🆕 FUNÇÕES OTIMIZADAS PARA IMPRESSÃO AUTOMÁTICA
         async function verificarNovasImpressoes() {
             if (isPrinting) {
                 console.log('Já está imprimindo, aguardando...');
@@ -641,7 +713,6 @@
                     .select('*')
                     .order('data_hora', { ascending: true });
 
-                // 🆕 USAR TIMESTAMP EM VEZ DE ID PARA MAIOR ROBUSTEZ
                 if (ultimaImpressaoTimestamp) {
                     query = query.gt('data_hora', ultimaImpressaoTimestamp);
                 }
@@ -654,10 +725,8 @@
                     console.log(`🆕 ${data.length} nova(s) impressão(ões) encontrada(s)`);
                     
                     for (const novaImpressao of data) {
-                        // 🆕 ATUALIZAR TIMESTAMP PARA A MAIS RECENTE
                         ultimaImpressaoTimestamp = novaImpressao.data_hora;
                         
-                        // 🆕 VERIFICAR SE JÁ FOI PROCESSADA (BACKUP)
                         if (impressoesProcessadas.has(novaImpressao.id)) {
                             console.log(`Impressão ${novaImpressao.id} já processada, pulando...`);
                             continue;
@@ -667,16 +736,12 @@
                         
                         console.log('🖨️ Imprimindo comanda:', novaImpressao.id, 'Mesa:', novaImpressao.mesa);
                         
-                        // 🆕 TOCAR ALERTA SONORO IMEDIATAMENTE
                         tocarAlertaSonoro();
                         
-                        // 🆕 IMPRIMIR COM DELAY MÍNIMO
                         await imprimirComandaCozinha(novaImpressao);
                         
-                        // 🆕 APAGAR DO BANCO COM CONFIRMAÇÃO
                         await apagarImpressaoComConfirmacao(novaImpressao.id);
                         
-                        // 🆕 PEQUENA PAUSA ENTRE IMPRESSÕES
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
                 }
@@ -687,7 +752,6 @@
             }
         }
 
-        // 🆕 FUNÇÃO ROBUSTA PARA APAGAR IMPRESSÃO
         async function apagarImpressaoComConfirmacao(impressaoId) {
             let tentativas = 3;
             
@@ -738,7 +802,6 @@
         function iniciarImpressaoAutomatica() {
             if (impressaoInterval) return;
             
-            // 🆕 VERIFICAR MAIS RÁPIDO (1 SEGUNDO)
             impressaoInterval = setInterval(verificarNovasImpressoes, 1000);
             console.log('🚀 Impressão automática iniciada - Verificando a cada 1 segundo');
         }
@@ -750,16 +813,19 @@
             }
         }
         
-        // 🆕 LIMPEZA PERIÓDICA DO SET DE IMPRESSÕES PROCESSADAS
         setInterval(() => {
             if (impressoesProcessadas.size > 100) {
                 console.log('🧹 Limpando set de impressões processadas...');
                 impressoesProcessadas.clear();
             }
-        }, 60000); // A cada 1 minuto
+        }, 60000);
         
-        // 🆕 FUNÇÕES PARA FECHAR CAIXA
         function abrirModalFechamentoCaixa() {
+            if (caixaFechadaHoje) {
+                alert('O caixa está bloqueado. Desbloqueie-o antes de fechar.');
+                return;
+            }
+            
             const hoje = new Date().toLocaleDateString('pt-BR');
             const total = document.getElementById('total-caixa').textContent;
             const pedidos = document.getElementById('contagem-pedidos').textContent;
@@ -781,25 +847,116 @@
         
         async function confirmarFechamentoCaixa() {
             try {
-                await baixarCaixaPDF();
-                await limparCaixaDoDia();
+                const totalAtual = parseFloat(document.getElementById('total-caixa').textContent.replace('R$ ', '').replace(',', '.'));
+                
+                if (totalAtual > 0) {
+                    await baixarCaixaPDF();
+                    await limparCaixaDoDia();
+                } else if (totalAtual === 0) {
+                     if(!confirm('O total do caixa é R$ 0,00. Deseja prosseguir com o bloqueio e fechar o caixa (sem gerar PDF ou limpar pedidos fechados)?')) return;
+                }
+                
+                caixaFechadaHoje = true; // Define o bloqueio
+                updateCaixaBlockStatus(); // Atualiza a interface (aplica o blur)
                 fecharModalFecharCaixa();
-                alert('Caixa fechado com sucesso! Relatório salvo.');
+                alert('Caixa fechado com sucesso! Ações bloqueadas.');
             } catch (error) {
                 alert('Erro ao fechar caixa: ' + error.message);
             }
         }
         
+        // 🆕 NOVO: FUNÇÃO PARA BLOQUEAR O CAIXA MANUALMENTE
+        function bloquearCaixaManualmente() {
+            if (confirm('Tem certeza que deseja BLOQUEAR o caixa? Os dados e ações serão desfocados/ocultados.')) {
+                caixaFechadaHoje = true;
+                updateCaixaBlockStatus();
+                alert('Caixa bloqueado. Use a senha para desbloquear.');
+            }
+        }
+
+        // 🆕 NOVO: ABRE O MODAL DE SENHA PARA DESBLOQUEIO
+        function abrirModalDesbloqueio() {
+            document.getElementById('input-senha-desbloqueio').value = '';
+            document.getElementById('mensagem-erro-desbloqueio').style.display = 'none';
+            document.getElementById('modal-desbloqueio').style.display = 'block';
+            document.getElementById('input-senha-desbloqueio').focus();
+        }
+
+        // 🆕 NOVO: FECHA O MODAL DE SENHA PARA DESBLOQUEIO
+        function fecharModalDesbloqueio() {
+            document.getElementById('modal-desbloqueio').style.display = 'none';
+        }
+        
+        // 🆕 NOVO: VERIFICA A SENHA PARA DESBLOQUEIO
+        function verificarSenhaDesbloqueio() {
+            const senhaDigitada = document.getElementById('input-senha-desbloqueio').value;
+            const msgErro = document.getElementById('mensagem-erro-desbloqueio');
+
+            if (senhaDigitada === SENHA_DESBLOQUEIO) {
+                caixaFechadaHoje = false; // Desbloqueia
+                updateCaixaBlockStatus();
+                fecharModalDesbloqueio();
+                alert('Caixa desbloqueado com sucesso!');
+            } else {
+                msgErro.style.display = 'block';
+                document.getElementById('input-senha-desbloqueio').value = '';
+                setTimeout(() => msgErro.style.display = 'none', 3000);
+            }
+        }
+
+        // 🆕 FUNÇÃO PARA BLOQUEAR/DESBLOQUEAR AS AÇÕES E O BLUR
+        function updateCaixaBlockStatus() {
+            const caixaContainer = document.getElementById('caixa-do-dia');
+            const caixaContent = document.getElementById('caixa-content');
+            const caixaActions = document.getElementById('caixa-actions-container');
+            const fecharCaixaBtn = document.getElementById('btn-fechar-caixa');
+            const bloquearCaixaBtn = document.getElementById('btn-bloquear-caixa');
+            const desbloquearCaixaBtn = document.getElementById('btn-desbloquear-caixa');
+            let statusBloqueado = document.getElementById('caixa-status-bloqueado');
+
+            if (caixaFechadaHoje) {
+                // Modo Bloqueado: Aplica Blur, Esconde ações, mostra botão de Desbloqueio
+                if (caixaContent) caixaContent.classList.add('blurry');
+                if (caixaActions) caixaActions.style.display = 'none';
+                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'none';
+                if (bloquearCaixaBtn) bloquearCaixaBtn.style.display = 'none';
+                if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'block';
+
+                if (!statusBloqueado) {
+                    statusBloqueado = document.createElement('p');
+                    statusBloqueado.id = 'caixa-status-bloqueado';
+                    statusBloqueado.style.cssText = 'color: red; font-weight: bold; margin-top: 10px; text-align: center;';
+                    statusBloqueado.textContent = '🔒 CAIXA FECHADO/BLOQUEADO';
+                    caixaContainer.prepend(statusBloqueado);
+                }
+            } else {
+                // Modo Desbloqueado: Remove Blur, Mostra ações, mostra botão de Bloqueio manual
+                if (caixaContent) caixaContent.classList.remove('blurry');
+                if (caixaActions) caixaActions.style.display = 'flex';
+                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'block';
+                if (bloquearCaixaBtn) bloquearCaixaBtn.style.display = 'block';
+                if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'none';
+                if (statusBloqueado) statusBloqueado.remove();
+            }
+        }
+        
         async function baixarCaixaPDF(){
+            if (caixaFechadaHoje) {
+                alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
+                return;
+            }
+            
             const hoje=new Date().toISOString().split('T')[0];
             const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
-            let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0};
+            
+            let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0}, totalTaxaServico = 0;
             const pedidosHoje=[];
             (data||[]).forEach(p=>{
                 if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
                     total+=p.total;
                     count++;
                     pedidosHoje.push(p);
+                    totalTaxaServico += p.taxa_servico || 0;
                     if(formas[p.forma_pagamento]!==undefined){
                         formas[p.forma_pagamento]+=p.total;
                     }
@@ -814,10 +971,11 @@
             doc.text('RELATÓRIO DE CAIXA',105,30,{align:'center'});
             doc.setFontSize(10);
             doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`,20,45);
-            doc.text(`Total: R$ ${total.toFixed(2)}`,20,55);
-            doc.text(`Pedidos: ${count}`,20,65);
+            doc.text(`Total Bruto (com 10%): R$ ${total.toFixed(2)}`,20,55);
+            doc.text(`Total Taxa Serviço: R$ ${totalTaxaServico.toFixed(2)}`,20,65);
+            doc.text(`Pedidos: ${count}`,20,75);
             
-            let y=80;
+            let y=90;
             doc.setFontSize(12);
             doc.text('Por Forma de Pagamento:',20,y);
             y+=10;
@@ -848,6 +1006,11 @@
         }
         
         async function limparCaixaDoDia(){
+            if (caixaFechadaHoje) {
+                alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
+                return;
+            }
+
             if(!confirm('ATENÇÃO: Isso irá DELETAR todos os pedidos fechados de hoje do banco de dados! Certifique-se de ter feito backup. Deseja continuar?'))return;
             if(!confirm('Tem ABSOLUTA CERTEZA? Esta ação NÃO pode ser desfeita!'))return;
             
