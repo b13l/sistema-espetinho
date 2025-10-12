@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Digital - Espetinho Gesselo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* ESTILOS DE FUNDO E TIPOGRAFIA */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #1a1a1a; 
+            color: white; 
+            margin: 0; 
+            padding: 0 0 80px 0; /* Padding extra para o footer fixo */
+        }
+        .container { 
+            padding: 15px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
+        
+        /* CABEÇALHO */
+        .header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            padding: 15px 0;
+            border-bottom: 3px solid #ff8c00;
+        }
+        .header h1 { 
+            color: #ff8c00; 
+            margin: 0; 
+            font-size: 2em;
+        }
+        .header p {
+            color: #ccc;
+            margin: 5px 0 0 0;
+            font-size: 1.1em;
+        }
+
+        /* ESTILOS DO CARDÁPIO */
+        .categoria-titulo {
+            font-size: 1.5em;
+            color: #4CAF50;
+            margin: 30px 0 15px 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .item-cardapio {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Alinha os botões e texto no centro vertical */
+            padding: 12px 0;
+            border-bottom: 1px dashed #383838;
+        }
+        
+        .item-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .item-nome {
+            font-weight: bold;
+            font-size: 1.1em;
+            line-height: 1.3;
+        }
+
+        .item-descricao {
+            font-size: 0.9em;
+            color: #a0a0a0;
+            margin-top: 3px;
+        }
+        
+        .item-preco {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #ff8c00; 
+            white-space: nowrap;
+            margin-right: 15px; /* Espaço entre preço e controles */
+        }
+        
+        /* CONTROLES DA CALCULADORA */
+        .item-controles {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .controles-btn {
+            background-color: #444;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.2em;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+        .controles-btn:active {
+            opacity: 0.8;
+        }
+        .controles-btn.add {
+            background-color: #4CAF50;
+        }
+        .controles-btn.remove {
+            background-color: #FF5733;
+        }
+        .item-quantidade {
+            margin: 0 10px;
+            font-weight: bold;
+            min-width: 15px;
+            text-align: center;
+        }
+
+        /* BARRA TOTAL FIXA (RODAPÉ) */
+        #carrinho-total-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #000000;
+            color: white;
+            padding: 15px 10px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        #carrinho-total-bar > div {
+            padding: 0 10px;
+        }
+        #carrinho-valor {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ff8c00;
+        }
+        
+        /* FOOTER SIMPLES */
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 0.8em;
+            color: #555;
+            margin-top: 40px;
+        }
+        
+        /* ESTILOS DE CARREGAMENTO/ERRO */
+        .loading-message {
+            color: #ccc;
+            margin-top: 50px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Espetinho Gesselo</h1>
+            <p> Cardápio Digital</p>
+        </div>
+
+        <div id="cardapio-view">
+            <p class="loading-message">Carregando cardápio...</p>
+        </div>
+
+        <div class="footer">
+            <p>Os valores acima são apenas uma simulação. Consulte um garçom para realizar o pedido.</p>
+        </div>
+    </div>
+    
+    <div id="carrinho-total-bar">
+        <div>Total da Simulação:</div>
+        <div id="carrinho-valor">R$ 0,00</div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÕES DO SUPABASE (Use as mesmas chaves do seu PDV) ---
+        const SUPABASE_URL = 'https://ufxbltjyswbynwnaybev.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Armazena os itens selecionados e suas quantidades
+        let carrinhoItens = {}; // Ex: { item_id: { nome: 'Item A', preco: 10.00, quantidade: 2 } }
+
+        document.addEventListener('DOMContentLoaded', carregarCardapioDigital);
+        
+        // --- FUNÇÕES DE CÁLCULO E RENDERIZAÇÃO ---
+
+        function updateCarrinho(itemId, nome, preco, acao) {
+            const item = carrinhoItens[itemId];
+
+            if (acao === 'add') {
+                if (item) {
+                    item.quantidade += 1;
+                } else {
+                    carrinhoItens[itemId] = { nome, preco, quantidade: 1 };
+                }
+            } else if (acao === 'remove' && item && item.quantidade > 0) {
+                item.quantidade -= 1;
+                if (item.quantidade === 0) {
+                    delete carrinhoItens[itemId]; // Remove se a quantidade for zero
+                }
+            }
+            
+            // Atualiza a visualização da quantidade e o total
+            renderItemQuantity(itemId);
+            calcularTotal();
+        }
+
+        function renderItemQuantity(itemId) {
+            const display = document.getElementById(`qty-${itemId}`);
+            if (display) {
+                const item = carrinhoItens[itemId];
+                display.textContent = item ? item.quantidade : 0;
+            }
+        }
+
+        function calcularTotal() {
+            let total = 0;
+            for (const id in carrinhoItens) {
+                const item = carrinhoItens[id];
+                total += item.preco * item.quantidade;
+            }
+
+            const totalFormatado = total.toFixed(2).replace('.', ',');
+            document.getElementById('carrinho-valor').textContent = `R$ ${totalFormatado}`;
+        }
+        
+        // --- FUNÇÃO PRINCIPAL DE CARREGAMENTO DO CARDÁPIO ---
+        async function carregarCardapioDigital() {
+            const container = document.getElementById('cardapio-view');
+            container.innerHTML = '<p class="loading-message">Carregando...</p>';
+
+            try {
+                const { data: itens, error } = await supabaseClient
+                    .from('cardapio')
+                    .select('*')
+                    .order('categoria', { ascending: true })
+                    .order('nome_item', { ascending: true });
+
+                if (error || !itens || itens.length === 0) {
+                    container.innerHTML = '<p class="loading-message" style="color: red;">Erro ao carregar cardápio ou cardápio vazio.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                let categorias = {};
+                
+                itens.forEach(item => {
+                    const categoriaNome = item.categoria && item.categoria.trim() !== '' ? item.categoria : 'Sem Categoria';
+                    if (!categorias[categoriaNome]) {
+                        categorias[categoriaNome] = [];
+                    }
+                    categorias[categoriaNome].push(item);
+                });
+
+                for (const [categoria, itensCategoria] of Object.entries(categorias)) {
+                    const h2 = document.createElement('h2');
+                    h2.className = 'categoria-titulo';
+                    h2.textContent = categoria;
+                    container.appendChild(h2);
+
+                    itensCategoria.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'item-cardapio';
+                        
+                        const precoFormatado = parseFloat(item.preco).toFixed(2).replace('.', ',');
+                        
+                        // ID Único para cada item
+                        const itemId = `item-${item.id}`; 
+                        
+                        // Escapando strings para passar ao JS
+                        const nomeItem = item.nome_item.replace(/'/g, "\\'");
+                        const precoItem = item.preco;
+
+                        itemDiv.innerHTML = `
+                            <div class="item-info">
+                                <span class="item-nome">${item.nome_item}</span>
+                                ${item.descricao ? `<p class="item-descricao">${item.descricao}</p>` : ''}
+                            </div>
+                            
+                            <span class="item-preco">R$ ${precoFormatado}</span>
+                            
+                            <div class="item-controles">
+                                <button class="controles-btn remove" 
+                                        onclick="updateCarrinho('${itemId}', '${nomeItem}', ${precoItem}, 'remove')">-</button>
+                                
+                                <span class="item-quantidade" id="qty-${itemId}">0</span>
+                                
+                                <button class="controles-btn add" 
+                                        onclick="updateCarrinho('${itemId}', '${nomeItem}', ${precoItem}, 'add')">+</button>
+                            </div>
+                        `;
+                        container.appendChild(itemDiv);
+                    });
+                }
+
+            } catch (err) {
+                container.innerHTML = '<p class="loading-message" style="color: red;">Erro de conexão. Tente novamente mais tarde.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
