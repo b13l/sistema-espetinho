@@ -755,60 +755,80 @@
         }
 
         // 🆕 FUNÇÃO PARA IMPRIMIR NA COZINHA
-        async function imprimirNaCozinha() {
-            const mesaId = GLOBAL_MESA_ID; 
-            const total = document.getElementById('total-comanda').textContent;
-            const dataHora = new Date().toLocaleString('pt-BR');
-            const observacao = document.getElementById('observacao').value.trim();
-            const nomeComanda = GLOBAL_COMANDA_NOME;
+async function imprimirNaCozinha() {
+    const mesaId = GLOBAL_MESA_ID; 
+    const total = document.getElementById('total-comanda').textContent;
+    const dataHora = new Date().toLocaleString('pt-BR');
+    const observacao = document.getElementById('observacao').value.trim();
+    const nomeComanda = GLOBAL_COMANDA_NOME;
+    
+    let printContent = `
+        <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
+            <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
+                <strong>ESPETINHO GESSELO</strong>
+            </h2>
+            <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;">
+                <strong>COMANDA - MESA ${mesaId}</strong>
+            </h3>
+            <p style="text-align: center; margin: 0 0 8px 0; font-size: 13pt; color: #000000;">
+                <strong>${nomeComanda}</strong>
+            </p>
+            <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;">
+                <strong>Data: ${dataHora}</strong>
+            </p>
             
-            let printContent = `
-                <div style="font-family: monospace; font-size: 10pt; line-height: 1.4;">
-                    <h3 style="text-align: center; margin: 5px 0;">ESPETINHO GESSELO</h3>
-                    <h4 style="text-align: center; margin: 0 0 10px 0;">COMANDA - MESA ${mesaId}</h4>
-                    <p style="text-align: center; margin: 0 0 5px 0;"><strong>${nomeComanda}</strong></p>
-                    <p style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">Data: ${dataHora}</p>
-                    
-                    <ul style="list-style: none; padding: 0;">
-                    ${GLOBAL_ORDER_ITEMS.map(item => `
-                        <li style="margin-bottom: 3px;">
-                            <span>${item.quantidade}x</span>
-                            <span style="display: inline-block; width: 60%;">${item.nome}</span>
-                            <span style="float: right;">R$ ${item.preco.toFixed(2).replace('.', ',')}</span>
-                        </li>
-                    `).join('')}
-                    </ul>
-                    
-                    ${observacao ? `<p style="border-top: 1px dashed black; padding-top: 5px; margin-top: 10px;">OBS: ${observacao}</p>` : ''}
-                    
-                    <h4 style="border-top: 1px dashed black; padding-top: 5px; margin-top: 10px; text-align: right;">${total}</h4>
+            <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;">
+                <strong>ITENS:</strong>
+            </h4>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+            ${GLOBAL_ORDER_ITEMS.map(item => `
+                <li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+                    <strong>${item.quantidade}x ${item.nome}</strong>
+                    <span style="float: right;">
+                        <strong>R$ ${item.preco.toFixed(2).replace('.', ',')}</strong>
+                    </span>
+                </li>
+            `).join('')}
+            </ul>
+            
+            ${observacao ? `
+                <div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;">
+                    <p style="font-size: 12pt; margin: 8px 0; color: #000000;">
+                        <strong>OBS: ${observacao}</strong>
+                    </p>
                 </div>
-            `;
+            ` : ''}
+            
+            <h3 style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: right; font-size: 16pt; color: #000000;">
+                <strong>${total}</strong>
+            </h3>
+        </div>
+    `;
 
-            // 🆕 ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE
-            const { error } = await supabaseClient
-                .from('impressoes_cozinha')
-                .insert({
-                    mesa: mesaId,
-                    comanda_nome: nomeComanda,
-                    conteudo: printContent,
-                    itens: GLOBAL_ORDER_ITEMS,
-                    total: total,
-                    observacao: observacao,
-                    data_hora: new Date().toISOString()
-                });
+    // 🆕 ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE
+    const { error } = await supabaseClient
+        .from('impressoes_cozinha')
+        .insert({
+            mesa: mesaId,
+            comanda_nome: nomeComanda,
+            conteudo: printContent,
+            itens: GLOBAL_ORDER_ITEMS,
+            total: total,
+            observacao: observacao,
+            data_hora: new Date().toISOString()
+        });
 
-            if (error) {
-                console.error('Erro ao enviar para impressão na cozinha:', error);
-                // Fallback: salvar em localStorage para a cozinha ler
-                localStorage.setItem('ultima_impressao_cozinha', JSON.stringify({
-                    mesa: mesaId,
-                    comanda_nome: nomeComanda,
-                    conteudo: printContent,
-                    data_hora: new Date().toISOString()
-                }));
-            }
-        }
+    if (error) {
+        console.error('Erro ao enviar para impressão na cozinha:', error);
+        // Fallback: salvar em localStorage para a cozinha ler
+        localStorage.setItem('ultima_impressao_cozinha', JSON.stringify({
+            mesa: mesaId,
+            comanda_nome: nomeComanda,
+            conteudo: printContent,
+            data_hora: new Date().toISOString()
+        }));
+    }
+}
 
         // --- INICIALIZAÇÃO ---
         document.addEventListener('DOMContentLoaded', () => {
