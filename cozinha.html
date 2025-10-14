@@ -110,7 +110,7 @@
     
     <div class="grid-container">
         <div>
-            <h2>Pedidos - Cozinha</h2>
+            <h2>📦 Pedidos - Cozinha</h2>
             <div id="pedidos-container"><p style="text-align: center;">Carregando pedidos...</p></div>
         </div>
         
@@ -152,21 +152,21 @@
         </div>
     </div>
     
-    <div id="modal-fechar-conta" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModalConta()">&times;</span>
-            <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
-            <div id="modal-itens-lista"></div>
-            <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
-            <h3 style="color: #ffc107;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
-            <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
+<div id="modal-fechar-conta" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModalConta()">&times;</span>
+        <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
+        <div id="modal-itens-lista"></div>
+        <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
+        <!-- 🔽🔽🔽 AQUI: TAXA DE SERVIÇO NO MODAL COM FONTE PEQUENA -->
+        <h3 style="color: #ffc107; font-size: 12px; margin: 5px 0;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
+        <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
             <label>Forma de Pagamento:</label>
             <select id="modal-forma-pagamento">
                 <option value="">Selecione...</option>
-                <option value="Dinheiro">Dinheiro</option>
                 <option value="Cartao Debito">Cartão Débito</option>
                 <option value="Cartao Credito">Cartão Crédito</option>
-                <option value="PIX">PIX</option>
+                
             </select>
             <div id="campo-dinheiro" style="display: none;">
                 <label>Valor Recebido:</label>
@@ -549,7 +549,7 @@
             try{
                 const hoje=new Date().toISOString().split('T')[0];
                 const{data}=await supabaseClient.from('pedidos').select('total,forma_pagamento,horario_fecha').eq('status','Fechado').not('horario_fecha','is',null);
-                let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0};
+                let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0};
                 (data||[]).forEach(p=>{
                     if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
                         total+=p.total;
@@ -668,36 +668,68 @@
             alert('Conta fechada!');
         }
         
-        function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal){
-            const dataHora=new Date().toLocaleString('pt-BR');
-            const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
-            const subtotal = totalFinal - taxaServico;
-            
-            let html=`
-                <div style="font-family:monospace;padding:10px;">
-                    <h2 style="text-align:center;">ESPETINHO GESSELO</h2>
-                    <h3 style="text-align:center;">COMPROVANTE</h3>
-                    <p style="text-align:center;">${dataHora}</p>
-                    <p><strong>Mesa:</strong> ${pedido.mesa}</p>
-                    <p><strong>Comanda:</strong> ${nomeComanda}</p>
-                    <h4>ITENS:</h4>
-                    <ul style="list-style:none;padding:0;">
-                        ${(pedido.itens||[]).map(i=>`<li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</li>`).join('')}
-                    </ul>
-                    <p><b>SUBTOTAL: R$ ${subtotal.toFixed(2)}</b></p>
-                    <p><b>Taxa de Serviço (10%): R$ ${taxaServico.toFixed(2)}</b></p>
-                    <p><b>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</b></p>
-                    <p><b>Forma: ${forma}</b></p>
-                    ${forma==='Dinheiro'&&recebido?`
-                        <p><b>Recebido: R$ ${recebido.toFixed(2)}</b></p>
-                        <p><b>Troco: R$ ${troco.toFixed(2)}</b></p>
-                    `:''}
-                    <p style="text-align:center;margin-top:20px;">Obrigado!</p>
-                </div>
-            `;
-            document.getElementById('comanda-impressao').innerHTML=html;
-            setTimeout(()=>window.print(),300);
-        }
+function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal){
+    const dataHora=new Date().toLocaleString('pt-BR');
+    const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+    const subtotal = totalFinal - taxaServico;
+    
+    let html=`
+        <div style="font-family:monospace;padding:15px;font-size:14pt;line-height:1.4;color:#000000;">
+            <h2 style="text-align:center;font-size:20pt;margin-bottom:8px;color:#000000;">
+                <strong>ESPETINHO GESSELO</strong>
+            </h2>
+            <h3 style="text-align:center;font-size:18pt;margin-top:5px;margin-bottom:15px;color:#000000;">
+                <strong>COMPROVANTE</strong>
+            </h3>
+            <p style="text-align:center;font-size:13pt;margin-bottom:20px;color:#000000;">
+                <strong>${dataHora}</strong>
+            </p>
+            <p style="font-size:13pt;margin:10px 0;color:#000000;">
+                <strong>Mesa: ${pedido.mesa}</strong>
+            </p>
+            <p style="font-size:13pt;margin:10px 0;color:#000000;">
+                <strong>Comanda: ${nomeComanda}</strong>
+            </p>
+            <h4 style="font-size:15pt;margin:20px 0 12px 0;border-bottom:2px solid #000;padding-bottom:8px;color:#000000;">
+                <strong>ITENS:</strong>
+            </h4>
+            <ul style="list-style:none;padding:0;margin:0;">
+                ${(pedido.itens||[]).map(i=>`
+                    <li style="font-size:13pt;margin:8px 0;padding:5px 0;border-bottom:1px dashed #000;color:#000000;">
+                        <strong>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</strong>
+                    </li>
+                `).join('')}
+            </ul>
+            <div style="margin-top:20px;border-top:3px solid #000;padding-top:15px;">
+                <p style="font-size:14pt;margin:10px 0;color:#000000;">
+                    <strong>SUBTOTAL: R$ ${subtotal.toFixed(2)}</strong>
+                </p>
+                <p style="font-size:10pt;margin:6px 0;color:#000000;">
+                    <strong>Taxa de Serviço (10%): R$ ${taxaServico.toFixed(2)}</strong>
+                </p>
+                <p style="font-size:16pt;margin:15px 0;color:#000000;">
+                    <strong>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</strong>
+                </p>
+                <p style="font-size:14pt;margin:10px 0;color:#000000;">
+                    <strong>Forma: ${forma}</strong>
+                </p>
+                ${forma==='Dinheiro'&&recebido?`
+                    <p style="font-size:13pt;margin:8px 0;color:#000000;">
+                        <strong>Recebido: R$ ${recebido.toFixed(2)}</strong>
+                    </p>
+                    <p style="font-size:13pt;margin:8px 0;color:#000000;">
+                        <strong>Troco: R$ ${troco.toFixed(2)}</strong>
+                    </p>
+                `:''}
+            </div>
+            <p style="text-align:center;margin-top:25px;font-size:13pt;color:#000000;">
+                <strong>Obrigado e Volte Sempre!</strong>
+            </p>
+        </div>
+    `;
+    document.getElementById('comanda-impressao').innerHTML=html;
+    setTimeout(()=>window.print(),300);
+}
         
         async function verificarNovasImpressoes() {
             if (isPrinting) {
