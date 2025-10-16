@@ -391,13 +391,18 @@
             });
         }
 
-        function selecionarComanda(comanda) {
-            GLOBAL_COMANDA_ID = comanda.id;
-            GLOBAL_ORDER_ITEMS = comanda.itens || [];
-            GLOBAL_COMANDA_NOME = comanda.nome_comanda || 'Principal';
-            document.getElementById('observacao').value = comanda.observacao || '';
-            showPdvView(comanda.mesa);
-        }
+      function selecionarComanda(comanda) {
+    GLOBAL_COMANDA_ID = comanda.id;
+    // MODIFICAÇÃO: Garante que todos os itens tenham um status, assumindo 'enviado' se for a primeira vez que carregamos um item.
+    GLOBAL_ORDER_ITEMS = (comanda.itens || []).map(item => ({
+        ...item,
+        status_cozinha: item.status_cozinha || 'enviado' // Se não tem status, já foi enviado
+    })); 
+    
+    GLOBAL_COMANDA_NOME = comanda.nome_comanda || 'Principal';
+    document.getElementById('observacao').value = comanda.observacao || '';
+    showPdvView(comanda.mesa);
+}
 
         async function criarNovaComanda() {
             const { data: newPedido, error } = await supabaseClient
@@ -661,16 +666,21 @@
 
         // --- FUNÇÕES DE MANIPULAÇÃO DA COMANDA ---
 
-        function addToCommand(id, nome, preco) {
-            const itemIndex = GLOBAL_ORDER_ITEMS.findIndex(item => item.id === id);
+       function addToCommand(id, nome, preco) {
+    const itemIndex = GLOBAL_ORDER_ITEMS.findIndex(item => item.id === id);
 
-            if (itemIndex > -1) {
-                GLOBAL_ORDER_ITEMS[itemIndex].quantidade += 1;
-            } else {
-                GLOBAL_ORDER_ITEMS.push({ id, nome, preco, quantidade: 1 });
-            }
-            renderComanda();
+    if (itemIndex > -1) {
+        GLOBAL_ORDER_ITEMS[itemIndex].quantidade += 1;
+        // Se já existe, mas está "enviado", marcamos como "novo" novamente
+        if (GLOBAL_ORDER_ITEMS[itemIndex].status_cozinha === 'enviado') {
+             GLOBAL_ORDER_ITEMS[itemIndex].status_cozinha = 'novo';
         }
+    } else {
+        // NOVO: Adicione o campo status_cozinha: 'novo'
+        GLOBAL_ORDER_ITEMS.push({ id, nome, preco, quantidade: 1, status_cozinha: 'novo' });
+    }
+    renderComanda();
+}
 
         function removeFromCommand(index) {
             GLOBAL_ORDER_ITEMS[index].quantidade -= 1;
@@ -704,68 +714,86 @@
             document.getElementById('total-comanda').textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
-        // --- FUNÇÕES DE ENVIO PARA COZINHA ---
+        // Localize esta função (aproximadamente linha 692)
+async function enviarParaCozinha() { 
+    if (GLOBAL_ORDER_ITEMS.length === 0) {
+        alert("Não há itens para enviar para cozinha.");
+        return;
+    }
 
-        async function enviarParaCozinha() { 
-            if (GLOBAL_ORDER_ITEMS.length === 0) {
-                alert("Não há itens para enviar para cozinha.");
-                return;
-            }
-
-            const totalComanda = parseFloat(document.getElementById('total-comanda').textContent.replace('Total: R$ ', '').replace(',', '.'));
-            const observacao = document.getElementById('observacao').value.trim();
-
-            // 🆕 ATUALIZAR STATUS PARA "EM PREPARO"
-            const { error: saveError } = await supabaseClient
-                .from('pedidos')
-                .update({ 
-                    itens: GLOBAL_ORDER_ITEMS, 
-                    observacao: observacao,
-                    total: totalComanda,
-                    status: 'Em Preparo'
-                })
-                .eq('id', GLOBAL_COMANDA_ID);
-
-            if (saveError) {
-                console.error('Erro ao enviar pedido para cozinha:', saveError);
-                alert('Erro ao enviar pedido para a cozinha!');
-                return;
-            }
-
-            // 🆕 ATUALIZAR STATUS DA MESA
-            const { error: mesaError } = await supabaseClient
-                .from('mesas_status')
-                .update({ status: 'Em Preparo' })
-                .eq('mesa', GLOBAL_MESA_ID);
-
-            if (mesaError) {
-                console.error('Erro ao atualizar status da mesa:', mesaError);
-            }
-
-            // 🆕 IMPRIMIR NA COZINHA (SEM ABRIR TELA DE IMPRESSÃO NO GARÇOM)
-            await imprimirNaCozinha();
-
-            alert('Pedido enviado para cozinha com sucesso!');
-            
-            // 🆕 VOLTAR PARA MESAS APÓS ENVIAR
-            setTimeout(() => {
-                showMesasView();
-                carregarMesas();
-            }, 1000);
-        }
-
-        // 🆕 FUNÇÃO PARA IMPRIMIR NA COZINHA
-async function imprimirNaCozinha() {
-    const mesaId = GLOBAL_MESA_ID; 
-    const total = document.getElementById('total-comanda').textContent;
-    const dataHora = new Date().toLocaleString('pt-BR');
+    const totalComanda = parseFloat(document.getElementById('total-comanda').textContent.replace('Total: R$ ', '').replace(',', '.'));
     const observacao = document.getElementById('observacao').value.trim();
-    const nomeComanda = GLOBAL_COMANDA_NOME;
+
+    // 🆕 IMPRIMIR NA COZINHA (Isto agora FILTRA, IMPRIME E ATUALIZA O STATUS LOCAL)
+    const impressoComSucesso = await imprimirNaCozinha();
     
+    if (!impressoComSucesso && GLOBAL_ORDER_ITEMS.filter(item => item.status_cozinha === 'novo').length > 0) {
+        // Se a impressão falhar e ainda houver itens 'novo' (caso o `imprimirNaCozinha` tenha falhado antes de atualizar o local),
+        // interrompemos a operação para evitar salvar um estado errado.
+        alert('Falha crítica ao enviar para impressão/atualizar status. Tente novamente.');
+        return;
+    }
+
+
+    // 🆕 ATUALIZAR O PEDIDO NO SUPABASE (SALVA O STATUS 'enviado' de volta no banco)
+    const { error: saveError } = await supabaseClient
+        .from('pedidos')
+        .update({ 
+            itens: GLOBAL_ORDER_ITEMS, // ARRAY AGORA CONTÉM OS ITENS NOVOS COM status_cozinha: 'enviado'
+            observacao: observacao,
+            total: totalComanda,
+            status: 'Em Preparo'
+        })
+        .eq('id', GLOBAL_COMANDA_ID);
+
+    if (saveError) {
+        console.error('Erro ao salvar o pedido atualizado com status:', saveError);
+        alert('Erro ao salvar o status atualizado do pedido!');
+        return;
+    }
+
+    // O restante da sua função continua...
+
+    // 🆕 ATUALIZAR STATUS DA MESA
+    const { error: mesaError } = await supabaseClient
+        .from('mesas_status')
+        .update({ status: 'Em Preparo' })
+        .eq('mesa', GLOBAL_MESA_ID);
+
+    if (mesaError) {
+        console.error('Erro ao atualizar status da mesa:', mesaError);
+    }
+    
+    alert('Pedido enviado para cozinha com sucesso! (Itens novos impressos)');
+    
+    // VOLTAR PARA MESAS APÓS ENVIAR
+    setTimeout(() => {
+        showMesasView();
+        carregarMesas();
+    }, 1000);
+}
+
+// 🆕 ATUALIZE ESTA FUNÇÃO: Mantenha o nome original, mas mude a lógica.
+async function imprimirNaCozinha() {
+    const mesaId = GLOBAL_MESA_ID;
+    const nomeComanda = GLOBAL_COMANDA_NOME;
+    const observacao = document.getElementById('observacao').value.trim();
+    const dataHora = new Date().toLocaleString('pt-BR');
+    
+    // 1. FILTRAR APENAS ITENS NOVOS
+    const itensNovos = GLOBAL_ORDER_ITEMS.filter(item => item.status_cozinha === 'novo');
+
+    if (itensNovos.length === 0) {
+        console.log("Nenhum item novo para imprimir na cozinha.");
+        // Se não há itens novos, apenas salva o total e observação, sem imprimir.
+        return true; 
+    }
+
+    // 2. GERAR CONTEÚDO DE IMPRESSÃO SÓ COM ITENS NOVOS
     let printContent = `
         <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
             <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
-                <strong>ESPETINHO GESSELO</strong>
+                <span style="color: #ff0000;">--- NOVO PEDIDO ---</span>
             </h2>
             <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;">
                 <strong>COMANDA - MESA ${mesaId}</strong>
@@ -778,15 +806,12 @@ async function imprimirNaCozinha() {
             </p>
             
             <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;">
-                <strong>ITENS:</strong>
+                <strong>ITENS NOVOS:</strong>
             </h4>
             <ul style="list-style: none; padding: 0; margin: 0;">
-            ${GLOBAL_ORDER_ITEMS.map(item => `
+            ${itensNovos.map(item => `
                 <li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;">
                     <strong>${item.quantidade}x ${item.nome}</strong>
-                    <span style="float: right;">
-                        <strong>R$ ${item.preco.toFixed(2).replace('.', ',')}</strong>
-                    </span>
                 </li>
             `).join('')}
             </ul>
@@ -799,35 +824,38 @@ async function imprimirNaCozinha() {
                 </div>
             ` : ''}
             
-            <h3 style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: right; font-size: 16pt; color: #000000;">
-                <strong>${total}</strong>
-            </h3>
+            <p style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: right; font-size: 12pt; color: #000000;">
+                NOVOS ITENS ENVIADOS
+            </p>
         </div>
     `;
 
-    // 🆕 ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE
+    // 3. ATUALIZAR STATUS DOS ITENS LOCAIS PARA 'enviado'
+    GLOBAL_ORDER_ITEMS.forEach(item => {
+        if (item.status_cozinha === 'novo') {
+            item.status_cozinha = 'enviado';
+        }
+    });
+
+    // 4. ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE (Agora com o conteúdo filtrado)
     const { error } = await supabaseClient
         .from('impressoes_cozinha')
         .insert({
             mesa: mesaId,
             comanda_nome: nomeComanda,
-            conteudo: printContent,
-            itens: GLOBAL_ORDER_ITEMS,
-            total: total,
+            conteudo: printContent, // Conteúdo com APENAS os itens novos
+            itens: itensNovos,      // Lista dos itens novos para referência
             observacao: observacao,
             data_hora: new Date().toISOString()
         });
 
     if (error) {
         console.error('Erro ao enviar para impressão na cozinha:', error);
-        // Fallback: salvar em localStorage para a cozinha ler
-        localStorage.setItem('ultima_impressao_cozinha', JSON.stringify({
-            mesa: mesaId,
-            comanda_nome: nomeComanda,
-            conteudo: printContent,
-            data_hora: new Date().toISOString()
-        }));
+        alert('Erro ao enviar impressão para a cozinha, verifique o console.');
+        return false;
     }
+    
+    return true;
 }
 
         // --- INICIALIZAÇÃO ---
