@@ -14,7 +14,8 @@
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; }
         .header { text-align: center; margin-bottom: 30px; }
-        .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        /* MODIFICADO: Ajustado para largura de conteúdo para a coluna lateral */
+        .grid-container { display: grid; grid-template-columns: 1fr max-content; gap: 30px; }
         
         /* PEDIDOS DA COZINHA */
         #pedidos-container { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -36,15 +37,77 @@
         .mesa-item:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
         
         /* CAIXA E GERENCIAMENTO */
-        .gerenciamento-col { background-color: #2c2c2c; padding: 20px; border-radius: 8px; }
-        #caixa-do-dia { margin-top: 20px; padding: 15px; border: 1px solid #ff8c00; border-radius: 4px; }
+        /* MODIFICADO: Melhores paddings/borders, e display flex column */
+        .gerenciamento-col { 
+            background-color: #2c2c2c; 
+            padding: 3px; 
+            border-radius: 4px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            width: max-content; 
+        }
+
+        /* NOVO: Classe para esconder o conteúdo da caixa */
+        .caixa-oculto {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .caixa-visivel {
+            max-height: 500px; 
+            opacity: 1;
+            transition: max-height 0.5s ease-in, opacity: 0.5s ease-in;
+            padding: 3px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Botão de Toggle */
+        #btn-toggle-caixa {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-size: 0.8em;
+            width: 100%;
+        }
+        
+        /* TÍTULO PRINCIPAL (h2) DENTRO DO CONTÊINER COLAPSÁVEL */
+        .caixa-visivel h2 {
+            font-size: 1.2em;
+            margin: 5px 0;
+            text-align: center;
+        }
+
+        /* MODIFICADO: Estilos para o div #caixa-do-dia */
+        #caixa-do-dia { 
+            margin-top: 3px; 
+            padding: 3px; 
+            border: 1px solid #ff8c00; 
+            border-radius: 4px; 
+            font-size: 0.8em; 
+            width: 100%;
+            box-sizing: border-box;
+        }
         #caixa-do-dia h4 { color: #ff8c00; }
-        .caixa-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-caixa { flex: 1; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        
+        /* MODIFICADO: Ajustado para o novo layout */
+        .caixa-actions { display: flex; gap: 5px; margin-top: 5px; width: 100%; box-sizing: border-box; }
+        .btn-caixa { flex: 1; padding: 5px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s; font-size: 0.9em; } 
         .btn-baixar-pdf { background-color: #28a745; color: white; }
         .btn-limpar-caixa { background-color: #dc3545; color: white; }
         .btn-baixar-pdf:hover { background-color: #218838; }
         .btn-limpar-caixa:hover { background-color: #c82333; }
+
         
         /* ADICIONAR ITEM */
         .adicionar-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #555; }
@@ -84,8 +147,8 @@
         .comanda-option.selecionada { border-color: #4CAF50; background: #2d4a2d; }
         
         /* NOVO: ESTILOS PARA OS BOTÕES DE BLOQUEIO/DESBLOQUEIO */
-        #btn-bloquear-caixa { background-color: #6c757d; color: white; margin-top: 15px; }
-        #btn-desbloquear-caixa { background-color: #ffc107; color: black; margin-top: 15px; }
+        #btn-bloquear-caixa { background-color: #6c757d; color: white; margin-top: 5px; } /* Ajustado para 5px */
+        #btn-desbloquear-caixa { background-color: #ffc107; color: black; margin-top: 5px; } /* Ajustado para 5px */
         
         /* NOVO: CLASSE DE BLUR */
         .blurry {
@@ -115,25 +178,33 @@
         </div>
         
         <div class="gerenciamento-col">
-            <h2>💰 Caixa do Dia</h2>
-            <div id="caixa-do-dia">
-                <div id="caixa-content">
-                    <p>Total Fechado Hoje: <strong id="total-caixa">R$ 0,00</strong></p>
-                    <p>Número de Pedidos: <strong id="contagem-pedidos">0</strong></p>
-                    <div id="totais-por-forma"></div>
+            <button id="btn-toggle-caixa" onclick="toggleCaixa()">💰 Mostrar Caixa</button>
+            
+            <div id="caixa-container" class="caixa-oculto">
+                
+                <h2>💰 Caixa do Dia</h2>
+                <div id="caixa-do-dia">
+                    <div id="caixa-content">
+                        <p>Total Fechado Hoje: <strong id="total-caixa">R$ 0,00</strong></p>
+                        <p>Número de Pedidos: <strong id="contagem-pedidos">0</strong></p>
+                        <div id="totais-por-forma"></div>
+                    </div>
                 </div>
+                
+                <div class="caixa-actions" id="caixa-actions-container">
+                    <button class="btn-caixa btn-baixar-pdf" onclick="baixarCaixaPDF()">📥 PDF</button>
+                    <button class="btn-caixa btn-limpar-caixa" onclick="limparCaixaDoDia()">🗑️ Limpar</button>
+                </div>
+                
+                <div style="display: flex; gap: 5px; margin-top: 5px; width: 100%; box-sizing: border-box;">
+                    <button class="btn-caixa" id="btn-fechar-caixa" style="flex: 1; background-color: #007bff; color: white;" onclick="abrirModalFechamentoCaixa()">💰 Fechar</button>
+                    <button class="btn-caixa" id="btn-bloquear-caixa" style="flex: 1;" onclick="bloquearCaixaManualmente()">🔒 Bloquear</button>
+                </div>
+
+                <button class="btn-caixa" id="btn-desbloquear-caixa" style="width: 100%; margin-top: 5px; display: none;" onclick="abrirModalDesbloqueio()">🔓 Desbloquear (Senha)</button>
             </div>
-            
-            <div class="caixa-actions" id="caixa-actions-container">
-                <button class="btn-caixa btn-baixar-pdf" onclick="baixarCaixaPDF()">📥 Baixar PDF</button>
-                <button class="btn-caixa btn-limpar-caixa" onclick="limparCaixaDoDia()">🗑️ Limpar Caixa</button>
             </div>
-            
-            <button class="btn-caixa" id="btn-fechar-caixa" style="width: 100%; margin-top: 15px; background-color: #007bff; color: white;" onclick="abrirModalFechamentoCaixa()">💰 Fechar Caixa do Dia</button>
-            <button class="btn-caixa" id="btn-bloquear-caixa" style="width: 100%;" onclick="bloquearCaixaManualmente()">🔒 Bloquear Caixa</button>
-            <button class="btn-caixa" id="btn-desbloquear-caixa" style="width: 100%; display: none;" onclick="abrirModalDesbloqueio()">🔓 Desbloquear Caixa (Senha)</button>
         </div>
-    </div>
     
     <hr style="margin: 40px 0; border-color: #555;">
     
@@ -158,7 +229,6 @@
         <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
         <div id="modal-itens-lista"></div>
         <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
-        <!-- 🔽🔽🔽 AQUI: TAXA DE SERVIÇO NO MODAL COM FONTE PEQUENA -->
         <h3 style="color: #ffc107; font-size: 12px; margin: 5px 0;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
         <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
             <label>Forma de Pagamento:</label>
@@ -166,7 +236,6 @@
                 <option value="">Selecione...</option>
                 <option value="Cartao Debito">Cartão Débito</option>
                 <option value="Cartao Credito">Cartão Crédito</option>
-                
             </select>
             <div id="campo-dinheiro" style="display: none;">
                 <label>Valor Recebido:</label>
@@ -226,6 +295,24 @@
         // 🆕 INICIA SEMPRE BLOQUEADO AO CARREGAR A PÁGINA
         let caixaFechadaHoje = true; 
         
+        // 🆕 NOVO: FUNÇÃO PARA ESCONDER/MOSTRAR O CAIXA
+        function toggleCaixa() {
+            const container = document.getElementById('caixa-container');
+            const button = document.getElementById('btn-toggle-caixa');
+            
+            if (container.classList.contains('caixa-oculto')) {
+                container.classList.remove('caixa-oculto');
+                container.classList.add('caixa-visivel');
+                button.innerHTML = '❌ Ocultar Caixa';
+                // Quando mostra, garante que o status de bloqueio seja aplicado/removido
+                updateCaixaBlockStatus(); 
+            } else {
+                container.classList.remove('caixa-visivel');
+                container.classList.add('caixa-oculto');
+                button.innerHTML = '💰 Mostrar Caixa';
+            }
+        }
+
         function initCozinha(){
             startAllPolling();
             iniciarImpressaoAutomatica();
@@ -241,6 +328,9 @@
             // 🆕 Aplica o estado inicial de bloqueio/blur
             updateCaixaBlockStatus();
 
+            // 🆕 Adicionado: Esconde o caixa ao carregar.
+            toggleCaixa(); 
+            
             ultimaImpressaoTimestamp = new Date().toISOString();
             console.log('Cozinha iniciada - Só processará impressões após:', ultimaImpressaoTimestamp);
         }
@@ -549,7 +639,8 @@
             try{
                 const hoje=new Date().toISOString().split('T')[0];
                 const{data}=await supabaseClient.from('pedidos').select('total,forma_pagamento,horario_fecha').eq('status','Fechado').not('horario_fecha','is',null);
-                let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0};
+                // 💡 CORRIGIDO: Inicialização de todas as formas de pagamento
+                let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0}; 
                 (data||[]).forEach(p=>{
                     if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
                         total+=p.total;
@@ -565,7 +656,11 @@
                 formasDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma:</h5>'+Object.entries(formas).map(([f,v])=>v>0?`<p>${f}: R$ ${v.toFixed(2).replace('.',',')}</p>`:'').join('');
                 
                 // 🆕 Garantir que o status de bloqueio seja aplicado no polling
-                updateCaixaBlockStatus();
+                // Só aplica se o container estiver visível (para evitar que updateCaixaBlockStatus remova o status de oculto)
+                if (document.getElementById('caixa-container').classList.contains('caixa-visivel')) {
+                    updateCaixaBlockStatus();
+                }
+
             }catch(err){
                 console.error(err);
             }
@@ -607,6 +702,7 @@
         }
         
         document.getElementById('modal-forma-pagamento').onchange=function(){
+            // Ativa o campo de dinheiro/troco se for DINHEIRO
             document.getElementById('campo-dinheiro').style.display=this.value==='Dinheiro'?'block':'none';
             document.getElementById('troco-info').style.display='none';
         };
@@ -868,7 +964,7 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                 <p><strong>Total Fechado:</strong> ${total}</p>
                 <p><strong>Número de Pedidos:</strong> ${pedidos}</p>
                 <div>${formasDiv}</div>
-                <p style="margin-top: 15px; color: #ff8c00;"><strong>Confirme o fechamento do caixa do dia.</strong></p>
+                <p style="margin-top: 5px; color: #ff8c00;"><strong>Confirme o fechamento do caixa do dia.</strong></p>
             `;
             document.getElementById('modal-fechar-caixa').style.display = 'block';
         }
@@ -938,11 +1034,15 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
 
         // 🆕 FUNÇÃO PARA BLOQUEAR/DESBLOQUEAR AS AÇÕES E O BLUR
         function updateCaixaBlockStatus() {
-            const caixaContainer = document.getElementById('caixa-do-dia');
+            const caixaContainer = document.getElementById('caixa-container');
+            // Só executa se o caixa estiver visível
+            if (!caixaContainer || caixaContainer.classList.contains('caixa-oculto')) {
+                return;
+            }
+
             const caixaContent = document.getElementById('caixa-content');
             const caixaActions = document.getElementById('caixa-actions-container');
-            const fecharCaixaBtn = document.getElementById('btn-fechar-caixa');
-            const bloquearCaixaBtn = document.getElementById('btn-bloquear-caixa');
+            const fecharCaixaBtn = document.getElementById('btn-fechar-caixa').parentElement; // Pegando o flex container dos botões
             const desbloquearCaixaBtn = document.getElementById('btn-desbloquear-caixa');
             let statusBloqueado = document.getElementById('caixa-status-bloqueado');
 
@@ -950,8 +1050,7 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                 // Modo Bloqueado: Aplica Blur, Esconde ações, mostra botão de Desbloqueio
                 if (caixaContent) caixaContent.classList.add('blurry');
                 if (caixaActions) caixaActions.style.display = 'none';
-                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'none';
-                if (bloquearCaixaBtn) bloquearCaixaBtn.style.display = 'none';
+                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'none'; // Esconde o contêiner de Fechar/Bloquear
                 if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'block';
 
                 if (!statusBloqueado) {
@@ -959,14 +1058,13 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                     statusBloqueado.id = 'caixa-status-bloqueado';
                     statusBloqueado.style.cssText = 'color: red; font-weight: bold; margin-top: 10px; text-align: center;';
                     statusBloqueado.textContent = '🔒 CAIXA FECHADO/BLOQUEADO';
-                    caixaContainer.prepend(statusBloqueado);
+                    document.getElementById('caixa-do-dia').prepend(statusBloqueado); // Coloca dentro de caixa-do-dia
                 }
             } else {
                 // Modo Desbloqueado: Remove Blur, Mostra ações, mostra botão de Bloqueio manual
                 if (caixaContent) caixaContent.classList.remove('blurry');
                 if (caixaActions) caixaActions.style.display = 'flex';
-                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'block';
-                if (bloquearCaixaBtn) bloquearCaixaBtn.style.display = 'block';
+                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'flex'; // Mostra o contêiner de Fechar/Bloquear
                 if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'none';
                 if (statusBloqueado) statusBloqueado.remove();
             }
@@ -981,7 +1079,7 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
             const hoje=new Date().toISOString().split('T')[0];
             const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
             
-            let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0}, totalTaxaServico = 0;
+            let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0}, totalTaxaServico = 0;
             const pedidosHoje=[];
             (data||[]).forEach(p=>{
                 if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
