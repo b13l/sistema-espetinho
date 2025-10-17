@@ -779,17 +779,58 @@ async function imprimirNaCozinha() {
     const nomeComanda = GLOBAL_COMANDA_NOME;
     const observacao = document.getElementById('observacao').value.trim();
     const dataHora = new Date().toLocaleString('pt-BR');
-    
-    // 1. FILTRAR APENAS ITENS NOVOS
-    const itensNovos = GLOBAL_ORDER_ITEMS.filter(item => item.status_cozinha === 'novo');
 
-    if (itensNovos.length === 0) {
+    // 1. BUSCAR O PEDIDO COMO ELE ESTÁ SALVO NO SUPABASE (ESTADO ANTERIOR)
+    const { data: pedidoAnterior, error: fetchError } = await supabaseClient
+        .from('pedidos')
+        .select('itens')
+        .eq('id', GLOBAL_COMANDA_ID)
+        .single();
+        
+    if (fetchError || !pedidoAnterior) {
+        console.error('Erro ao buscar pedido anterior para cálculo do delta:', fetchError);
+        alert('Atenção: Falha ao conferir itens antigos. O pedido pode ser impresso com quantidades totais. Tente novamente.');
+        return false; // Interrompe para evitar erro de impressão
+    }
+
+    const itensAnteriores = pedidoAnterior ? pedidoAnterior.itens || [] : [];
+    
+    // Mapeia os itens anteriores para fácil comparação (ID -> Quantidade)
+    const mapaItensAnteriores = itensAnteriores.reduce((map, item) => {
+        map[item.id] = (map[item.id] || 0) + item.quantidade;
+        return map;
+    }, {});
+    
+    // 2. CALCULAR O DELTA: FILTRAR ITENS NOVOS E AJUSTAR A QUANTIDADE
+    const itensNovosDelta = [];
+
+    // Itera sobre o estado atual (GLOBAL_ORDER_ITEMS)
+    GLOBAL_ORDER_ITEMS.forEach(itemAtual => {
+        // Só consideramos itens que foram adicionados e marcados como 'novo' pelo garçom
+        if (itemAtual.status_cozinha === 'novo') {
+            const quantidadeAnterior = mapaItensAnteriores[itemAtual.id] || 0;
+            const quantidadeAtual = itemAtual.quantidade;
+            // O AJUSTE CRUCIAL: calcula a diferença
+            const deltaQuantidade = quantidadeAtual - quantidadeAnterior; 
+            
+            if (deltaQuantidade > 0) {
+                // Adiciona ao delta com a nova quantidade (a diferença)
+                itensNovosDelta.push({
+                    ...itemAtual,
+                    quantidade: deltaQuantidade // SÓ A QUANTIDADE ADICIONADA
+                });
+            }
+        }
+    });
+
+    const itensAImprimir = itensNovosDelta;
+
+    if (itensAImprimir.length === 0) {
         console.log("Nenhum item novo para imprimir na cozinha.");
-        // Se não há itens novos, apenas salva o total e observação, sem imprimir.
         return true; 
     }
 
-    // 2. GERAR CONTEÚDO DE IMPRESSÃO SÓ COM ITENS NOVOS
+    // 3. GERAR CONTEÚDO DE IMPRESSÃO SÓ COM ITENS NOVOS (USA itensAImprimir)
     let printContent = `
         <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
             <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
@@ -809,7 +850,7 @@ async function imprimirNaCozinha() {
                 <strong>ITENS NOVOS:</strong>
             </h4>
             <ul style="list-style: none; padding: 0; margin: 0;">
-            ${itensNovos.map(item => `
+            ${itensAImprimir.map(item => `
                 <li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;">
                     <strong>${item.quantidade}x ${item.nome}</strong>
                 </li>
@@ -830,21 +871,22 @@ async function imprimirNaCozinha() {
         </div>
     `;
 
-    // 3. ATUALIZAR STATUS DOS ITENS LOCAIS PARA 'enviado'
+    // 4. ATUALIZAR STATUS DOS ITENS LOCAIS PARA 'enviado' (Crucial para o próximo ciclo)
+    // Isso garante que o estado local esteja pronto para a próxima adição.
     GLOBAL_ORDER_ITEMS.forEach(item => {
         if (item.status_cozinha === 'novo') {
             item.status_cozinha = 'enviado';
         }
     });
 
-    // 4. ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE (Agora com o conteúdo filtrado)
+    // 5. ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE
     const { error } = await supabaseClient
         .from('impressoes_cozinha')
         .insert({
             mesa: mesaId,
             comanda_nome: nomeComanda,
-            conteudo: printContent, // Conteúdo com APENAS os itens novos
-            itens: itensNovos,      // Lista dos itens novos para referência
+            conteudo: printContent, 
+            itens: itensAImprimir, 
             observacao: observacao,
             data_hora: new Date().toISOString()
         });
