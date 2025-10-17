@@ -270,6 +270,38 @@
     </div>
     
     <div id="comanda-impressao" style="display:none;"></div>
+
+    <div style="width: 100%; margin-top: 5px; box-sizing: border-box;">
+        <button class="btn-caixa" id="btn-historico-caixa" style="width: 100%; background-color: #ff8c00; color: white;" onclick="abrirModalHistorico()">📜 Histórico Comandas</button>
+    </div>
+
+<div id="modal-historico" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModalHistorico()">&times;</span>
+        <h2 style="color: #ff8c00;">Histórico de Comandas Fechadas</h2>
+        
+        <label for="input-data-historico">Selecione a Data:</label>
+        <input type="date" id="input-data-historico" onchange="carregarHistoricoPorData()">
+        
+        <button class="btn-caixa" style="background-color: #dc3545; color: white; width: 100%; margin-top: 15px;" 
+                onclick="limparHistoricoComandas()">
+            🗑️ Limpar HISTÓRICO de Comandas Fechadas
+        </button>
+
+        <div id="historico-lista" style="margin-top: 20px;">
+            <p style="text-align: center; color: gray;">Selecione uma data para ver o histórico.</p>
+        </div>
+    </div>
+</div>
+
+    <div id="modal-visualizar-comanda" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalVisualizar()">&times;</span>
+            <h2 style="color: #4CAF50;">Detalhes da Comanda Fechada</h2>
+            <div id="comanda-detalhe-conteudo"></div>
+            <button class="btn-confirmar" style="background-color: #007bff; margin-top: 20px;" onclick="reimprimirComprovante()">🖨️ Reimprimir Comprovante</button>
+        </div>
+    </div>
     
     <script>
         const SUPABASE_URL='https://ufxbltjyswbynwnaybev.supabase.co';
@@ -1070,70 +1102,113 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
             }
         }
         
-        async function baixarCaixaPDF(){
-            if (caixaFechadaHoje) {
-                alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
-                return;
+        // cozinha.html - SUBSTITUIR FUNÇÃO baixarCaixaPDF COMPLETA
+
+async function baixarCaixaPDF(){
+    if (caixaFechadaHoje) {
+        alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
+        return;
+    }
+    
+    const hoje=new Date().toISOString().split('T')[0];
+    const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
+    
+    let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0}, totalTaxaServico = 0;
+    const pedidosHoje=[];
+    (data||[]).forEach(p=>{
+        if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
+            total+=p.total;
+            count++;
+            pedidosHoje.push(p);
+            totalTaxaServico += p.taxa_servico || 0;
+            if(formas[p.forma_pagamento]!==undefined){
+                formas[p.forma_pagamento]+=p.total;
             }
-            
-            const hoje=new Date().toISOString().split('T')[0];
-            const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
-            
-            let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0}, totalTaxaServico = 0;
-            const pedidosHoje=[];
-            (data||[]).forEach(p=>{
-                if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
-                    total+=p.total;
-                    count++;
-                    pedidosHoje.push(p);
-                    totalTaxaServico += p.taxa_servico || 0;
-                    if(formas[p.forma_pagamento]!==undefined){
-                        formas[p.forma_pagamento]+=p.total;
-                    }
-                }
-            });
-            
-            const{jsPDF}=window.jspdf;
-            const doc=new jsPDF();
-            doc.setFontSize(18);
-            doc.text('ESPETINHO GESSELO',105,20,{align:'center'});
-            doc.setFontSize(14);
-            doc.text('RELATÓRIO DE CAIXA',105,30,{align:'center'});
-            doc.setFontSize(10);
-            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`,20,45);
-            doc.text(`Total Bruto (com 10%): R$ ${total.toFixed(2)}`,20,55);
-            doc.text(`Total Taxa Serviço: R$ ${totalTaxaServico.toFixed(2)}`,20,65);
-            doc.text(`Pedidos: ${count}`,20,75);
-            
-            let y=90;
-            doc.setFontSize(12);
-            doc.text('Por Forma de Pagamento:',20,y);
-            y+=10;
-            doc.setFontSize(10);
-            for(const[forma,valor]of Object.entries(formas)){
-                if(valor>0){
-                    doc.text(`${forma}: R$ ${valor.toFixed(2)}`,25,y);
-                    y+=8;
-                }
-            }
-            
-            y+=10;
-            doc.setFontSize(12);
-            doc.text('Detalhamento:',20,y);
-            y+=10;
-            doc.setFontSize(9);
-            pedidosHoje.forEach(p=>{
-                if(y>270){
-                    doc.addPage();
-                    y=20;
-                }
-                const nomeComanda = p.nome_comanda || 'Principal';
-                doc.text(`Mesa ${p.mesa} - ${nomeComanda} - R$ ${p.total.toFixed(2)} - ${p.forma_pagamento||'N/A'}`,25,y);
-                y+=6;
-            });
-            
-            doc.save(`caixa_${hoje}.pdf`);
         }
+    });
+    
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF('p', 'mm', 'a4'); // Usando A4 para mais espaço
+    let y = 20;
+
+    // --- CABEÇALHO ---
+    doc.setFontSize(18);
+    doc.text('ESPETINHO GESSELO',105,y,{align:'center'});
+    y += 10;
+    doc.setFontSize(14);
+    doc.text('RELATÓRIO DE CAIXA DETALHADO',105,y,{align:'center'});
+    y += 10;
+    
+    // --- RESUMO GERAL ---
+    doc.setFontSize(10);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`,20,y);
+    y += 6;
+    doc.text(`Pedidos Fechados: ${count}`,20,y);
+    y += 10;
+    doc.setFontSize(12);
+    doc.text(`TOTAL BRUTO (c/ Taxa): R$ ${total.toFixed(2).replace('.',',')}`,20,y);
+    y += 8;
+    doc.setFontSize(10);
+    doc.text(`Taxa de Serviço (10%): R$ ${totalTaxaServico.toFixed(2).replace('.',',')}`,20,y);
+    y += 10;
+    
+    // --- TOTAIS POR FORMA ---
+    doc.setFontSize(12);
+    doc.text('Totais por Forma de Pagamento:',20,y);
+    y+=6;
+    doc.setFontSize(10);
+    for(const[forma,valor]of Object.entries(formas)){
+        if(valor>0){
+            doc.text(`${forma}: R$ ${valor.toFixed(2).replace('.',',')}`,25,y);
+            y+=6;
+        }
+    }
+    
+    y+=10;
+    doc.setFontSize(14);
+    doc.text('DETALHAMENTO DOS PEDIDOS',20,y);
+    y+=8;
+
+    // --- DETALHAMENTO DE CADA PEDIDO ---
+    doc.setFontSize(9);
+    pedidosHoje.forEach(p=>{
+        const nomeComanda = p.nome_comanda || 'Principal';
+        const subtotal = (p.total - (p.taxa_servico || 0)).toFixed(2);
+        
+        // Verifica quebra de página
+        if(y>270){
+            doc.addPage();
+            y=20;
+        }
+        
+        doc.setFontSize(10);
+        doc.text(`---------------------------------------------------------------------------------------------------------------------------------`, 20, y);
+        y += 4;
+        doc.setFontSize(12);
+        doc.text(`Mesa ${p.mesa} / ${nomeComanda} - Fechamento: R$ ${p.total.toFixed(2).replace('.',',')} (${p.forma_pagamento||'N/A'})`,20,y);
+        y+=6;
+        doc.setFontSize(9);
+        doc.text(`Subtotal: R$ ${subtotal.replace('.',',')} | Taxa 10%: R$ ${(p.taxa_servico || 0).toFixed(2).replace('.',',')}`, 20, y);
+        y+=5;
+        doc.text(`ITENS:`, 25, y);
+        y+=5;
+
+        // Lista de itens consumidos
+        (p.itens || []).forEach(item => {
+            if(y>275){ // Quebra de página para itens longos
+                doc.addPage();
+                y=20;
+            }
+            const itemTotal = (item.quantidade * item.preco).toFixed(2);
+            doc.text(`- ${item.quantidade}x ${item.nome} (R$ ${itemTotal.replace('.',',')})`, 30, y);
+            y += 5;
+        });
+
+        y += 5;
+    });
+
+    doc.save(`caixa_detalhado_${hoje}.pdf`);
+}
         
         async function limparCaixaDoDia(){
             if (caixaFechadaHoje) {
@@ -1176,6 +1251,180 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                 alert('Erro ao limpar caixa! '+err.message);
             }
         }
+
+        // cozinha.html - Adicionar novas funções JS
+let comandaSelecionadaHistorico = null;
+
+function abrirModalHistorico() {
+    document.getElementById('modal-historico').style.display = 'block';
+    // Define a data atual como padrão se não houver valor
+    const dataInput = document.getElementById('input-data-historico');
+    if (!dataInput.value) {
+        dataInput.value = new Date().toISOString().split('T')[0];
+    }
+    carregarHistoricoPorData();
+}
+
+function fecharModalHistorico() {
+    document.getElementById('modal-historico').style.display = 'none';
+}
+
+function fecharModalVisualizar() {
+    document.getElementById('modal-visualizar-comanda').style.display = 'none';
+    comandaSelecionadaHistorico = null;
+}
+
+async function carregarHistoricoPorData() {
+    const dataSelecionada = document.getElementById('input-data-historico').value;
+    const listaDiv = document.getElementById('historico-lista');
+    listaDiv.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
+    
+    if (!dataSelecionada) {
+        listaDiv.innerHTML = '<p style="text-align: center; color: gray;">Selecione uma data.</p>';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('pedidos')
+            .select('*')
+            .eq('status', 'Fechado')
+            .not('horario_fecha', 'is', null)
+            .order('horario_fecha', { ascending: false });
+
+        if (error) throw error;
+
+        const pedidosDoDia = (data || []).filter(p => 
+            p.horario_fecha && p.horario_fecha.startsWith(dataSelecionada)
+        );
+
+        if (pedidosDoDia.length === 0) {
+            listaDiv.innerHTML = `<p style="text-align: center; color: gray;">Nenhuma comanda fechada em ${dataSelecionada.split('-').reverse().join('/')}.</p>`;
+            return;
+        }
+
+        listaDiv.innerHTML = pedidosDoDia.map(p => {
+            const horario = new Date(p.horario_fecha).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const nomeComanda = p.nome_comanda || 'Comanda Principal';
+            return `
+                <div style="background-color: #383838; padding: 10px; border-radius: 4px; margin-bottom: 8px; cursor: pointer; border: 1px solid #555;"
+                     onclick="visualizarComandaFechada('${p.id}')">
+                    <p style="margin: 0;">
+                        <strong>Mesa ${p.mesa} - ${nomeComanda}</strong>
+                        <span style="float: right; color: #4CAF50;">R$ ${p.total.toFixed(2).replace('.',',')}</span>
+                    </p>
+                    <p style="font-size: 0.8em; margin: 0; color: #ccc;">
+                        Fechado às ${horario} | Pagamento: ${p.forma_pagamento || 'N/A'}
+                    </p>
+                </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+        listaDiv.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar dados.</p>';
+    }
+}
+
+async function visualizarComandaFechada(pedidoId) {
+    const { data: pedido, error } = await supabaseClient
+        .from('pedidos')
+        .select('*')
+        .eq('id', pedidoId)
+        .single();
+    
+    if (error || !pedido) {
+        alert('Erro ao carregar detalhes da comanda.');
+        return;
+    }
+    
+    comandaSelecionadaHistorico = pedido;
+    const detalhesDiv = document.getElementById('comanda-detalhe-conteudo');
+    const subtotal = (pedido.total - (pedido.taxa_servico || 0)).toFixed(2).replace('.',',');
+
+    detalhesDiv.innerHTML = `
+        <p><strong>Mesa:</strong> ${pedido.mesa}</p>
+        <p><strong>Comanda:</strong> ${pedido.nome_comanda || 'Principal'}</p>
+        <p><strong>Total (c/ 10%):</strong> R$ ${pedido.total.toFixed(2).replace('.',',')}</p>
+        <p><strong>Forma de Pagamento:</strong> ${pedido.forma_pagamento}</p>
+        <p><strong>Fechado em:</strong> ${new Date(pedido.horario_fecha).toLocaleString('pt-BR')}</p>
+        <hr style="border-color: #555;">
+        <h4 style="color: #ff8c00;">Resumo dos Itens (Subtotal: R$ ${subtotal})</h4>
+        <ul class="lista-itens">
+            ${(pedido.itens || []).map(i => `
+                <li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade * i.preco).toFixed(2).replace('.',',')}</li>
+            `).join('')}
+        </ul>
+        <hr style="border-color: #555;">
+        <p style="font-size: 0.9em; color: #ffc107;">Taxa de Serviço: R$ ${(pedido.taxa_servico || 0).toFixed(2).replace('.',',')}</p>
+    `;
+
+    document.getElementById('modal-visualizar-comanda').style.display = 'block';
+    fecharModalHistorico();
+}
+
+function reimprimirComprovante() {
+    if (!comandaSelecionadaHistorico) {
+        alert('Nenhuma comanda selecionada.');
+        return;
+    }
+    
+    // Reusa a função de impressão existente no cozinha.html
+    imprimirComprovante(
+        comandaSelecionadaHistorico, 
+        comandaSelecionadaHistorico.forma_pagamento, 
+        comandaSelecionadaHistorico.valor_recebido, 
+        comandaSelecionadaHistorico.troco, 
+        comandaSelecionadaHistorico.taxa_servico, 
+        comandaSelecionadaHistorico.total
+    );
+
+    fecharModalVisualizar();
+    alert('Comprovante enviado para reimpressão!');
+}
+
+// cozinha.html - Adicionar esta nova função JS
+async function limparHistoricoComandas() {
+    if (!confirm('ATENÇÃO: Você tem certeza que deseja deletar TODAS as comandas fechadas permanentemente do sistema? Esta ação é irreversível e pode afetar relatórios passados.')) {
+        return;
+    }
+
+    try {
+        // 1. Busca todos os IDs dos pedidos fechados (com data de fechamento)
+        const { data: pedidosFechados, error: fetchError } = await supabaseClient
+            .from('pedidos')
+            .select('id')
+            .eq('status', 'Fechado')
+            .not('horario_fecha', 'is', null);
+
+        if (fetchError) throw fetchError;
+
+        const idsParaDeletar = (pedidosFechados || []).map(p => p.id);
+
+        if (idsParaDeletar.length === 0) {
+            alert('Não há comandas fechadas para limpar no histórico.');
+            return;
+        }
+
+        // 2. Deleta os registros no banco de dados
+        const { error: deleteError } = await supabaseClient
+            .from('pedidos')
+            .delete()
+            .in('id', idsParaDeletar);
+
+        if (deleteError) throw deleteError;
+
+        // 3. Sucesso e atualização
+        alert(`✓ ${idsParaDeletar.length} comandas foram removidas permanentemente do histórico!`);
+        
+        // Recarrega o histórico (se estiver aberto)
+        carregarHistoricoPorData(); 
+
+    } catch (err) {
+        console.error('Erro ao limpar histórico de comandas:', err);
+        alert('Erro ao limpar histórico! ' + err.message);
+    }
+}
         
         window.addEventListener('beforeunload',()=>{
             clearInterval(pollingIntervalPedidos);
