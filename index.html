@@ -246,7 +246,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: {
                 storageKey: 'supabase_auth_gesselo',
-                persistSession: true,
+                persistSession: false,
                 autoRefreshToken: true
             }
         });
@@ -472,24 +472,81 @@
 
         // --- FUNÇÕES DE AUTENTICAÇÃO ---
 
-        async function fazerLogin() {
-            const email = document.getElementById('email-login').value;
-            const senha = document.getElementById('senha-login').value;
+     // index.html - SUBSTITUIR função fazerLogin completa
+async function fazerLogin() {
+    const email = document.getElementById('email-login').value;
+    const senha = document.getElementById('senha-login').value;
 
-            if (!email || !senha) {
-                alert('Por favor, preencha email e senha.');
-                return;
-            }
+    if (!email || !senha) {
+        alert('Por favor, preencha email e senha.');
+        return;
+    }
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+    try {
+        // Primeiro verificar se há logout remoto
+        await verificarLogoutRemoto();
+        
+        // Buscar a senha atual da tabela de configurações
+        const { data: configSenha, error: configError } = await supabaseClient
+            .from('configuracoes_sistema')
+            .select('valor')
+            .eq('chave', 'senha_garcom')
+            .single();
 
-            if (error) {
-                alert(`Erro no Login: ${error.message}`);
-                console.error(error);
-            } else {
-                showMesasView();
-            }
+        let senhaCorreta = false;
+        
+        if (configError) {
+            console.error('Erro ao buscar senha:', configError);
+            // Se não encontrar na configuração, usa a padrão
+            senhaCorreta = (senha === '#Kwaii2020');
+        } else {
+            // Verifica contra a senha salva nas configurações
+            senhaCorreta = (senha === configSenha.valor);
         }
+
+        if (!senhaCorreta) {
+            alert('Senha incorreta!');
+            return;
+        }
+
+        // Se a senha estiver correta, faz login SIMULADO (sem Supabase Auth)
+        // Armazenar sessão localmente
+        localStorage.setItem('garcom_logado', 'true');
+        localStorage.setItem('garcom_email', email);
+        localStorage.setItem('garcom_login_time', new Date().toISOString());
+        
+        console.log('Login realizado com sucesso!');
+        showMesasView();
+        
+    } catch (error) {
+        console.error('Erro no login:', error);
+        alert('Erro ao fazer login. Tente novamente.');
+    }
+}
+
+// index.html - ADICIONAR esta função
+function verificarSessaoLocal() {
+    const logado = localStorage.getItem('garcom_logado');
+    const loginTime = localStorage.getItem('garcom_login_time');
+    
+    if (logado === 'true' && loginTime) {
+        // Verificar se o login foi feito há menos de 12 horas
+        const loginDate = new Date(loginTime);
+        const now = new Date();
+        const diffHours = (now - loginDate) / (1000 * 60 * 60);
+        
+        if (diffHours < 12) {
+            return true;
+        } else {
+            // Sessão expirada
+            localStorage.removeItem('garcom_logado');
+            localStorage.removeItem('garcom_email');
+            localStorage.removeItem('garcom_login_time');
+        }
+    }
+    return false;
+}
+                
 
         // --- FUNÇÕES DE MESAS ---
 
@@ -901,30 +958,30 @@ async function imprimirNaCozinha() {
 }
 
         // --- INICIALIZAÇÃO ---
-                document.addEventListener('DOMContentLoaded', () => {
-            // Verificar logout remoto imediatamente ao carregar
-            verificarLogoutRemoto();
-            
-            supabaseClient.auth.getSession().then(({ data: { session } }) => {
-                if (session) {
-                    console.log('Usuário logado, mostrando mesas...');
-                    showMesasView();
-                    
-                    setTimeout(() => {
-                        console.log('Testando carregamento do cardápio...');
-                        carregarCardapio().then(() => {
-                            console.log('Cardápio carregado com sucesso!');
-                        }).catch(error => {
-                            console.error('Erro ao carregar cardápio:', error);
-                        });
-                    }, 1000);
-                    
-                } else {
-                    console.log('Usuário não logado, mostrando login...');
-                    showLoginView();
-                }
+        // index.html - SUBSTITUIR o event listener DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Verificar logout remoto imediatamente ao carregar
+    verificarLogoutRemoto();
+    
+    // Verificar sessão local primeiro
+    if (verificarSessaoLocal()) {
+        console.log('Usuário logado (sessão local), mostrando mesas...');
+        showMesasView();
+        
+        setTimeout(() => {
+            console.log('Testando carregamento do cardápio...');
+            carregarCardapio().then(() => {
+                console.log('Cardápio carregado com sucesso!');
+            }).catch(error => {
+                console.error('Erro ao carregar cardápio:', error);
             });
-        });
+        }, 1000);
+        
+    } else {
+        console.log('Usuário não logado, mostrando login...');
+        showLoginView();
+    }
+});
 
         window.onclick = function(event) {
             const modal = document.getElementById('modal-editar-nome');
@@ -936,22 +993,23 @@ async function imprimirNaCozinha() {
              // --- FUNÇÕES DE LOGOUT REMOTO E VERIFICAÇÃO ---
         
         // Verificar se houve logout remoto
-        async function verificarLogoutRemoto() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .select('valor')
-                    .eq('chave', 'logout_garcom')
-                    .single();
+        // index.html - ATUALIZAR função verificarLogoutRemoto
+async function verificarLogoutRemoto() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('configuracoes_sistema')
+            .select('valor')
+            .eq('chave', 'logout_garcom')
+            .single();
 
-                if (!error && data && data.valor === 'true') {
-                    // Logout remoto detectado - fazer logout local E LIMPAR A FLAG
-                    await fazerLogoutEResetarFlag();
-                }
-            } catch (error) {
-                console.log('Erro ao verificar logout remoto:', error);
-            }
+        if (!error && data && data.valor === 'true') {
+            // Logout remoto detectado - fazer logout local E LIMPAR A FLAG
+            await fazerLogoutEResetarFlag();
         }
+    } catch (error) {
+        console.log('Erro ao verificar logout remoto:', error);
+    }
+}
 
         async function fazerLogoutEResetarFlag() {
             try {
@@ -978,26 +1036,28 @@ async function imprimirNaCozinha() {
             }
         }
 
-        async function fazerLogoutLocal() {
-            // Limpar sessão
-            await supabaseClient.auth.signOut();
-            
-            // Resetar variáveis globais
-            GLOBAL_MESA_ID = null;
-            GLOBAL_COMANDA_ID = null;
-            GLOBAL_ORDER_ITEMS = [];
-            GLOBAL_COMANDA_NOME = "Principal";
-            GLOBAL_MESA_COMANDAS = [];
-            
-            // Parar polling
-            stopPolling();
-            
-            // Mostrar tela de login
-            showLoginView();
-            
-            alert('Sessão encerrada remotamente pela cozinha.');
-        }
-
+             // index.html - ATUALIZAR função fazerLogoutLocal
+async function fazerLogoutLocal() {
+    // Limpar sessão local
+    localStorage.removeItem('garcom_logado');
+    localStorage.removeItem('garcom_email');
+    localStorage.removeItem('garcom_login_time');
+    
+    // Resetar variáveis globais
+    GLOBAL_MESA_ID = null;
+    GLOBAL_COMANDA_ID = null;
+    GLOBAL_ORDER_ITEMS = [];
+    GLOBAL_COMANDA_NOME = "Principal";
+    GLOBAL_MESA_COMANDAS = [];
+    
+    // Parar polling
+    stopPolling();
+    
+    // Mostrar tela de login
+    showLoginView();
+    
+    alert('Sessão encerrada remotamente pela cozinha.');
+}
         // Verificar logout remoto periodicamente (mantém 5 segundos)
         setInterval(verificarLogoutRemoto, 5000);
         
