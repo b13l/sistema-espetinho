@@ -901,7 +901,10 @@ async function imprimirNaCozinha() {
 }
 
         // --- INICIALIZAÇÃO ---
-        document.addEventListener('DOMContentLoaded', () => {
+                document.addEventListener('DOMContentLoaded', () => {
+            // Verificar logout remoto imediatamente ao carregar
+            verificarLogoutRemoto();
+            
             supabaseClient.auth.getSession().then(({ data: { session } }) => {
                 if (session) {
                     console.log('Usuário logado, mostrando mesas...');
@@ -929,7 +932,75 @@ async function imprimirNaCozinha() {
                 fecharModalEditarNome();
             }
         }
+
+             // --- FUNÇÕES DE LOGOUT REMOTO E VERIFICAÇÃO ---
+        
+        // Verificar se houve logout remoto
+        async function verificarLogoutRemoto() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('configuracoes_sistema')
+                    .select('valor')
+                    .eq('chave', 'logout_garcom')
+                    .single();
+
+                if (!error && data && data.valor === 'true') {
+                    // Logout remoto detectado - fazer logout local E LIMPAR A FLAG
+                    await fazerLogoutEResetarFlag();
+                }
+            } catch (error) {
+                console.log('Erro ao verificar logout remoto:', error);
+            }
+        }
+
+        async function fazerLogoutEResetarFlag() {
+            try {
+                // 1. Primeiro resetar a flag para false no banco
+                const { error: resetError } = await supabaseClient
+                    .from('configuracoes_sistema')
+                    .upsert({
+                        chave: 'logout_garcom',
+                        valor: 'false',
+                        atualizado_em: new Date().toISOString()
+                    }, {
+                        onConflict: 'chave'
+                    });
+
+                if (resetError) {
+                    console.error('Erro ao resetar flag de logout:', resetError);
+                }
+
+                // 2. Depois fazer o logout local
+                await fazerLogoutLocal();
+                
+            } catch (error) {
+                console.error('Erro no processo de logout:', error);
+            }
+        }
+
+        async function fazerLogoutLocal() {
+            // Limpar sessão
+            await supabaseClient.auth.signOut();
+            
+            // Resetar variáveis globais
+            GLOBAL_MESA_ID = null;
+            GLOBAL_COMANDA_ID = null;
+            GLOBAL_ORDER_ITEMS = [];
+            GLOBAL_COMANDA_NOME = "Principal";
+            GLOBAL_MESA_COMANDAS = [];
+            
+            // Parar polling
+            stopPolling();
+            
+            // Mostrar tela de login
+            showLoginView();
+            
+            alert('Sessão encerrada remotamente pela cozinha.');
+        }
+
+        // Verificar logout remoto periodicamente (mantém 5 segundos)
+        setInterval(verificarLogoutRemoto, 5000);
+        
     </script>
 </body>
 </html>
-
