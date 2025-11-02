@@ -313,41 +313,41 @@
         <button class="btn-caixa" id="btn-gerenciar-garcom" style="width: 100%; background-color: #6f42c1; color: white;" onclick="abrirModalGerenciarGarcom()">👨‍💼 Gerenciar Garçom</button>
     </div>
 
-    <!-- MODAL GERENCIAR GARÇOM -->
-    <div id="modal-gerenciar-garcom" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModalGerenciarGarcom()">&times;</span>
-            <h2 style="color: #6f42c1;">Gerenciar Acesso do Garçom</h2>
-            
-            <div style="margin: 20px 0; padding: 15px; background: #383838; border-radius: 8px;">
-                <h4 style="color: #ff8c00; margin-top: 0;">Status Atual do Garçom</h4>
-                <p id="status-garcom">Carregando...</p>
-            </div>
-            
-            <div class="caixa-actions" style="margin: 15px 0;">
-                <button class="btn-caixa" style="background-color: #dc3545; color: white; flex: 1;" onclick="deslogarGarcom()">🚪 Deslogar Garçom</button>
-                <button class="btn-caixa" style="background-color: #17a2b8; color: white; flex: 1;" onclick="mostrarFormAlterarSenha()">🔑 Alterar Senha</button>
-            </div>
-            
-            <!-- FORMULÁRIO PARA ALTERAR SENHA -->
-            <div id="form-alterar-senha" style="display: none; margin-top: 20px; padding: 15px; background: #2d2d2d; border-radius: 8px;">
-                <h4 style="color: #4CAF50; margin-top: 0;">Alterar Senha do Garçom</h4>
-                
-                <label for="nova-senha">Nova Senha:</label>
-                <input type="password" id="nova-senha" placeholder="Digite a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
-                
-                <label for="confirmar-senha">Confirmar Senha:</label>
-                <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
-                
-                <div class="caixa-actions" style="margin-top: 15px;">
-                    <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" onclick="alterarSenhaGarcom()">💾 Salvar Nova Senha</button>
-                    <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="ocultarFormAlterarSenha()">❌ Cancelar</button>
-                </div>
-            </div>
-            
-            <div id="mensagem-garcom" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
+  <!-- MODAL GERENCIAR GARÇOM -->
+<div id="modal-gerenciar-garcom" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModalGerenciarGarcom()">&times;</span>
+        <h2 style="color: #6f42c1;">Gerenciar Acesso do Garçom</h2>
+        
+        <div style="margin: 20px 0; padding: 15px; background: #383838; border-radius: 8px;">
+            <h4 style="color: #ff8c00; margin-top: 0;">Ações Disponíveis</h4>
+            <p>Gerencie o acesso e a senha do garçom remotamente.</p>
         </div>
+        
+        <div class="caixa-actions" style="margin: 15px 0;">
+            <button class="btn-caixa" style="background-color: #dc3545; color: white; flex: 1;" onclick="deslogarGarcom()">🚪 Deslogar Garçom</button>
+            <button class="btn-caixa" style="background-color: #17a2b8; color: white; flex: 1;" onclick="mostrarFormAlterarSenha()">🔑 Alterar Senha</button>
+        </div>
+        
+        <!-- FORMULÁRIO PARA ALTERAR SENHA -->
+        <div id="form-alterar-senha" style="display: none; margin-top: 20px; padding: 15px; background: #2d2d2d; border-radius: 8px;">
+            <h4 style="color: #4CAF50; margin-top: 0;">Alterar Senha do Garçom</h4>
+            
+            <label for="nova-senha">Nova Senha:</label>
+            <input type="password" id="nova-senha" placeholder="Digite a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
+            
+            <label for="confirmar-senha">Confirmar Senha:</label>
+            <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
+            
+            <div class="caixa-actions" style="margin-top: 15px;">
+                <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" onclick="alterarSenhaGarcom()">💾 Salvar Nova Senha</button>
+                <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="ocultarFormAlterarSenha()">❌ Cancelar</button>
+            </div>
+        </div>
+        
+        <div id="mensagem-garcom" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
     </div>
+</div>
 
     <div id="modal-visualizar-comanda" class="modal">
         <div class="modal-content">
@@ -1509,39 +1509,33 @@ async function limparHistoricoComandas() {
             document.getElementById('form-alterar-senha').style.display = 'none';
         }
 
-           async function verificarStatusGarcom() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .select('valor, atualizado_em')
-                    .eq('chave', 'logout_garcom')
-                    .single();
+          // cozinha.html - ATUALIZAR função verificarStatusGarcom
+async function verificarStatusGarcom() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('configuracoes_sistema')
+            .select('valor, atualizado_em')
+            .eq('chave', 'logout_garcom')
+            .single();
 
-                let statusText = '✅ Garçom está logado';
-                let ultimoLogout = '';
-                
-                if (!error && data) {
-                    if (data.valor === 'true') {
-                        statusText = '🔄 Comando de logout enviado - aguardando garçom desconectar...';
-                    } else {
-                        statusText = '✅ Garçom está logado';
-                    }
-                    
-                    if (data.atualizado_em) {
-                        ultimoLogout = new Date(data.atualizado_em).toLocaleString('pt-BR');
-                    }
-                }
-                
-                document.getElementById('status-garcom').innerHTML = `
-                    ${statusText}
-                    ${ultimoLogout ? `<br><small>Última ação: ${ultimoLogout}</small>` : ''}
-                `;
-                
-            } catch (error) {
-                console.error('Erro ao verificar status:', error);
-                document.getElementById('status-garcom').textContent = 'Erro ao verificar status';
+        let statusText = '✅ Garçom está logado';
+        
+        if (!error && data) {
+            if (data.valor === 'true') {
+                statusText = '🔄 Comando de logout enviado - aguardando garçom desconectar...';
+            } else {
+                statusText = '✅ Garçom está logado';
             }
         }
+        
+        // Removemos a exibição do status anterior para simplificar
+        document.getElementById('status-garcom').innerHTML = statusText;
+        
+    } catch (error) {
+        console.error('Erro ao verificar status:', error);
+        document.getElementById('status-garcom').textContent = 'Erro ao verificar status';
+    }
+}
 
          async function deslogarGarcom() {
             if (!confirm('Tem certeza que deseja deslogar o garçom remotamente? Isso fará com que ele precise fazer login novamente.')) {
@@ -1573,51 +1567,49 @@ async function limparHistoricoComandas() {
         }
 
         async function alterarSenhaGarcom() {
-            const novaSenha = document.getElementById('nova-senha').value;
-            const confirmarSenha = document.getElementById('confirmar-senha').value;
+    const novaSenha = document.getElementById('nova-senha').value;
+    const confirmarSenha = document.getElementById('confirmar-senha').value;
 
-            if (!novaSenha || !confirmarSenha) {
-                mostrarMensagem('❌ Por favor, preencha ambos os campos de senha.', 'error');
-                return;
-            }
+    if (!novaSenha || !confirmarSenha) {
+        mostrarMensagem('❌ Por favor, preencha ambos os campos de senha.', 'error');
+        return;
+    }
 
-            if (novaSenha !== confirmarSenha) {
-                mostrarMensagem('❌ As senhas não coincidem!', 'error');
-                return;
-            }
+    if (novaSenha !== confirmarSenha) {
+        mostrarMensagem('❌ As senhas não coincidem!', 'error');
+        return;
+    }
 
-            if (novaSenha.length < 6) {
-                mostrarMensagem('❌ A senha deve ter pelo menos 6 caracteres.', 'error');
-                return;
-            }
+    if (novaSenha.length < 6) {
+        mostrarMensagem('❌ A senha deve ter pelo menos 6 caracteres.', 'error');
+        return;
+    }
 
-            try {
-                // ATENÇÃO: Esta função requer que você tenha permissões de administrador no Supabase
-                // ou configure uma Edge Function para alterar senhas de usuários
-                
-                const { data, error } = await supabaseClient.auth.admin.updateUserById(
-                    // Você precisaria do ID do usuário garçom aqui
-                    // Esta é uma abordagem alternativa usando uma tabela de configurações
-                    EMAIL_GARCOM,
-                    { password: novaSenha }
-                );
+    try {
+        // Salvar a nova senha na tabela de configurações
+        const { error } = await supabaseClient
+            .from('configuracoes_sistema')
+            .upsert({
+                chave: 'senha_garcom',
+                valor: novaSenha,
+                atualizado_em: new Date().toISOString()
+            }, {
+                onConflict: 'chave'
+            });
 
-                if (error) {
-                    // Se a função admin não estiver disponível, use esta abordagem alternativa:
-                    await salvarSenhaEmConfiguracoes(novaSenha);
-                } else {
-                    mostrarMensagem('✅ Senha alterada com sucesso!', 'success');
-                    ocultarFormAlterarSenha();
-                    
-                    // Opcional: deslogar o garçom após alterar a senha
-                    await deslogarGarcom();
-                }
-                
-            } catch (error) {
-                console.error('Erro ao alterar senha:', error);
-                mostrarMensagem('❌ Erro ao alterar senha: ' + error.message, 'error');
-            }
-        }
+        if (error) throw error;
+
+        mostrarMensagem('✅ Senha do garçom alterada com sucesso! O garçom será desconectado.', 'success');
+        ocultarFormAlterarSenha();
+        
+        // Deslogar o garçom para forçar novo login com a nova senha
+        await deslogarGarcom();
+        
+    } catch (error) {
+        console.error('Erro ao alterar senha:', error);
+        mostrarMensagem('❌ Erro ao alterar senha: ' + error.message, 'error');
+    }
+}
 
         // Função alternativa para salvar senha em configurações (caso a admin API não esteja disponível)
         async function salvarSenhaEmConfiguracoes(novaSenha) {
