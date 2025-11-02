@@ -21,6 +21,20 @@
         #pedidos-container { display: flex; flex-wrap: wrap; gap: 20px; }
         .pedido-card { background-color: #383838; padding: 15px; border-radius: 8px; width: 320px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
         .pedido-card h3 { color: #ff8c00; margin-top: 0; border-bottom: 2px solid #555; padding-bottom: 5px; }
+                .btn-reimprimir { 
+            background-color: #17a2b8; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin-top: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+        }
+        .btn-reimprimir:hover {
+            background-color: #138496;
+        }
         .lista-itens { list-style: none; padding: 0; margin: 10px 0; }
         .lista-itens li { padding: 3px 0; border-bottom: 1px dotted #555; font-size: 0.9em; }
         .pedido-card button { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; }
@@ -469,7 +483,7 @@
             }
         }
         
-        function renderPedidos(){
+              function renderPedidos(){
             const container=document.getElementById('pedidos-container');
             const pedidosAbertos=pedidosAtuais.filter(p=>p.status==='Aberto'||p.status==='Em Preparo'||p.status==='Pronto');
             container.innerHTML='';
@@ -499,6 +513,8 @@
                     <ul class="lista-itens">${listaItens}</ul>
                     <button class="btn-pronto" onclick="marcarComoPronto('${pedido.id}','${pedido.mesa}')" ${pedido.status==='Pronto'?'disabled':''}>${pedido.status==='Pronto'?'✓ PRONTO':'Marcar Pronto'}</button>
                     <button class="btn-fechar-conta" onclick="abrirModalFecharConta('${pedido.id}')">Fechar Conta</button>
+                    <!-- NOVO BOTÃO DE REIMPRESSÃO -->
+                    <button class="btn-reimprimir" onclick="reimprimirComandaCozinha('${pedido.id}')">🖨️ Reimprimir</button>
                 `;
                 container.appendChild(div);
             });
@@ -1664,6 +1680,94 @@ async function limparHistoricoComandas() {
                 
             } catch (error) {
                 console.log('Tabela configuracoes_sistema já existe ou erro na verificação:', error);
+            }
+        }
+
+                // 🆕 FUNÇÃO PARA REIMPRIMIR COMANDA DA COZINHA
+        async function reimprimirComandaCozinha(pedidoId) {
+            try {
+                // Buscar os dados completos do pedido
+                const { data: pedido, error } = await supabaseClient
+                    .from('pedidos')
+                    .select('*')
+                    .eq('id', pedidoId)
+                    .single();
+
+                if (error || !pedido) {
+                    alert('Erro ao carregar dados da comanda para reimpressão.');
+                    return;
+                }
+
+                const mesaId = pedido.mesa;
+                const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+                const observacao = pedido.observacao || '';
+                const dataHora = new Date().toLocaleString('pt-BR');
+
+                // Gerar conteúdo de impressão (igual ao da função original)
+                let printContent = `
+                    <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
+                        <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
+                            <span style="color: #ff0000;">--- REIMPRESSÃO ---</span>
+                        </h2>
+                        <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;">
+                            <strong>COMANDA - MESA ${mesaId}</strong>
+                        </h3>
+                        <p style="text-align: center; margin: 0 0 8px 0; font-size: 13pt; color: #000000;">
+                            <strong>${nomeComanda}</strong>
+                        </p>
+                        <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;">
+                            <strong>Data: ${dataHora}</strong>
+                        </p>
+                        
+                        <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;">
+                            <strong>ITENS:</strong>
+                        </h4>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                        ${(pedido.itens || []).map(item => `
+                            <li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+                                <strong>${item.quantidade}x ${item.nome}</strong>
+                            </li>
+                        `).join('')}
+                        </ul>
+                        
+                        ${observacao ? `
+                            <div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;">
+                                <p style="font-size: 12pt; margin: 8px 0; color: #000000;">
+                                    <strong>OBS: ${observacao}</strong>
+                                </p>
+                            </div>
+                        ` : ''}
+                        
+                        <p style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: center; font-size: 12pt; color: #000000;">
+                            *** REIMPRESSÃO ***
+                        </p>
+                    </div>
+                `;
+
+                // Enviar para impressora da cozinha
+                const { error: impressaoError } = await supabaseClient
+                    .from('impressoes_cozinha')
+                    .insert({
+                        mesa: mesaId,
+                        comanda_nome: nomeComanda,
+                        conteudo: printContent,
+                        itens: pedido.itens || [],
+                        observacao: observacao,
+                        data_hora: new Date().toISOString(),
+                        reimpressao: true // Marcar como reimpressão
+                    });
+
+                if (impressaoError) {
+                    console.error('Erro ao enviar reimpressão para cozinha:', impressaoError);
+                    alert('Erro ao enviar reimpressão para a cozinha.');
+                    return;
+                }
+
+                alert('✅ Comanda enviada para reimpressão na cozinha!');
+
+            } catch (error) {
+                console.error('Erro na reimpressão:', error);
+                alert('Erro ao processar reimpressão.');
             }
         }
 
