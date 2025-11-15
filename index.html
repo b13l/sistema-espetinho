@@ -994,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Verificar se houve logout remoto
         // index.html - ATUALIZAR função verificarLogoutRemoto
-async function verificarLogoutRemoto() { // COMENTE no index.html:
+async function verificarLogoutRemoto() { 
     try {
         const { data, error } = await supabaseClient
             .from('configuracoes_sistema')
@@ -1011,7 +1011,7 @@ async function verificarLogoutRemoto() { // COMENTE no index.html:
     }
 }
 
-        async function fazerLogoutEResetarFlag() { // COMENTE no index.html:
+        async function fazerLogoutEResetarFlag() { 
 
             try {
                 // 1. Primeiro resetar a flag para false no banco
