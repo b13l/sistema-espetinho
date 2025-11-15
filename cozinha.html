@@ -419,19 +419,6 @@
     </div>
     
     <script>
-        // SOLUÇÃO RÁPIDA - Ignorar erros da tabela configuracoes_sistema
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-    if (args[0] && args[0].includes('configuracoes_sistema')) {
-        console.log('Ignorando requisição para configuracoes_sistema');
-        return Promise.resolve({
-            ok: false,
-            status: 404,
-            json: () => Promise.resolve({error: 'Tabela não existe'})
-        });
-    }
-    return originalFetch.apply(this, args);
-};
         const SUPABASE_URL='https://ufxbltjyswbynwnaybev.supabase.co';
         const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
         const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
@@ -1583,7 +1570,7 @@ async function limparHistoricoComandas() {
         }
 
           // cozinha.html - ATUALIZAR função verificarStatusGarcom
-async function verificarStatusGarcom() { // COMENTE ou REMOVA estas funções:
+async function verificarStatusGarcom() { 
     try {
         const { data, error } = await supabaseClient
             .from('configuracoes_sistema')
@@ -1610,7 +1597,7 @@ async function verificarStatusGarcom() { // COMENTE ou REMOVA estas funções:
     }
 }
 
-         async function deslogarGarcom() { // COMENTE ou REMOVA estas funções:
+         async function deslogarGarcom() { 
 
             if (!confirm('Tem certeza que deseja deslogar o garçom remotamente? Isso fará com que ele precise fazer login novamente.')) {
                 return;
@@ -1640,7 +1627,7 @@ async function verificarStatusGarcom() { // COMENTE ou REMOVA estas funções:
             }
         }
 
-        async function alterarSenhaGarcom() { // COMENTE ou REMOVA estas funções:
+        async function alterarSenhaGarcom() { 
 
     const novaSenha = document.getElementById('nova-senha').value;
     const confirmarSenha = document.getElementById('confirmar-senha').value;
