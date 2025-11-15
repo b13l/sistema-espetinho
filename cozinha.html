@@ -349,6 +349,66 @@
     </div>
 </div>
 
+<!-- Adicione este código após a seção "GERENCIAR GARÇOM" -->
+
+<!-- NOVA SEÇÃO: GERENCIAR CARDÁPIO -->
+<div style="width: 100%; margin-top: 15px; box-sizing: border-box;">
+    <button class="btn-caixa" id="btn-gerenciar-cardapio" style="width: 100%; background-color: #28a745; color: white;" onclick="abrirModalGerenciarCardapio()">📋 Gerenciar Cardápio</button>
+</div>
+
+<!-- MODAL GERENCIAR CARDÁPIO -->
+<div id="modal-gerenciar-cardapio" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <span class="close" onclick="fecharModalGerenciarCardapio()">&times;</span>
+        <h2 style="color: #28a745;">Gerenciar Cardápio</h2>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="btn-caixa" style="background-color: #007bff; color: white;" onclick="mostrarFormAdicionarItem()">➕ Novo Item</button>
+            <button class="btn-caixa" style="background-color: #6c757d; color: white;" onclick="carregarItensCardapio()">🔄 Atualizar Lista</button>
+        </div>
+
+             <!-- BARRA DE PESQUISA - ADICIONE ESTE CÓDIGO -->
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="busca-cardapio" placeholder="🔍 Pesquisar por nome, categoria ou preço..." 
+                   style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;"
+                   onkeyup="filtrarCardapio()">
+        </div>
+        
+<!-- FORMULÁRIO PARA ADICIONAR/EDITAR ITEM -->
+<div id="form-item-cardapio" style="display: none; margin-bottom: 20px; padding: 15px; background: #383838; border-radius: 8px;">
+    <h4 style="color: #ff8c00; margin-top: 0;" id="form-item-titulo">Adicionar Novo Item</h4>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label for="item-nome">Nome do Item:</label>
+            <input type="text" id="item-nome" placeholder="Ex: Espetinho de Carne" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+        </div>
+        <div>
+            <label for="item-preco">Preço (R$):</label>
+            <input type="number" id="item-preco" step="0.01" min="0" placeholder="Ex: 12.50" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+        </div>
+    </div>
+    
+    <div style="margin-top: 10px;">
+        <label for="item-categoria">Categoria:</label>
+        <input type="text" id="item-categoria" placeholder="Ex: Espetinhos, Bebidas, Acompanhamentos..." style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+    </div>
+    
+    <div class="caixa-actions" style="margin-top: 15px;">
+        <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" id="btn-salvar-item" onclick="salvarItemCardapio()">💾 Salvar Item</button>
+        <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="cancelarEdicaoItem()">❌ Cancelar</button>
+    </div>
+</div>
+        
+        <!-- LISTA DE ITENS DO CARDÁPIO -->
+        <div id="lista-cardapio-container" style="max-height: 400px; overflow-y: auto;">
+            <p style="text-align: center; color: gray;">Carregando cardápio...</p>
+        </div>
+        
+        <div id="mensagem-cardapio" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
+    </div>
+</div>
+
     <div id="modal-visualizar-comanda" class="modal">
         <div class="modal-content">
             <span class="close" onclick="fecharModalVisualizar()">&times;</span>
@@ -359,6 +419,19 @@
     </div>
     
     <script>
+        // SOLUÇÃO RÁPIDA - Ignorar erros da tabela configuracoes_sistema
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+    if (args[0] && args[0].includes('configuracoes_sistema')) {
+        console.log('Ignorando requisição para configuracoes_sistema');
+        return Promise.resolve({
+            ok: false,
+            status: 404,
+            json: () => Promise.resolve({error: 'Tabela não existe'})
+        });
+    }
+    return originalFetch.apply(this, args);
+};
         const SUPABASE_URL='https://ufxbltjyswbynwnaybev.supabase.co';
         const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
         const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
@@ -1510,7 +1583,7 @@ async function limparHistoricoComandas() {
         }
 
           // cozinha.html - ATUALIZAR função verificarStatusGarcom
-async function verificarStatusGarcom() {
+async function verificarStatusGarcom() { // COMENTE ou REMOVA estas funções:
     try {
         const { data, error } = await supabaseClient
             .from('configuracoes_sistema')
@@ -1537,7 +1610,8 @@ async function verificarStatusGarcom() {
     }
 }
 
-         async function deslogarGarcom() {
+         async function deslogarGarcom() { // COMENTE ou REMOVA estas funções:
+
             if (!confirm('Tem certeza que deseja deslogar o garçom remotamente? Isso fará com que ele precise fazer login novamente.')) {
                 return;
             }
@@ -1566,7 +1640,8 @@ async function verificarStatusGarcom() {
             }
         }
 
-        async function alterarSenhaGarcom() {
+        async function alterarSenhaGarcom() { // COMENTE ou REMOVA estas funções:
+
     const novaSenha = document.getElementById('nova-senha').value;
     const confirmarSenha = document.getElementById('confirmar-senha').value;
 
@@ -1762,6 +1837,382 @@ async function verificarStatusGarcom() {
                 alert('Erro ao processar reimpressão.');
             }
         }
+
+ // --- FUNÇÕES DE GERENCIAMENTO DO CARDÁPIO (VERSÃO LIMPA) ---
+
+let itemEditando = null;
+
+function abrirModalGerenciarCardapio() {
+    document.getElementById('modal-gerenciar-cardapio').style.display = 'block';
+    document.getElementById('form-item-cardapio').style.display = 'none';
+    document.getElementById('mensagem-cardapio').style.display = 'none';
+    carregarItensCardapio();
+}
+
+function fecharModalGerenciarCardapio() {
+    document.getElementById('modal-gerenciar-cardapio').style.display = 'none';
+    cancelarEdicaoItem();
+}
+
+function mostrarFormAdicionarItem() {
+    document.getElementById('form-item-cardapio').style.display = 'block';
+    document.getElementById('form-item-titulo').textContent = 'Adicionar Novo Item';
+    document.getElementById('btn-salvar-item').textContent = '💾 Salvar Item';
+    
+    // Limpa os campos
+    document.getElementById('item-nome').value = '';
+    document.getElementById('item-preco').value = '';
+    document.getElementById('item-categoria').value = '';
+    
+    itemEditando = null;
+}
+
+function cancelarEdicaoItem() {
+    document.getElementById('form-item-cardapio').style.display = 'none';
+    itemEditando = null;
+}
+
+async function carregarItensCardapio() {
+    const container = document.getElementById('lista-cardapio-container');
+    container.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
+    
+    try {
+        const { data: itens, error } = await supabaseClient
+            .from('cardapio')
+            .select('*')
+            .order('categoria', { ascending: true })
+            .order('nome_item', { ascending: true });
+        
+        if (error) {
+            console.error('Erro ao carregar cardápio:', error);
+            container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
+            return;
+        }
+        
+        if (!itens || itens.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>';
+            return;
+        }
+        
+        // Agrupar por categoria
+        const categorias = {};
+        itens.forEach(item => {
+            const categoria = item.categoria || 'Sem Categoria';
+            if (!categorias[categoria]) categorias[categoria] = [];
+            categorias[categoria].push(item);
+        });
+        
+        container.innerHTML = '';
+        
+        for (const [categoria, itensCategoria] of Object.entries(categorias)) {
+            const h3 = document.createElement('h3');
+            h3.textContent = categoria;
+            h3.style.color = '#ff8c00';
+            h3.style.marginTop = '20px';
+            h3.style.marginBottom = '10px';
+            container.appendChild(h3);
+            
+            itensCategoria.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item-cardapio';
+                div.style.marginBottom = '8px';
+                div.style.padding = '10px';
+                div.style.backgroundColor = '#2c2c2c';
+                div.style.borderRadius = '4px';
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+                
+                div.innerHTML = `
+                    <div style="flex: 1;">
+                        <strong>${item.nome_item}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: bold; color: #ff8c00;">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
+                        <div style="margin-top: 5px;">
+                            <button class="btn-caixa" style="background-color: #17a2b8; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="editarItemCardapio(${item.id})">✏️ Editar</button>
+                            <button class="btn-caixa" style="background-color: #dc3545; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="excluirItemCardapio(${item.id})">🗑️ Excluir</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+    } catch (error) {
+        console.error('Erro ao carregar cardápio:', error);
+        container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
+    }
+}
+
+async function editarItemCardapio(itemId) {
+    try {
+        const { data: item, error } = await supabaseClient
+            .from('cardapio')
+            .select('*')
+            .eq('id', itemId)
+            .single();
+        
+        if (error) throw error;
+        
+        // Verifica se os elementos existem antes de tentar setar valores
+        const nomeInput = document.getElementById('item-nome');
+        const precoInput = document.getElementById('item-preco');
+        const categoriaInput = document.getElementById('item-categoria');
+        
+        if (!nomeInput || !precoInput || !categoriaInput) {
+            throw new Error('Elementos do formulário não encontrados');
+        }
+        
+        // Preenche o formulário com os dados do item
+        nomeInput.value = item.nome_item;
+        precoInput.value = item.preco;
+        categoriaInput.value = item.categoria || '';
+        
+        // Mostra o formulário
+        document.getElementById('form-item-cardapio').style.display = 'block';
+        document.getElementById('form-item-titulo').textContent = 'Editar Item';
+        document.getElementById('btn-salvar-item').textContent = '💾 Atualizar Item';
+        
+        itemEditando = itemId;
+        
+    } catch (error) {
+        console.error('Erro ao carregar item para edição:', error);
+        mostrarMensagemCardapio('❌ Erro ao carregar item para edição: ' + error.message, 'error');
+    }
+}
+
+async function salvarItemCardapio() {
+    try {
+        const nomeInput = document.getElementById('item-nome');
+        const precoInput = document.getElementById('item-preco');
+        const categoriaInput = document.getElementById('item-categoria');
+        
+        if (!nomeInput || !precoInput || !categoriaInput) {
+            throw new Error('Elementos do formulário não encontrados');
+        }
+        
+        const nome = nomeInput.value.trim();
+        const preco = parseFloat(precoInput.value);
+        const categoria = categoriaInput.value.trim();
+        
+        // Validações
+        if (!nome) {
+            mostrarMensagemCardapio('❌ O nome do item é obrigatório.', 'error');
+            return;
+        }
+        
+        if (!preco || preco <= 0) {
+            mostrarMensagemCardapio('❌ O preço deve ser maior que zero.', 'error');
+            return;
+        }
+        
+        // Preparar dados para envio
+        const dadosItem = {
+            nome_item: nome,
+            preco: preco,
+            categoria: categoria || null
+        };
+        
+        if (itemEditando) {
+            // Atualizar item existente
+            const { error } = await supabaseClient
+                .from('cardapio')
+                .update(dadosItem)
+                .eq('id', itemEditando);
+            
+            if (error) throw error;
+            
+            mostrarMensagemCardapio('✅ Item atualizado com sucesso!', 'success');
+        } else {
+            // Criar novo item
+            const { error } = await supabaseClient
+                .from('cardapio')
+                .insert(dadosItem);
+            
+            if (error) throw error;
+            
+            mostrarMensagemCardapio('✅ Item adicionado com sucesso!', 'success');
+        }
+        
+        // Limpa o formulário e atualiza a lista
+        cancelarEdicaoItem();
+        setTimeout(() => {
+            carregarItensCardapio();
+        }, 500);
+        
+    } catch (error) {
+        console.error('Erro ao salvar item:', error);
+        mostrarMensagemCardapio('❌ Erro ao salvar item: ' + error.message, 'error');
+    }
+}
+
+async function excluirItemCardapio(itemId) {
+    if (!confirm('Tem certeza que deseja excluir este item do cardápio? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('cardapio')
+            .delete()
+            .eq('id', itemId);
+        
+        if (error) throw error;
+        
+        mostrarMensagemCardapio('✅ Item excluído com sucesso!', 'success');
+        setTimeout(() => {
+            carregarItensCardapio();
+        }, 500);
+        
+    } catch (error) {
+        console.error('Erro ao excluir item:', error);
+        mostrarMensagemCardapio('❌ Erro ao excluir item: ' + error.message, 'error');
+    }
+}
+
+function mostrarMensagemCardapio(mensagem, tipo) {
+    const div = document.getElementById('mensagem-cardapio');
+    if (!div) {
+        console.error('Elemento mensagem-cardapio não encontrado');
+        return;
+    }
+    
+    div.textContent = mensagem;
+    div.style.display = 'block';
+    div.style.backgroundColor = tipo === 'success' ? '#2d4a2d' : '#4a2d2d';
+    div.style.color = tipo === 'success' ? '#4CAF50' : '#FF5733';
+    div.style.border = `1px solid ${tipo === 'success' ? '#4CAF50' : '#FF5733'}`;
+    
+    setTimeout(() => {
+        div.style.display = 'none';
+    }, 5000);
+}
+
+// --- FUNÇÕES DE PESQUISA DO CARDÁPIO ---
+
+let todosItensCardapio = []; // Para armazenar todos os itens
+
+async function carregarItensCardapio() {
+    const container = document.getElementById('lista-cardapio-container');
+    container.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
+    
+    try {
+        const { data: itens, error } = await supabaseClient
+            .from('cardapio')
+            .select('*')
+            .order('categoria', { ascending: true })
+            .order('nome_item', { ascending: true });
+        
+        if (error) {
+            console.error('Erro ao carregar cardápio:', error);
+            container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
+            return;
+        }
+        
+        if (!itens || itens.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>';
+            todosItensCardapio = [];
+            return;
+        }
+        
+        // Salva todos os itens para usar na pesquisa
+        todosItensCardapio = itens;
+        
+        // Renderiza os itens
+        renderizarItensCardapio(itens);
+        
+    } catch (error) {
+        console.error('Erro ao carregar cardápio:', error);
+        container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
+    }
+}
+
+function renderizarItensCardapio(itens) {
+    const container = document.getElementById('lista-cardapio-container');
+    
+    if (!itens || itens.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item encontrado.</p>';
+        return;
+    }
+    
+    // Agrupar por categoria
+    const categorias = {};
+    itens.forEach(item => {
+        const categoria = item.categoria || 'Sem Categoria';
+        if (!categorias[categoria]) categorias[categoria] = [];
+        categorias[categoria].push(item);
+    });
+    
+    container.innerHTML = '';
+    
+    for (const [categoria, itensCategoria] of Object.entries(categorias)) {
+        const h3 = document.createElement('h3');
+        h3.textContent = `${categoria} (${itensCategoria.length} itens)`;
+        h3.style.color = '#ff8c00';
+        h3.style.marginTop = '20px';
+        h3.style.marginBottom = '10px';
+        container.appendChild(h3);
+        
+        itensCategoria.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item-cardapio';
+            div.style.marginBottom = '8px';
+            div.style.padding = '10px';
+            div.style.backgroundColor = '#2c2c2c';
+            div.style.borderRadius = '4px';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+            
+            div.innerHTML = `
+                <div style="flex: 1;">
+                    <strong>${item.nome_item}</strong>
+                    <div style="font-size: 0.8em; color: #ccc; margin-top: 3px;">
+                        Categoria: ${item.categoria || 'Sem categoria'}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: bold; color: #ff8c00;">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
+                    <div style="margin-top: 5px;">
+                        <button class="btn-caixa" style="background-color: #17a2b8; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="editarItemCardapio(${item.id})">✏️ Editar</button>
+                        <button class="btn-caixa" style="background-color: #dc3545; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="excluirItemCardapio(${item.id})">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+}
+
+function filtrarCardapio() {
+    const termo = document.getElementById('busca-cardapio').value.toLowerCase().trim();
+    
+    if (!termo) {
+        // Se não há termo de busca, mostra todos os itens
+        renderizarItensCardapio(todosItensCardapio);
+        return;
+    }
+    
+    // Filtra os itens
+    const itensFiltrados = todosItensCardapio.filter(item => {
+        return (
+            item.nome_item.toLowerCase().includes(termo) ||
+            (item.categoria && item.categoria.toLowerCase().includes(termo)) ||
+            item.preco.toString().includes(termo) ||
+            item.id.toString().includes(termo)
+        );
+    });
+    
+    // Renderiza os itens filtrados
+    renderizarItensCardapio(itensFiltrados);
+}
+
+// Função para limpar a pesquisa
+function limparPesquisaCardapio() {
+    document.getElementById('busca-cardapio').value = '';
+    renderizarItensCardapio(todosItensCardapio);
+}
 
         // Inicializar ao carregar a página
         inicializarConfiguracoesSistema();
