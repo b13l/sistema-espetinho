@@ -994,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Verificar se houve logout remoto
         // index.html - ATUALIZAR função verificarLogoutRemoto
-async function verificarLogoutRemoto() {
+async function verificarLogoutRemoto() { // COMENTE no index.html:
     try {
         const { data, error } = await supabaseClient
             .from('configuracoes_sistema')
@@ -1011,7 +1011,8 @@ async function verificarLogoutRemoto() {
     }
 }
 
-        async function fazerLogoutEResetarFlag() {
+        async function fazerLogoutEResetarFlag() { // COMENTE no index.html:
+
             try {
                 // 1. Primeiro resetar a flag para false no banco
                 const { error: resetError } = await supabaseClient
@@ -1059,7 +1060,7 @@ async function fazerLogoutLocal() {
     alert('Sessão encerrada remotamente pela cozinha.');
 }
         // Verificar logout remoto periodicamente (mantém 5 segundos)
-        setInterval(verificarLogoutRemoto, 5000);
+        setInterval(verificarLogoutRemoto, 5000); // Verificar logout remoto periodicamente (mantém 5 segundos)
         
     </script>
 </body>
