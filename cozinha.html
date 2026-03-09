@@ -14,14 +14,12 @@
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; }
         .header { text-align: center; margin-bottom: 30px; }
-        /* MODIFICADO: Ajustado para largura de conteúdo para a coluna lateral */
         .grid-container { display: grid; grid-template-columns: 1fr max-content; gap: 30px; }
         
-        /* PEDIDOS DA COZINHA */
         #pedidos-container { display: flex; flex-wrap: wrap; gap: 20px; }
         .pedido-card { background-color: #383838; padding: 15px; border-radius: 8px; width: 320px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
         .pedido-card h3 { color: #ff8c00; margin-top: 0; border-bottom: 2px solid #555; padding-bottom: 5px; }
-                .btn-reimprimir { 
+        .btn-reimprimir { 
             background-color: #17a2b8; 
             color: white; 
             border: none; 
@@ -32,16 +30,13 @@
             font-weight: bold; 
             width: 100%; 
         }
-        .btn-reimprimir:hover {
-            background-color: #138496;
-        }
+        .btn-reimprimir:hover { background-color: #138496; }
         .lista-itens { list-style: none; padding: 0; margin: 10px 0; }
         .lista-itens li { padding: 3px 0; border-bottom: 1px dotted #555; font-size: 0.9em; }
         .pedido-card button { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; }
         .btn-pronto { background-color: #4CAF50; }
         .btn-fechar-conta { background-color: #007bff; margin-top: 5px; }
         
-        /* MESAS EM GRID */
         .mesas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-bottom: 30px; }
         .mesa-item { padding: 25px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; text-align: center; transition: all 0.3s; position: relative; }
         .mesa-item.livre { background-color: #4CAF50; color: white; }
@@ -50,8 +45,6 @@
         .mesa-item.pronto { background-color: #00bcd4; color: white; }
         .mesa-item:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
         
-        /* CAIXA E GERENCIAMENTO */
-        /* MODIFICADO: Melhores paddings/borders, e display flex column */
         .gerenciamento-col { 
             background-color: #2c2c2c; 
             padding: 3px; 
@@ -63,7 +56,6 @@
             width: max-content; 
         }
 
-        /* NOVO: Classe para esconder o conteúdo da caixa */
         .caixa-oculto {
             max-height: 0;
             overflow: hidden;
@@ -82,7 +74,6 @@
             width: 100%;
         }
 
-        /* Botão de Toggle */
         #btn-toggle-caixa {
             background-color: #555;
             color: white;
@@ -95,14 +86,8 @@
             width: 100%;
         }
         
-        /* TÍTULO PRINCIPAL (h2) DENTRO DO CONTÊINER COLAPSÁVEL */
-        .caixa-visivel h2 {
-            font-size: 1.2em;
-            margin: 5px 0;
-            text-align: center;
-        }
+        .caixa-visivel h2 { font-size: 1.2em; margin: 5px 0; text-align: center; }
 
-        /* MODIFICADO: Estilos para o div #caixa-do-dia */
         #caixa-do-dia { 
             margin-top: 3px; 
             padding: 3px; 
@@ -114,7 +99,6 @@
         }
         #caixa-do-dia h4 { color: #ff8c00; }
         
-        /* MODIFICADO: Ajustado para o novo layout */
         .caixa-actions { display: flex; gap: 5px; margin-top: 5px; width: 100%; box-sizing: border-box; }
         .btn-caixa { flex: 1; padding: 5px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s; font-size: 0.9em; } 
         .btn-baixar-pdf { background-color: #28a745; color: white; }
@@ -122,8 +106,6 @@
         .btn-baixar-pdf:hover { background-color: #218838; }
         .btn-limpar-caixa:hover { background-color: #c82333; }
 
-        
-        /* ADICIONAR ITEM */
         .adicionar-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #555; }
         .mesa-selecionada-info { background-color: #ff8c00; padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align: center; font-weight: bold; }
         .comanda-selecionada-info { background-color: #4CAF50; padding: 8px; border-radius: 4px; margin-bottom: 10px; text-align: center; font-size: 0.9em; }
@@ -132,16 +114,13 @@
         .item-preco { font-weight: bold; margin-right: 10px; color: #ff8c00; }
         .add-btn { background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        /* INDICADORES */
         .status-indicator { position: fixed; top: 10px; right: 10px; padding: 8px 12px; background-color: #4CAF50; color: white; border-radius: 4px; font-size: 0.9em; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 1000; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: white; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         
-        /* ALERTA SONORO */
         .alert-indicator { position: fixed; top: 10px; left: 10px; padding: 8px 12px; background-color: #ff8c00; color: white; border-radius: 4px; font-size: 0.9em; display: none; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 1000; animation: blink 1s infinite; }
         @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.3; } }
         
-        /* MODAIS */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); overflow-y: auto; }
         .modal-content { background-color: #2c2c2c; margin: 3% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 700px; border-radius: 8px; max-height: 85vh; overflow-y: auto; }
         .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px; }
@@ -152,19 +131,15 @@
         .troco-display { background-color: #383838; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #4CAF50; }
         .troco-display h3 { color: #4CAF50; margin: 0 0 10px 0; }
         
-        /* NOVO: MODAIS FECHAR CAIXA E DESBLOQUEIO */
         #modal-fechar-caixa .modal-content, #modal-desbloqueio .modal-content { max-width: 500px; }
         
-        /* NOVO: SELEÇÃO DE COMANDA */
         .comanda-option { background: #383838; margin: 5px 0; padding: 10px; border-radius: 4px; cursor: pointer; border: 1px solid #555; }
         .comanda-option:hover { border-color: #ff8c00; }
         .comanda-option.selecionada { border-color: #4CAF50; background: #2d4a2d; }
         
-        /* NOVO: ESTILOS PARA OS BOTÕES DE BLOQUEIO/DESBLOQUEIO */
-        #btn-bloquear-caixa { background-color: #6c757d; color: white; margin-top: 5px; } /* Ajustado para 5px */
-        #btn-desbloquear-caixa { background-color: #ffc107; color: black; margin-top: 5px; } /* Ajustado para 5px */
+        #btn-bloquear-caixa { background-color: #6c757d; color: white; margin-top: 5px; }
+        #btn-desbloquear-caixa { background-color: #ffc107; color: black; margin-top: 5px; }
         
-        /* NOVO: CLASSE DE BLUR */
         .blurry {
             filter: blur(5px);
             user-select: none;
@@ -217,8 +192,8 @@
 
                 <button class="btn-caixa" id="btn-desbloquear-caixa" style="width: 100%; margin-top: 5px; display: none;" onclick="abrirModalDesbloqueio()">🔓 Desbloquear (Senha)</button>
             </div>
-            </div>
         </div>
+    </div>
     
     <hr style="margin: 40px 0; border-color: #555;">
     
@@ -237,14 +212,14 @@
         </div>
     </div>
     
-<div id="modal-fechar-conta" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="fecharModalConta()">&times;</span>
-        <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
-        <div id="modal-itens-lista"></div>
-        <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
-        <h3 style="color: #ffc107; font-size: 12px; margin: 5px 0;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
-        <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
+    <div id="modal-fechar-conta" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalConta()">&times;</span>
+            <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
+            <div id="modal-itens-lista"></div>
+            <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
+            <h3 style="color: #ffc107; font-size: 12px; margin: 5px 0;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
+            <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
             <label>Forma de Pagamento:</label>
             <select id="modal-forma-pagamento">
                 <option value="">Selecione...</option>
@@ -289,125 +264,117 @@
         <button class="btn-caixa" id="btn-historico-caixa" style="width: 100%; background-color: #ff8c00; color: white;" onclick="abrirModalHistorico()">📜 Histórico Comandas</button>
     </div>
 
-<div id="modal-historico" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="fecharModalHistorico()">&times;</span>
-        <h2 style="color: #ff8c00;">Histórico de Comandas Fechadas</h2>
-        
-        <label for="input-data-historico">Selecione a Data:</label>
-        <input type="date" id="input-data-historico" onchange="carregarHistoricoPorData()">
-        
-        <button class="btn-caixa" style="background-color: #dc3545; color: white; width: 100%; margin-top: 15px;" 
-                onclick="limparHistoricoComandas()">
-            🗑️ Limpar HISTÓRICO de Comandas Fechadas
-        </button>
+    <div id="modal-historico" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalHistorico()">&times;</span>
+            <h2 style="color: #ff8c00;">Histórico de Comandas Fechadas</h2>
+            
+            <label for="input-data-historico">Selecione a Data:</label>
+            <input type="date" id="input-data-historico" onchange="carregarHistoricoPorData()">
+            
+            <button class="btn-caixa" style="background-color: #dc3545; color: white; width: 100%; margin-top: 15px;" 
+                    onclick="limparHistoricoComandas()">
+                🗑️ Limpar HISTÓRICO de Comandas Fechadas
+            </button>
 
-        <div id="historico-lista" style="margin-top: 20px;">
-            <p style="text-align: center; color: gray;">Selecione uma data para ver o histórico.</p>
+            <div id="historico-lista" style="margin-top: 20px;">
+                <p style="text-align: center; color: gray;">Selecione uma data para ver o histórico.</p>
+            </div>
         </div>
     </div>
-</div>
 
-    <!-- NOVA SEÇÃO: GERENCIAR GARÇOM -->
+    <!-- GERENCIAR GARÇOM -->
     <div style="width: 100%; margin-top: 15px; box-sizing: border-box;">
         <button class="btn-caixa" id="btn-gerenciar-garcom" style="width: 100%; background-color: #6f42c1; color: white;" onclick="abrirModalGerenciarGarcom()">👨‍💼 Gerenciar Garçom</button>
     </div>
 
-  <!-- MODAL GERENCIAR GARÇOM -->
-<div id="modal-gerenciar-garcom" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="fecharModalGerenciarGarcom()">&times;</span>
-        <h2 style="color: #6f42c1;">Gerenciar Acesso do Garçom</h2>
-        
-        <div style="margin: 20px 0; padding: 15px; background: #383838; border-radius: 8px;">
-            <h4 style="color: #ff8c00; margin-top: 0;">Ações Disponíveis</h4>
-            <p>Gerencie o acesso e a senha do garçom remotamente.</p>
-        </div>
-        
-        <div class="caixa-actions" style="margin: 15px 0;">
-            <button class="btn-caixa" style="background-color: #dc3545; color: white; flex: 1;" onclick="deslogarGarcom()">🚪 Deslogar Garçom</button>
-            <button class="btn-caixa" style="background-color: #17a2b8; color: white; flex: 1;" onclick="mostrarFormAlterarSenha()">🔑 Alterar Senha</button>
-        </div>
-        
-        <!-- FORMULÁRIO PARA ALTERAR SENHA -->
-        <div id="form-alterar-senha" style="display: none; margin-top: 20px; padding: 15px; background: #2d2d2d; border-radius: 8px;">
-            <h4 style="color: #4CAF50; margin-top: 0;">Alterar Senha do Garçom</h4>
+    <div id="modal-gerenciar-garcom" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalGerenciarGarcom()">&times;</span>
+            <h2 style="color: #6f42c1;">Gerenciar Acesso do Garçom</h2>
             
-            <label for="nova-senha">Nova Senha:</label>
-            <input type="password" id="nova-senha" placeholder="Digite a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
-            
-            <label for="confirmar-senha">Confirmar Senha:</label>
-            <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
-            
-            <div class="caixa-actions" style="margin-top: 15px;">
-                <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" onclick="alterarSenhaGarcom()">💾 Salvar Nova Senha</button>
-                <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="ocultarFormAlterarSenha()">❌ Cancelar</button>
+            <div style="margin: 20px 0; padding: 15px; background: #383838; border-radius: 8px;">
+                <h4 style="color: #ff8c00; margin-top: 0;">Ações Disponíveis</h4>
+                <p>Gerencie o acesso e a senha do garçom remotamente.</p>
             </div>
+            
+            <div class="caixa-actions" style="margin: 15px 0;">
+                <button class="btn-caixa" style="background-color: #dc3545; color: white; flex: 1;" onclick="deslogarGarcom()">🚪 Deslogar Garçom</button>
+                <button class="btn-caixa" style="background-color: #17a2b8; color: white; flex: 1;" onclick="mostrarFormAlterarSenha()">🔑 Alterar Senha</button>
+            </div>
+            
+            <div id="form-alterar-senha" style="display: none; margin-top: 20px; padding: 15px; background: #2d2d2d; border-radius: 8px;">
+                <h4 style="color: #4CAF50; margin-top: 0;">Alterar Senha do Garçom</h4>
+                
+                <label for="nova-senha">Nova Senha:</label>
+                <input type="password" id="nova-senha" placeholder="Digite a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
+                
+                <label for="confirmar-senha">Confirmar Senha:</label>
+                <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
+                
+                <div class="caixa-actions" style="margin-top: 15px;">
+                    <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" onclick="alterarSenhaGarcom()">💾 Salvar Nova Senha</button>
+                    <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="ocultarFormAlterarSenha()">❌ Cancelar</button>
+                </div>
+            </div>
+            
+            <div id="mensagem-garcom" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
-        
-        <div id="mensagem-garcom" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
     </div>
-</div>
 
-<!-- Adicione este código após a seção "GERENCIAR GARÇOM" -->
+    <!-- GERENCIAR CARDÁPIO -->
+    <div style="width: 100%; margin-top: 15px; box-sizing: border-box;">
+        <button class="btn-caixa" id="btn-gerenciar-cardapio" style="width: 100%; background-color: #28a745; color: white;" onclick="abrirModalGerenciarCardapio()">📋 Gerenciar Cardápio</button>
+    </div>
 
-<!-- NOVA SEÇÃO: GERENCIAR CARDÁPIO -->
-<div style="width: 100%; margin-top: 15px; box-sizing: border-box;">
-    <button class="btn-caixa" id="btn-gerenciar-cardapio" style="width: 100%; background-color: #28a745; color: white;" onclick="abrirModalGerenciarCardapio()">📋 Gerenciar Cardápio</button>
-</div>
+    <div id="modal-gerenciar-cardapio" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="fecharModalGerenciarCardapio()">&times;</span>
+            <h2 style="color: #28a745;">Gerenciar Cardápio</h2>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn-caixa" style="background-color: #007bff; color: white;" onclick="mostrarFormAdicionarItem()">➕ Novo Item</button>
+                <button class="btn-caixa" style="background-color: #6c757d; color: white;" onclick="carregarItensCardapio()">🔄 Atualizar Lista</button>
+            </div>
 
-<!-- MODAL GERENCIAR CARDÁPIO -->
-<div id="modal-gerenciar-cardapio" class="modal">
-    <div class="modal-content" style="max-width: 900px;">
-        <span class="close" onclick="fecharModalGerenciarCardapio()">&times;</span>
-        <h2 style="color: #28a745;">Gerenciar Cardápio</h2>
-        
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <button class="btn-caixa" style="background-color: #007bff; color: white;" onclick="mostrarFormAdicionarItem()">➕ Novo Item</button>
-            <button class="btn-caixa" style="background-color: #6c757d; color: white;" onclick="carregarItensCardapio()">🔄 Atualizar Lista</button>
-        </div>
-
-             <!-- BARRA DE PESQUISA - ADICIONE ESTE CÓDIGO -->
-        <div style="margin-bottom: 15px;">
-            <input type="text" id="busca-cardapio" placeholder="🔍 Pesquisar por nome, categoria ou preço..." 
-                   style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;"
-                   onkeyup="filtrarCardapio()">
-        </div>
-        
-<!-- FORMULÁRIO PARA ADICIONAR/EDITAR ITEM -->
-<div id="form-item-cardapio" style="display: none; margin-bottom: 20px; padding: 15px; background: #383838; border-radius: 8px;">
-    <h4 style="color: #ff8c00; margin-top: 0;" id="form-item-titulo">Adicionar Novo Item</h4>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-            <label for="item-nome">Nome do Item:</label>
-            <input type="text" id="item-nome" placeholder="Ex: Espetinho de Carne" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
-        </div>
-        <div>
-            <label for="item-preco">Preço (R$):</label>
-            <input type="number" id="item-preco" step="0.01" min="0" placeholder="Ex: 12.50" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="busca-cardapio" placeholder="🔍 Pesquisar por nome, categoria ou preço..." 
+                       style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;"
+                       onkeyup="filtrarCardapio()">
+            </div>
+            
+            <div id="form-item-cardapio" style="display: none; margin-bottom: 20px; padding: 15px; background: #383838; border-radius: 8px;">
+                <h4 style="color: #ff8c00; margin-top: 0;" id="form-item-titulo">Adicionar Novo Item</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label for="item-nome">Nome do Item:</label>
+                        <input type="text" id="item-nome" placeholder="Ex: Espetinho de Carne" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+                    </div>
+                    <div>
+                        <label for="item-preco">Preço (R$):</label>
+                        <input type="number" id="item-preco" step="0.01" min="0" placeholder="Ex: 12.50" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <label for="item-categoria">Categoria:</label>
+                    <input type="text" id="item-categoria" placeholder="Ex: Espetinhos, Bebidas, Acompanhamentos..." style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
+                </div>
+                
+                <div class="caixa-actions" style="margin-top: 15px;">
+                    <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" id="btn-salvar-item" onclick="salvarItemCardapio()">💾 Salvar Item</button>
+                    <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="cancelarEdicaoItem()">❌ Cancelar</button>
+                </div>
+            </div>
+            
+            <div id="lista-cardapio-container" style="max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: gray;">Carregando cardápio...</p>
+            </div>
+            
+            <div id="mensagem-cardapio" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
     </div>
-    
-    <div style="margin-top: 10px;">
-        <label for="item-categoria">Categoria:</label>
-        <input type="text" id="item-categoria" placeholder="Ex: Espetinhos, Bebidas, Acompanhamentos..." style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
-    </div>
-    
-    <div class="caixa-actions" style="margin-top: 15px;">
-        <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" id="btn-salvar-item" onclick="salvarItemCardapio()">💾 Salvar Item</button>
-        <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="cancelarEdicaoItem()">❌ Cancelar</button>
-    </div>
-</div>
-        
-        <!-- LISTA DE ITENS DO CARDÁPIO -->
-        <div id="lista-cardapio-container" style="max-height: 400px; overflow-y: auto;">
-            <p style="text-align: center; color: gray;">Carregando cardápio...</p>
-        </div>
-        
-        <div id="mensagem-cardapio" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
-    </div>
-</div>
 
     <div id="modal-visualizar-comanda" class="modal">
         <div class="modal-content">
@@ -439,10 +406,32 @@
 
         let totalCom10Percent = 0;
         let taxaServico = 0;
-        // 🆕 INICIA SEMPRE BLOQUEADO AO CARREGAR A PÁGINA
         let caixaFechadaHoje = true; 
+
+        // =============================================
+        // ===== FUSO HORÁRIO JAPÃO (JST = UTC+9) =====
+        // =============================================
+        function getJSTDate() {
+            const now = new Date();
+            const jstOffset = 9 * 60; // minutos
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            return new Date(utc + (jstOffset * 60000));
+        }
+
+        function getJSTISOString() {
+            const jst = getJSTDate();
+            const pad = n => String(n).padStart(2, '0');
+            return `${jst.getFullYear()}-${pad(jst.getMonth()+1)}-${pad(jst.getDate())}T` +
+                   `${pad(jst.getHours())}:${pad(jst.getMinutes())}:${pad(jst.getSeconds())}.000+09:00`;
+        }
+
+        function getJSTDateString() {
+            const jst = getJSTDate();
+            const pad = n => String(n).padStart(2, '0');
+            return `${jst.getFullYear()}-${pad(jst.getMonth()+1)}-${pad(jst.getDate())}`;
+        }
+        // =============================================
         
-        // 🆕 NOVO: FUNÇÃO PARA ESCONDER/MOSTRAR O CAIXA
         function toggleCaixa() {
             const container = document.getElementById('caixa-container');
             const button = document.getElementById('btn-toggle-caixa');
@@ -451,7 +440,6 @@
                 container.classList.remove('caixa-oculto');
                 container.classList.add('caixa-visivel');
                 button.innerHTML = '❌ Ocultar Caixa';
-                // Quando mostra, garante que o status de bloqueio seja aplicado/removido
                 updateCaixaBlockStatus(); 
             } else {
                 container.classList.remove('caixa-visivel');
@@ -465,17 +453,13 @@
             iniciarImpressaoAutomatica();
             calcularCaixaDoDia();
             
-            // 🆕 Configura o evento 'Enter' para o modal de desbloqueio
             document.getElementById('input-senha-desbloqueio').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     verificarSenhaDesbloqueio();
                 }
             });
             
-            // 🆕 Aplica o estado inicial de bloqueio/blur
             updateCaixaBlockStatus();
-
-            // 🆕 Adicionado: Esconde o caixa ao carregar.
             toggleCaixa(); 
             
             ultimaImpressaoTimestamp = new Date().toISOString();
@@ -483,7 +467,6 @@
         }
         
         function startAllPolling(){
-            // Garante que o polling não rode duplicado
             if (pollingIntervalPedidos) return; 
 
             fetchPedidos();
@@ -543,7 +526,7 @@
             }
         }
         
-              function renderPedidos(){
+        function renderPedidos(){
             const container=document.getElementById('pedidos-container');
             const pedidosAbertos=pedidosAtuais.filter(p=>p.status==='Aberto'||p.status==='Em Preparo'||p.status==='Pronto');
             container.innerHTML='';
@@ -559,21 +542,21 @@
                 
                 const horario = pedido.horario ? new Date(pedido.horario).toLocaleTimeString('pt-BR', {
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
+                    timeZone: 'Asia/Tokyo'
                 }) : '--:--';
                 
                 const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
                 
                 div.innerHTML=`
                     <h3>Mesa ${pedido.mesa} - ${nomeComanda} - #${pedido.id.substring(0,4)}</h3>
-                    <p><strong>Horário:</strong> ${horario}</p>
+                    <p><strong>Horário (JST):</strong> ${horario}</p>
                     <p><strong>Status:</strong> <strong style="color:${statusColor};">${pedido.status}</strong></p>
                     <p><strong>Total:</strong> R$ ${(pedido.total||0).toFixed(2).replace('.',',')}</p>
                     <p><strong>Obs:</strong> ${pedido.observacao||'Nenhuma'}</p>
                     <ul class="lista-itens">${listaItens}</ul>
                     <button class="btn-pronto" onclick="marcarComoPronto('${pedido.id}','${pedido.mesa}')" ${pedido.status==='Pronto'?'disabled':''}>${pedido.status==='Pronto'?'✓ PRONTO':'Marcar Pronto'}</button>
                     <button class="btn-fechar-conta" onclick="abrirModalFecharConta('${pedido.id}')">Fechar Conta</button>
-                    <!-- NOVO BOTÃO DE REIMPRESSÃO -->
                     <button class="btn-reimprimir" onclick="reimprimirComandaCozinha('${pedido.id}')">🖨️ Reimprimir</button>
                 `;
                 container.appendChild(div);
@@ -786,9 +769,10 @@
         
         async function calcularCaixaDoDia(){
             try{
-                const hoje=new Date().toISOString().split('T')[0];
+                // ✅ JST: usa a data de hoje no fuso do Japão
+                const hoje = getJSTDateString();
+
                 const{data}=await supabaseClient.from('pedidos').select('total,forma_pagamento,horario_fecha').eq('status','Fechado').not('horario_fecha','is',null);
-                // 💡 CORRIGIDO: Inicialização de todas as formas de pagamento
                 let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0}; 
                 (data||[]).forEach(p=>{
                     if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
@@ -804,8 +788,6 @@
                 const formasDiv=document.getElementById('totais-por-forma');
                 formasDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma:</h5>'+Object.entries(formas).map(([f,v])=>v>0?`<p>${f}: R$ ${v.toFixed(2).replace('.',',')}</p>`:'').join('');
                 
-                // 🆕 Garantir que o status de bloqueio seja aplicado no polling
-                // Só aplica se o container estiver visível (para evitar que updateCaixaBlockStatus remova o status de oculto)
                 if (document.getElementById('caixa-container').classList.contains('caixa-visivel')) {
                     updateCaixaBlockStatus();
                 }
@@ -820,7 +802,6 @@
             if(!pedido)return;
             pedidoAtualModal=pedido;
             
-            // 🆕 Implementação da Taxa de Serviço (10%)
             const subtotal = (pedido.total || 0); 
             taxaServico = subtotal * 0.10;
             totalCom10Percent = subtotal + taxaServico;
@@ -851,7 +832,6 @@
         }
         
         document.getElementById('modal-forma-pagamento').onchange=function(){
-            // Ativa o campo de dinheiro/troco se for DINHEIRO
             document.getElementById('campo-dinheiro').style.display=this.value==='Dinheiro'?'block':'none';
             document.getElementById('troco-info').style.display='none';
         };
@@ -888,14 +868,15 @@
                 .eq('mesa', pedidoAtualModal.mesa)
                 .neq('status', 'Fechado');
             
+            // ✅ JST: grava o horário de fechamento no fuso do Japão
             await supabaseClient.from('pedidos').update({
                 status:'Fechado',
                 forma_pagamento:forma,
                 valor_recebido:valorRecebido,
                 troco:troco,
-                total: totalFinal, // O total final com 10%
-                taxa_servico: taxaServico, // Valor da taxa de serviço
-                horario_fecha:new Date().toISOString()
+                total: totalFinal,
+                taxa_servico: taxaServico,
+                horario_fecha: getJSTISOString()
             }).eq('id',pedidoAtualModal.id);
             
             const comandasAbertasRestantes = comandasRestantes ? comandasRestantes.filter(c => c.id !== pedidoAtualModal.id) : [];
@@ -913,68 +894,69 @@
             alert('Conta fechada!');
         }
         
-function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal){
-    const dataHora=new Date().toLocaleString('pt-BR');
-    const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
-    const subtotal = totalFinal - taxaServico;
-    
-    let html=`
-        <div style="font-family:monospace;padding:15px;font-size:14pt;line-height:1.4;color:#000000;">
-            <h2 style="text-align:center;font-size:20pt;margin-bottom:8px;color:#000000;">
-                <strong>ESPETINHO GESSELO</strong>
-            </h2>
-            <h3 style="text-align:center;font-size:18pt;margin-top:5px;margin-bottom:15px;color:#000000;">
-                <strong>COMPROVANTE</strong>
-            </h3>
-            <p style="text-align:center;font-size:13pt;margin-bottom:20px;color:#000000;">
-                <strong>${dataHora}</strong>
-            </p>
-            <p style="font-size:13pt;margin:10px 0;color:#000000;">
-                <strong>Mesa: ${pedido.mesa}</strong>
-            </p>
-            <p style="font-size:13pt;margin:10px 0;color:#000000;">
-                <strong>Comanda: ${nomeComanda}</strong>
-            </p>
-            <h4 style="font-size:15pt;margin:20px 0 12px 0;border-bottom:2px solid #000;padding-bottom:8px;color:#000000;">
-                <strong>ITENS:</strong>
-            </h4>
-            <ul style="list-style:none;padding:0;margin:0;">
-                ${(pedido.itens||[]).map(i=>`
-                    <li style="font-size:13pt;margin:8px 0;padding:5px 0;border-bottom:1px dashed #000;color:#000000;">
-                        <strong>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</strong>
-                    </li>
-                `).join('')}
-            </ul>
-            <div style="margin-top:20px;border-top:3px solid #000;padding-top:15px;">
-                <p style="font-size:14pt;margin:10px 0;color:#000000;">
-                    <strong>SUBTOTAL: R$ ${subtotal.toFixed(2)}</strong>
-                </p>
-                <p style="font-size:10pt;margin:6px 0;color:#000000;">
-                    <strong>Taxa de Serviço (10%): R$ ${taxaServico.toFixed(2)}</strong>
-                </p>
-                <p style="font-size:16pt;margin:15px 0;color:#000000;">
-                    <strong>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</strong>
-                </p>
-                <p style="font-size:14pt;margin:10px 0;color:#000000;">
-                    <strong>Forma: ${forma}</strong>
-                </p>
-                ${forma==='Dinheiro'&&recebido?`
-                    <p style="font-size:13pt;margin:8px 0;color:#000000;">
-                        <strong>Recebido: R$ ${recebido.toFixed(2)}</strong>
+        function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal){
+            // ✅ JST: data/hora do comprovante no fuso do Japão
+            const dataHora = getJSTDate().toLocaleString('pt-BR');
+            const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
+            const subtotal = totalFinal - taxaServico;
+            
+            let html=`
+                <div style="font-family:monospace;padding:15px;font-size:14pt;line-height:1.4;color:#000000;">
+                    <h2 style="text-align:center;font-size:20pt;margin-bottom:8px;color:#000000;">
+                        <strong>ESPETINHO GESSELO</strong>
+                    </h2>
+                    <h3 style="text-align:center;font-size:18pt;margin-top:5px;margin-bottom:15px;color:#000000;">
+                        <strong>COMPROVANTE</strong>
+                    </h3>
+                    <p style="text-align:center;font-size:13pt;margin-bottom:20px;color:#000000;">
+                        <strong>${dataHora} (JST)</strong>
                     </p>
-                    <p style="font-size:13pt;margin:8px 0;color:#000000;">
-                        <strong>Troco: R$ ${troco.toFixed(2)}</strong>
+                    <p style="font-size:13pt;margin:10px 0;color:#000000;">
+                        <strong>Mesa: ${pedido.mesa}</strong>
                     </p>
-                `:''}
-            </div>
-            <p style="text-align:center;margin-top:25px;font-size:13pt;color:#000000;">
-                <strong>Obrigado e Volte Sempre!</strong>
-            </p>
-        </div>
-    `;
-    document.getElementById('comanda-impressao').innerHTML=html;
-    setTimeout(()=>window.print(),300);
-}
+                    <p style="font-size:13pt;margin:10px 0;color:#000000;">
+                        <strong>Comanda: ${nomeComanda}</strong>
+                    </p>
+                    <h4 style="font-size:15pt;margin:20px 0 12px 0;border-bottom:2px solid #000;padding-bottom:8px;color:#000000;">
+                        <strong>ITENS:</strong>
+                    </h4>
+                    <ul style="list-style:none;padding:0;margin:0;">
+                        ${(pedido.itens||[]).map(i=>`
+                            <li style="font-size:13pt;margin:8px 0;padding:5px 0;border-bottom:1px dashed #000;color:#000000;">
+                                <strong>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</strong>
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <div style="margin-top:20px;border-top:3px solid #000;padding-top:15px;">
+                        <p style="font-size:14pt;margin:10px 0;color:#000000;">
+                            <strong>SUBTOTAL: R$ ${subtotal.toFixed(2)}</strong>
+                        </p>
+                        <p style="font-size:10pt;margin:6px 0;color:#000000;">
+                            <strong>Taxa de Serviço (10%): R$ ${taxaServico.toFixed(2)}</strong>
+                        </p>
+                        <p style="font-size:16pt;margin:15px 0;color:#000000;">
+                            <strong>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</strong>
+                        </p>
+                        <p style="font-size:14pt;margin:10px 0;color:#000000;">
+                            <strong>Forma: ${forma}</strong>
+                        </p>
+                        ${forma==='Dinheiro'&&recebido?`
+                            <p style="font-size:13pt;margin:8px 0;color:#000000;">
+                                <strong>Recebido: R$ ${recebido.toFixed(2)}</strong>
+                            </p>
+                            <p style="font-size:13pt;margin:8px 0;color:#000000;">
+                                <strong>Troco: R$ ${troco.toFixed(2)}</strong>
+                            </p>
+                        `:''}
+                    </div>
+                    <p style="text-align:center;margin-top:25px;font-size:13pt;color:#000000;">
+                        <strong>Obrigado e Volte Sempre!</strong>
+                    </p>
+                </div>
+            `;
+            document.getElementById('comanda-impressao').innerHTML=html;
+            setTimeout(()=>window.print(),300);
+        }
         
         async function verificarNovasImpressoes() {
             if (isPrinting) {
@@ -1039,9 +1021,7 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                         .delete()
                         .eq('id', impressaoId);
                     
-                    if (error) {
-                        throw error;
-                    }
+                    if (error) throw error;
                     
                     console.log('✅ Impressão apagada do banco:', impressaoId);
                     return;
@@ -1078,7 +1058,6 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
 
         function iniciarImpressaoAutomatica() {
             if (impressaoInterval) return;
-            
             impressaoInterval = setInterval(verificarNovasImpressoes, 1000);
             console.log('🚀 Impressão automática iniciada - Verificando a cada 1 segundo');
         }
@@ -1103,13 +1082,14 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                 return;
             }
             
-            const hoje = new Date().toLocaleDateString('pt-BR');
+            // ✅ JST: data do caixa no fuso do Japão
+            const hoje = getJSTDate().toLocaleDateString('pt-BR');
             const total = document.getElementById('total-caixa').textContent;
             const pedidos = document.getElementById('contagem-pedidos').textContent;
             const formasDiv = document.getElementById('totais-por-forma').innerHTML;
             
             document.getElementById('resumo-caixa').innerHTML = `
-                <h3 style="color: #4CAF50;">Resumo do Caixa - ${hoje}</h3>
+                <h3 style="color: #4CAF50;">Resumo do Caixa - ${hoje} (JST)</h3>
                 <p><strong>Total Fechado:</strong> ${total}</p>
                 <p><strong>Número de Pedidos:</strong> ${pedidos}</p>
                 <div>${formasDiv}</div>
@@ -1133,8 +1113,8 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                      if(!confirm('O total do caixa é R$ 0,00. Deseja prosseguir com o bloqueio e fechar o caixa (sem gerar PDF ou limpar pedidos fechados)?')) return;
                 }
                 
-                caixaFechadaHoje = true; // Define o bloqueio
-                updateCaixaBlockStatus(); // Atualiza a interface (aplica o blur)
+                caixaFechadaHoje = true;
+                updateCaixaBlockStatus();
                 fecharModalFecharCaixa();
                 alert('Caixa fechado com sucesso! Ações bloqueadas.');
             } catch (error) {
@@ -1142,7 +1122,6 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
             }
         }
         
-        // 🆕 NOVO: FUNÇÃO PARA BLOQUEAR O CAIXA MANUALMENTE
         function bloquearCaixaManualmente() {
             if (confirm('Tem certeza que deseja BLOQUEAR o caixa? Os dados e ações serão desfocados/ocultados.')) {
                 caixaFechadaHoje = true;
@@ -1151,7 +1130,6 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
             }
         }
 
-        // 🆕 NOVO: ABRE O MODAL DE SENHA PARA DESBLOQUEIO
         function abrirModalDesbloqueio() {
             document.getElementById('input-senha-desbloqueio').value = '';
             document.getElementById('mensagem-erro-desbloqueio').style.display = 'none';
@@ -1159,18 +1137,16 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
             document.getElementById('input-senha-desbloqueio').focus();
         }
 
-        // 🆕 NOVO: FECHA O MODAL DE SENHA PARA DESBLOQUEIO
         function fecharModalDesbloqueio() {
             document.getElementById('modal-desbloqueio').style.display = 'none';
         }
         
-        // 🆕 NOVO: VERIFICA A SENHA PARA DESBLOQUEIO
         function verificarSenhaDesbloqueio() {
             const senhaDigitada = document.getElementById('input-senha-desbloqueio').value;
             const msgErro = document.getElementById('mensagem-erro-desbloqueio');
 
             if (senhaDigitada === SENHA_DESBLOQUEIO) {
-                caixaFechadaHoje = false; // Desbloqueia
+                caixaFechadaHoje = false;
                 updateCaixaBlockStatus();
                 fecharModalDesbloqueio();
                 alert('Caixa desbloqueado com sucesso!');
@@ -1181,25 +1157,22 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
             }
         }
 
-        // 🆕 FUNÇÃO PARA BLOQUEAR/DESBLOQUEAR AS AÇÕES E O BLUR
         function updateCaixaBlockStatus() {
             const caixaContainer = document.getElementById('caixa-container');
-            // Só executa se o caixa estiver visível
             if (!caixaContainer || caixaContainer.classList.contains('caixa-oculto')) {
                 return;
             }
 
             const caixaContent = document.getElementById('caixa-content');
             const caixaActions = document.getElementById('caixa-actions-container');
-            const fecharCaixaBtn = document.getElementById('btn-fechar-caixa').parentElement; // Pegando o flex container dos botões
+            const fecharCaixaBtn = document.getElementById('btn-fechar-caixa').parentElement;
             const desbloquearCaixaBtn = document.getElementById('btn-desbloquear-caixa');
             let statusBloqueado = document.getElementById('caixa-status-bloqueado');
 
             if (caixaFechadaHoje) {
-                // Modo Bloqueado: Aplica Blur, Esconde ações, mostra botão de Desbloqueio
                 if (caixaContent) caixaContent.classList.add('blurry');
                 if (caixaActions) caixaActions.style.display = 'none';
-                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'none'; // Esconde o contêiner de Fechar/Bloquear
+                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'none';
                 if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'block';
 
                 if (!statusBloqueado) {
@@ -1207,125 +1180,126 @@ function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal)
                     statusBloqueado.id = 'caixa-status-bloqueado';
                     statusBloqueado.style.cssText = 'color: red; font-weight: bold; margin-top: 10px; text-align: center;';
                     statusBloqueado.textContent = '🔒 CAIXA FECHADO/BLOQUEADO';
-                    document.getElementById('caixa-do-dia').prepend(statusBloqueado); // Coloca dentro de caixa-do-dia
+                    document.getElementById('caixa-do-dia').prepend(statusBloqueado);
                 }
             } else {
-                // Modo Desbloqueado: Remove Blur, Mostra ações, mostra botão de Bloqueio manual
                 if (caixaContent) caixaContent.classList.remove('blurry');
                 if (caixaActions) caixaActions.style.display = 'flex';
-                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'flex'; // Mostra o contêiner de Fechar/Bloquear
+                if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'flex';
                 if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'none';
                 if (statusBloqueado) statusBloqueado.remove();
             }
         }
         
-        // cozinha.html - SUBSTITUIR FUNÇÃO baixarCaixaPDF COMPLETA
-
-async function baixarCaixaPDF(){
-    if (caixaFechadaHoje) {
-        alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
-        return;
-    }
-    
-    const hoje=new Date().toISOString().split('T')[0];
-    const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
-    
-    let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0}, totalTaxaServico = 0;
-    const pedidosHoje=[];
-    (data||[]).forEach(p=>{
-        if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
-            total+=p.total;
-            count++;
-            pedidosHoje.push(p);
-            totalTaxaServico += p.taxa_servico || 0;
-            if(formas[p.forma_pagamento]!==undefined){
-                formas[p.forma_pagamento]+=p.total;
+        async function baixarCaixaPDF(){
+            if (caixaFechadaHoje) {
+                alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
+                return;
             }
-        }
-    });
-    
-    const{jsPDF}=window.jspdf;
-    const doc=new jsPDF('p', 'mm', 'a4'); // Usando A4 para mais espaço
-    let y = 20;
+            
+            // ✅ JST: usa a data de hoje no fuso do Japão
+            const hoje = getJSTDateString();
 
-    // --- CABEÇALHO ---
-    doc.setFontSize(18);
-    doc.text('ESPETINHO GESSELO',105,y,{align:'center'});
-    y += 10;
-    doc.setFontSize(14);
-    doc.text('RELATÓRIO DE CAIXA DETALHADO',105,y,{align:'center'});
-    y += 10;
-    
-    // --- RESUMO GERAL ---
-    doc.setFontSize(10);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`,20,y);
-    y += 6;
-    doc.text(`Pedidos Fechados: ${count}`,20,y);
-    y += 10;
-    doc.setFontSize(12);
-    doc.text(`TOTAL BRUTO (c/ Taxa): R$ ${total.toFixed(2).replace('.',',')}`,20,y);
-    y += 8;
-    doc.setFontSize(10);
-    doc.text(`Taxa de Serviço (10%): R$ ${totalTaxaServico.toFixed(2).replace('.',',')}`,20,y);
-    y += 10;
-    
-    // --- TOTAIS POR FORMA ---
-    doc.setFontSize(12);
-    doc.text('Totais por Forma de Pagamento:',20,y);
-    y+=6;
-    doc.setFontSize(10);
-    for(const[forma,valor]of Object.entries(formas)){
-        if(valor>0){
-            doc.text(`${forma}: R$ ${valor.toFixed(2).replace('.',',')}`,25,y);
+            const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
+            
+            let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0}, totalTaxaServico = 0;
+            const pedidosHoje=[];
+            (data||[]).forEach(p=>{
+                if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
+                    total+=p.total;
+                    count++;
+                    pedidosHoje.push(p);
+                    totalTaxaServico += p.taxa_servico || 0;
+                    if(formas[p.forma_pagamento]!==undefined){
+                        formas[p.forma_pagamento]+=p.total;
+                    }
+                }
+            });
+            
+            const{jsPDF}=window.jspdf;
+            const doc=new jsPDF('p', 'mm', 'a4');
+            let y = 20;
+
+            doc.setFontSize(18);
+            doc.text('ESPETINHO GESSELO',105,y,{align:'center'});
+            y += 10;
+            doc.setFontSize(14);
+            doc.text('RELATÓRIO DE CAIXA DETALHADO',105,y,{align:'center'});
+            y += 10;
+            
+            doc.setFontSize(10);
+            // ✅ JST: data do PDF no fuso do Japão
+            doc.text(`Data: ${getJSTDate().toLocaleDateString('pt-BR')} (JST)`,20,y);
+            y += 6;
+            doc.text(`Pedidos Fechados: ${count}`,20,y);
+            y += 10;
+            doc.setFontSize(12);
+            doc.text(`TOTAL BRUTO (c/ Taxa): R$ ${total.toFixed(2).replace('.',',')}`,20,y);
+            y += 8;
+            doc.setFontSize(10);
+            doc.text(`Taxa de Serviço (10%): R$ ${totalTaxaServico.toFixed(2).replace('.',',')}`,20,y);
+            y += 10;
+            
+            doc.setFontSize(12);
+            doc.text('Totais por Forma de Pagamento:',20,y);
             y+=6;
-        }
-    }
-    
-    y+=10;
-    doc.setFontSize(14);
-    doc.text('DETALHAMENTO DOS PEDIDOS',20,y);
-    y+=8;
-
-    // --- DETALHAMENTO DE CADA PEDIDO ---
-    doc.setFontSize(9);
-    pedidosHoje.forEach(p=>{
-        const nomeComanda = p.nome_comanda || 'Principal';
-        const subtotal = (p.total - (p.taxa_servico || 0)).toFixed(2);
-        
-        // Verifica quebra de página
-        if(y>270){
-            doc.addPage();
-            y=20;
-        }
-        
-        doc.setFontSize(10);
-        doc.text(`---------------------------------------------------------------------------------------------------------------------------------`, 20, y);
-        y += 4;
-        doc.setFontSize(12);
-        doc.text(`Mesa ${p.mesa} / ${nomeComanda} - Fechamento: R$ ${p.total.toFixed(2).replace('.',',')} (${p.forma_pagamento||'N/A'})`,20,y);
-        y+=6;
-        doc.setFontSize(9);
-        doc.text(`Subtotal: R$ ${subtotal.replace('.',',')} | Taxa 10%: R$ ${(p.taxa_servico || 0).toFixed(2).replace('.',',')}`, 20, y);
-        y+=5;
-        doc.text(`ITENS:`, 25, y);
-        y+=5;
-
-        // Lista de itens consumidos
-        (p.itens || []).forEach(item => {
-            if(y>275){ // Quebra de página para itens longos
-                doc.addPage();
-                y=20;
+            doc.setFontSize(10);
+            for(const[forma,valor]of Object.entries(formas)){
+                if(valor>0){
+                    doc.text(`${forma}: R$ ${valor.toFixed(2).replace('.',',')}`,25,y);
+                    y+=6;
+                }
             }
-            const itemTotal = (item.quantidade * item.preco).toFixed(2);
-            doc.text(`- ${item.quantidade}x ${item.nome} (R$ ${itemTotal.replace('.',',')})`, 30, y);
-            y += 5;
-        });
+            
+            y+=10;
+            doc.setFontSize(14);
+            doc.text('DETALHAMENTO DOS PEDIDOS',20,y);
+            y+=8;
 
-        y += 5;
-    });
+            doc.setFontSize(9);
+            pedidosHoje.forEach(p=>{
+                const nomeComanda = p.nome_comanda || 'Principal';
+                const subtotal = (p.total - (p.taxa_servico || 0)).toFixed(2);
+                
+                if(y>270){
+                    doc.addPage();
+                    y=20;
+                }
+                
+                // ✅ JST: horário de fechamento no fuso do Japão
+                const horarioFecha = p.horario_fecha
+                    ? new Date(p.horario_fecha).toLocaleString('pt-BR', { timeZone: 'Asia/Tokyo' })
+                    : 'N/A';
 
-    doc.save(`caixa_detalhado_${hoje}.pdf`);
-}
+                doc.setFontSize(10);
+                doc.text(`---------------------------------------------------------------------------------------------------------------------------------`, 20, y);
+                y += 4;
+                doc.setFontSize(12);
+                doc.text(`Mesa ${p.mesa} / ${nomeComanda} - Fechamento: R$ ${p.total.toFixed(2).replace('.',',')} (${p.forma_pagamento||'N/A'})`,20,y);
+                y+=6;
+                doc.setFontSize(9);
+                doc.text(`Fechado em (JST): ${horarioFecha}`, 20, y);
+                y+=5;
+                doc.text(`Subtotal: R$ ${subtotal.replace('.',',')} | Taxa 10%: R$ ${(p.taxa_servico || 0).toFixed(2).replace('.',',')}`, 20, y);
+                y+=5;
+                doc.text(`ITENS:`, 25, y);
+                y+=5;
+
+                (p.itens || []).forEach(item => {
+                    if(y>275){
+                        doc.addPage();
+                        y=20;
+                    }
+                    const itemTotal = (item.quantidade * item.preco).toFixed(2);
+                    doc.text(`- ${item.quantidade}x ${item.nome} (R$ ${itemTotal.replace('.',',')})`, 30, y);
+                    y += 5;
+                });
+
+                y += 5;
+            });
+
+            doc.save(`caixa_detalhado_${hoje}.pdf`);
+        }
         
         async function limparCaixaDoDia(){
             if (caixaFechadaHoje) {
@@ -1337,7 +1311,8 @@ async function baixarCaixaPDF(){
             if(!confirm('Tem ABSOLUTA CERTEZA? Esta ação NÃO pode ser desfeita!'))return;
             
             try{
-                const hoje=new Date().toISOString().split('T')[0];
+                // ✅ JST: usa a data de hoje no fuso do Japão
+                const hoje = getJSTDateString();
                 
                 const{data:pedidosHoje}=await supabaseClient
                     .from('pedidos')
@@ -1369,183 +1344,184 @@ async function baixarCaixaPDF(){
             }
         }
 
-        // cozinha.html - Adicionar novas funções JS
-let comandaSelecionadaHistorico = null;
+        // --- HISTÓRICO ---
+        let comandaSelecionadaHistorico = null;
 
-function abrirModalHistorico() {
-    document.getElementById('modal-historico').style.display = 'block';
-    // Define a data atual como padrão se não houver valor
-    const dataInput = document.getElementById('input-data-historico');
-    if (!dataInput.value) {
-        dataInput.value = new Date().toISOString().split('T')[0];
-    }
-    carregarHistoricoPorData();
-}
-
-function fecharModalHistorico() {
-    document.getElementById('modal-historico').style.display = 'none';
-}
-
-function fecharModalVisualizar() {
-    document.getElementById('modal-visualizar-comanda').style.display = 'none';
-    comandaSelecionadaHistorico = null;
-}
-
-async function carregarHistoricoPorData() {
-    const dataSelecionada = document.getElementById('input-data-historico').value;
-    const listaDiv = document.getElementById('historico-lista');
-    listaDiv.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
-    
-    if (!dataSelecionada) {
-        listaDiv.innerHTML = '<p style="text-align: center; color: gray;">Selecione uma data.</p>';
-        return;
-    }
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('pedidos')
-            .select('*')
-            .eq('status', 'Fechado')
-            .not('horario_fecha', 'is', null)
-            .order('horario_fecha', { ascending: false });
-
-        if (error) throw error;
-
-        const pedidosDoDia = (data || []).filter(p => 
-            p.horario_fecha && p.horario_fecha.startsWith(dataSelecionada)
-        );
-
-        if (pedidosDoDia.length === 0) {
-            listaDiv.innerHTML = `<p style="text-align: center; color: gray;">Nenhuma comanda fechada em ${dataSelecionada.split('-').reverse().join('/')}.</p>`;
-            return;
+        function abrirModalHistorico() {
+            document.getElementById('modal-historico').style.display = 'block';
+            const dataInput = document.getElementById('input-data-historico');
+            if (!dataInput.value) {
+                // ✅ JST: data padrão do histórico no fuso do Japão
+                dataInput.value = getJSTDateString();
+            }
+            carregarHistoricoPorData();
         }
 
-        listaDiv.innerHTML = pedidosDoDia.map(p => {
-            const horario = new Date(p.horario_fecha).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            const nomeComanda = p.nome_comanda || 'Comanda Principal';
-            return `
-                <div style="background-color: #383838; padding: 10px; border-radius: 4px; margin-bottom: 8px; cursor: pointer; border: 1px solid #555;"
-                     onclick="visualizarComandaFechada('${p.id}')">
-                    <p style="margin: 0;">
-                        <strong>Mesa ${p.mesa} - ${nomeComanda}</strong>
-                        <span style="float: right; color: #4CAF50;">R$ ${p.total.toFixed(2).replace('.',',')}</span>
-                    </p>
-                    <p style="font-size: 0.8em; margin: 0; color: #ccc;">
-                        Fechado às ${horario} | Pagamento: ${p.forma_pagamento || 'N/A'}
-                    </p>
-                </div>
+        function fecharModalHistorico() {
+            document.getElementById('modal-historico').style.display = 'none';
+        }
+
+        function fecharModalVisualizar() {
+            document.getElementById('modal-visualizar-comanda').style.display = 'none';
+            comandaSelecionadaHistorico = null;
+        }
+
+        async function carregarHistoricoPorData() {
+            const dataSelecionada = document.getElementById('input-data-historico').value;
+            const listaDiv = document.getElementById('historico-lista');
+            listaDiv.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
+            
+            if (!dataSelecionada) {
+                listaDiv.innerHTML = '<p style="text-align: center; color: gray;">Selecione uma data.</p>';
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pedidos')
+                    .select('*')
+                    .eq('status', 'Fechado')
+                    .not('horario_fecha', 'is', null)
+                    .order('horario_fecha', { ascending: false });
+
+                if (error) throw error;
+
+                // ✅ JST: filtra pelo prefixo da data JST gravada
+                const pedidosDoDia = (data || []).filter(p => 
+                    p.horario_fecha && p.horario_fecha.startsWith(dataSelecionada)
+                );
+
+                if (pedidosDoDia.length === 0) {
+                    listaDiv.innerHTML = `<p style="text-align: center; color: gray;">Nenhuma comanda fechada em ${dataSelecionada.split('-').reverse().join('/')}.</p>`;
+                    return;
+                }
+
+                listaDiv.innerHTML = pedidosDoDia.map(p => {
+                    // ✅ JST: exibe horário no fuso do Japão
+                    const horario = new Date(p.horario_fecha).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Asia/Tokyo'
+                    });
+                    const nomeComanda = p.nome_comanda || 'Comanda Principal';
+                    return `
+                        <div style="background-color: #383838; padding: 10px; border-radius: 4px; margin-bottom: 8px; cursor: pointer; border: 1px solid #555;"
+                             onclick="visualizarComandaFechada('${p.id}')">
+                            <p style="margin: 0;">
+                                <strong>Mesa ${p.mesa} - ${nomeComanda}</strong>
+                                <span style="float: right; color: #4CAF50;">R$ ${p.total.toFixed(2).replace('.',',')}</span>
+                            </p>
+                            <p style="font-size: 0.8em; margin: 0; color: #ccc;">
+                                Fechado às ${horario} (JST) | Pagamento: ${p.forma_pagamento || 'N/A'}
+                            </p>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Erro ao carregar histórico:', err);
+                listaDiv.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar dados.</p>';
+            }
+        }
+
+        async function visualizarComandaFechada(pedidoId) {
+            const { data: pedido, error } = await supabaseClient
+                .from('pedidos')
+                .select('*')
+                .eq('id', pedidoId)
+                .single();
+            
+            if (error || !pedido) {
+                alert('Erro ao carregar detalhes da comanda.');
+                return;
+            }
+            
+            comandaSelecionadaHistorico = pedido;
+            const detalhesDiv = document.getElementById('comanda-detalhe-conteudo');
+            const subtotal = (pedido.total - (pedido.taxa_servico || 0)).toFixed(2).replace('.',',');
+
+            // ✅ JST: exibe data/hora de fechamento no fuso do Japão
+            const fechadoEm = new Date(pedido.horario_fecha).toLocaleString('pt-BR', { timeZone: 'Asia/Tokyo' });
+
+            detalhesDiv.innerHTML = `
+                <p><strong>Mesa:</strong> ${pedido.mesa}</p>
+                <p><strong>Comanda:</strong> ${pedido.nome_comanda || 'Principal'}</p>
+                <p><strong>Total (c/ 10%):</strong> R$ ${pedido.total.toFixed(2).replace('.',',')}</p>
+                <p><strong>Forma de Pagamento:</strong> ${pedido.forma_pagamento}</p>
+                <p><strong>Fechado em (JST):</strong> ${fechadoEm}</p>
+                <hr style="border-color: #555;">
+                <h4 style="color: #ff8c00;">Resumo dos Itens (Subtotal: R$ ${subtotal})</h4>
+                <ul class="lista-itens">
+                    ${(pedido.itens || []).map(i => `
+                        <li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade * i.preco).toFixed(2).replace('.',',')}</li>
+                    `).join('')}
+                </ul>
+                <hr style="border-color: #555;">
+                <p style="font-size: 0.9em; color: #ffc107;">Taxa de Serviço: R$ ${(pedido.taxa_servico || 0).toFixed(2).replace('.',',')}</p>
             `;
-        }).join('');
 
-    } catch (err) {
-        console.error('Erro ao carregar histórico:', err);
-        listaDiv.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar dados.</p>';
-    }
-}
-
-async function visualizarComandaFechada(pedidoId) {
-    const { data: pedido, error } = await supabaseClient
-        .from('pedidos')
-        .select('*')
-        .eq('id', pedidoId)
-        .single();
-    
-    if (error || !pedido) {
-        alert('Erro ao carregar detalhes da comanda.');
-        return;
-    }
-    
-    comandaSelecionadaHistorico = pedido;
-    const detalhesDiv = document.getElementById('comanda-detalhe-conteudo');
-    const subtotal = (pedido.total - (pedido.taxa_servico || 0)).toFixed(2).replace('.',',');
-
-    detalhesDiv.innerHTML = `
-        <p><strong>Mesa:</strong> ${pedido.mesa}</p>
-        <p><strong>Comanda:</strong> ${pedido.nome_comanda || 'Principal'}</p>
-        <p><strong>Total (c/ 10%):</strong> R$ ${pedido.total.toFixed(2).replace('.',',')}</p>
-        <p><strong>Forma de Pagamento:</strong> ${pedido.forma_pagamento}</p>
-        <p><strong>Fechado em:</strong> ${new Date(pedido.horario_fecha).toLocaleString('pt-BR')}</p>
-        <hr style="border-color: #555;">
-        <h4 style="color: #ff8c00;">Resumo dos Itens (Subtotal: R$ ${subtotal})</h4>
-        <ul class="lista-itens">
-            ${(pedido.itens || []).map(i => `
-                <li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade * i.preco).toFixed(2).replace('.',',')}</li>
-            `).join('')}
-        </ul>
-        <hr style="border-color: #555;">
-        <p style="font-size: 0.9em; color: #ffc107;">Taxa de Serviço: R$ ${(pedido.taxa_servico || 0).toFixed(2).replace('.',',')}</p>
-    `;
-
-    document.getElementById('modal-visualizar-comanda').style.display = 'block';
-    fecharModalHistorico();
-}
-
-function reimprimirComprovante() {
-    if (!comandaSelecionadaHistorico) {
-        alert('Nenhuma comanda selecionada.');
-        return;
-    }
-    
-    // Reusa a função de impressão existente no cozinha.html
-    imprimirComprovante(
-        comandaSelecionadaHistorico, 
-        comandaSelecionadaHistorico.forma_pagamento, 
-        comandaSelecionadaHistorico.valor_recebido, 
-        comandaSelecionadaHistorico.troco, 
-        comandaSelecionadaHistorico.taxa_servico, 
-        comandaSelecionadaHistorico.total
-    );
-
-    fecharModalVisualizar();
-    alert('Comprovante enviado para reimpressão!');
-}
-
-// cozinha.html - Adicionar esta nova função JS
-async function limparHistoricoComandas() {
-    if (!confirm('ATENÇÃO: Você tem certeza que deseja deletar TODAS as comandas fechadas permanentemente do sistema? Esta ação é irreversível e pode afetar relatórios passados.')) {
-        return;
-    }
-
-    try {
-        // 1. Busca todos os IDs dos pedidos fechados (com data de fechamento)
-        const { data: pedidosFechados, error: fetchError } = await supabaseClient
-            .from('pedidos')
-            .select('id')
-            .eq('status', 'Fechado')
-            .not('horario_fecha', 'is', null);
-
-        if (fetchError) throw fetchError;
-
-        const idsParaDeletar = (pedidosFechados || []).map(p => p.id);
-
-        if (idsParaDeletar.length === 0) {
-            alert('Não há comandas fechadas para limpar no histórico.');
-            return;
+            document.getElementById('modal-visualizar-comanda').style.display = 'block';
+            fecharModalHistorico();
         }
 
-        // 2. Deleta os registros no banco de dados
-        const { error: deleteError } = await supabaseClient
-            .from('pedidos')
-            .delete()
-            .in('id', idsParaDeletar);
+        function reimprimirComprovante() {
+            if (!comandaSelecionadaHistorico) {
+                alert('Nenhuma comanda selecionada.');
+                return;
+            }
+            
+            imprimirComprovante(
+                comandaSelecionadaHistorico, 
+                comandaSelecionadaHistorico.forma_pagamento, 
+                comandaSelecionadaHistorico.valor_recebido, 
+                comandaSelecionadaHistorico.troco, 
+                comandaSelecionadaHistorico.taxa_servico, 
+                comandaSelecionadaHistorico.total
+            );
 
-        if (deleteError) throw deleteError;
+            fecharModalVisualizar();
+            alert('Comprovante enviado para reimpressão!');
+        }
 
-        // 3. Sucesso e atualização
-        alert(`✓ ${idsParaDeletar.length} comandas foram removidas permanentemente do histórico!`);
-        
-        // Recarrega o histórico (se estiver aberto)
-        carregarHistoricoPorData(); 
+        async function limparHistoricoComandas() {
+            if (!confirm('ATENÇÃO: Você tem certeza que deseja deletar TODAS as comandas fechadas permanentemente do sistema? Esta ação é irreversível e pode afetar relatórios passados.')) {
+                return;
+            }
 
-    } catch (err) {
-        console.error('Erro ao limpar histórico de comandas:', err);
-        alert('Erro ao limpar histórico! ' + err.message);
-    }
-}
+            try {
+                const { data: pedidosFechados, error: fetchError } = await supabaseClient
+                    .from('pedidos')
+                    .select('id')
+                    .eq('status', 'Fechado')
+                    .not('horario_fecha', 'is', null);
 
-        // --- FUNÇÕES DE GERENCIAMENTO DO GARÇOM ---
-        
-        const EMAIL_GARCOM = 'garcom@admin.com'; // Email fixo do garçom
+                if (fetchError) throw fetchError;
+
+                const idsParaDeletar = (pedidosFechados || []).map(p => p.id);
+
+                if (idsParaDeletar.length === 0) {
+                    alert('Não há comandas fechadas para limpar no histórico.');
+                    return;
+                }
+
+                const { error: deleteError } = await supabaseClient
+                    .from('pedidos')
+                    .delete()
+                    .in('id', idsParaDeletar);
+
+                if (deleteError) throw deleteError;
+
+                alert(`✓ ${idsParaDeletar.length} comandas foram removidas permanentemente do histórico!`);
+                carregarHistoricoPorData(); 
+
+            } catch (err) {
+                console.error('Erro ao limpar histórico de comandas:', err);
+                alert('Erro ao limpar histórico! ' + err.message);
+            }
+        }
+
+        // --- GERENCIAMENTO DO GARÇOM ---
+        const EMAIL_GARCOM = 'garcom@admin.com';
 
         function abrirModalGerenciarGarcom() {
             document.getElementById('modal-gerenciar-garcom').style.display = 'block';
@@ -1569,36 +1545,33 @@ async function limparHistoricoComandas() {
             document.getElementById('form-alterar-senha').style.display = 'none';
         }
 
-          // cozinha.html - ATUALIZAR função verificarStatusGarcom
-async function verificarStatusGarcom() { 
-    try {
-        const { data, error } = await supabaseClient
-            .from('configuracoes_sistema')
-            .select('valor, atualizado_em')
-            .eq('chave', 'logout_garcom')
-            .single();
+        async function verificarStatusGarcom() { 
+            try {
+                const { data, error } = await supabaseClient
+                    .from('configuracoes_sistema')
+                    .select('valor, atualizado_em')
+                    .eq('chave', 'logout_garcom')
+                    .single();
 
-        let statusText = '✅ Garçom está logado';
-        
-        if (!error && data) {
-            if (data.valor === 'true') {
-                statusText = '🔄 Comando de logout enviado - aguardando garçom desconectar...';
-            } else {
-                statusText = '✅ Garçom está logado';
+                let statusText = '✅ Garçom está logado';
+                
+                if (!error && data) {
+                    if (data.valor === 'true') {
+                        statusText = '🔄 Comando de logout enviado - aguardando garçom desconectar...';
+                    } else {
+                        statusText = '✅ Garçom está logado';
+                    }
+                }
+                
+                document.getElementById('status-garcom').innerHTML = statusText;
+                
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+                document.getElementById('status-garcom').textContent = 'Erro ao verificar status';
             }
         }
-        
-        // Removemos a exibição do status anterior para simplificar
-        document.getElementById('status-garcom').innerHTML = statusText;
-        
-    } catch (error) {
-        console.error('Erro ao verificar status:', error);
-        document.getElementById('status-garcom').textContent = 'Erro ao verificar status';
-    }
-}
 
-         async function deslogarGarcom() { 
-
+        async function deslogarGarcom() { 
             if (!confirm('Tem certeza que deseja deslogar o garçom remotamente? Isso fará com que ele precise fazer login novamente.')) {
                 return;
             }
@@ -1617,8 +1590,6 @@ async function verificarStatusGarcom() {
                 if (error) throw error;
 
                 mostrarMensagem('✅ Comando de logout enviado! O garçom será desconectado em instantes.', 'success');
-                
-                // Atualizar o status imediatamente
                 setTimeout(verificarStatusGarcom, 1000);
                 
             } catch (error) {
@@ -1628,52 +1599,47 @@ async function verificarStatusGarcom() {
         }
 
         async function alterarSenhaGarcom() { 
+            const novaSenha = document.getElementById('nova-senha').value;
+            const confirmarSenha = document.getElementById('confirmar-senha').value;
 
-    const novaSenha = document.getElementById('nova-senha').value;
-    const confirmarSenha = document.getElementById('confirmar-senha').value;
+            if (!novaSenha || !confirmarSenha) {
+                mostrarMensagem('❌ Por favor, preencha ambos os campos de senha.', 'error');
+                return;
+            }
 
-    if (!novaSenha || !confirmarSenha) {
-        mostrarMensagem('❌ Por favor, preencha ambos os campos de senha.', 'error');
-        return;
-    }
+            if (novaSenha !== confirmarSenha) {
+                mostrarMensagem('❌ As senhas não coincidem!', 'error');
+                return;
+            }
 
-    if (novaSenha !== confirmarSenha) {
-        mostrarMensagem('❌ As senhas não coincidem!', 'error');
-        return;
-    }
+            if (novaSenha.length < 6) {
+                mostrarMensagem('❌ A senha deve ter pelo menos 6 caracteres.', 'error');
+                return;
+            }
 
-    if (novaSenha.length < 6) {
-        mostrarMensagem('❌ A senha deve ter pelo menos 6 caracteres.', 'error');
-        return;
-    }
+            try {
+                const { error } = await supabaseClient
+                    .from('configuracoes_sistema')
+                    .upsert({
+                        chave: 'senha_garcom',
+                        valor: novaSenha,
+                        atualizado_em: new Date().toISOString()
+                    }, {
+                        onConflict: 'chave'
+                    });
 
-    try {
-        // Salvar a nova senha na tabela de configurações
-        const { error } = await supabaseClient
-            .from('configuracoes_sistema')
-            .upsert({
-                chave: 'senha_garcom',
-                valor: novaSenha,
-                atualizado_em: new Date().toISOString()
-            }, {
-                onConflict: 'chave'
-            });
+                if (error) throw error;
 
-        if (error) throw error;
+                mostrarMensagem('✅ Senha do garçom alterada com sucesso! O garçom será desconectado.', 'success');
+                ocultarFormAlterarSenha();
+                await deslogarGarcom();
+                
+            } catch (error) {
+                console.error('Erro ao alterar senha:', error);
+                mostrarMensagem('❌ Erro ao alterar senha: ' + error.message, 'error');
+            }
+        }
 
-        mostrarMensagem('✅ Senha do garçom alterada com sucesso! O garçom será desconectado.', 'success');
-        ocultarFormAlterarSenha();
-        
-        // Deslogar o garçom para forçar novo login com a nova senha
-        await deslogarGarcom();
-        
-    } catch (error) {
-        console.error('Erro ao alterar senha:', error);
-        mostrarMensagem('❌ Erro ao alterar senha: ' + error.message, 'error');
-    }
-}
-
-        // Função alternativa para salvar senha em configurações (caso a admin API não esteja disponível)
         async function salvarSenhaEmConfiguracoes(novaSenha) {
             try {
                 const { error } = await supabaseClient
@@ -1690,8 +1656,6 @@ async function verificarStatusGarcom() {
 
                 mostrarMensagem('✅ Senha do garçom atualizada nas configurações!', 'success');
                 ocultarFormAlterarSenha();
-                
-                // Deslogar o garçom para forçar novo login
                 await deslogarGarcom();
                 
             } catch (error) {
@@ -1712,10 +1676,8 @@ async function verificarStatusGarcom() {
             }, 5000);
         }
 
-        // Verificar e criar tabela de configurações do sistema se não existir
         async function inicializarConfiguracoesSistema() {
             try {
-                // Verificar se a tabela existe tentando inserir um registro
                 const { error } = await supabaseClient
                     .from('configuracoes_sistema')
                     .insert({
@@ -1725,11 +1687,8 @@ async function verificarStatusGarcom() {
                     })
                     .select();
 
-                // Se der erro de tabela não existir, crie-a
                 if (error && error.message.includes('does not exist')) {
                     console.log('Tabela configuracoes_sistema não existe. Criando...');
-                    // Você precisaria criar esta tabela manualmente no Supabase
-                    // SQL: CREATE TABLE configuracoes_sistema (chave TEXT PRIMARY KEY, valor TEXT, atualizado_em TIMESTAMP);
                 }
                 
             } catch (error) {
@@ -1737,10 +1696,8 @@ async function verificarStatusGarcom() {
             }
         }
 
-                // 🆕 FUNÇÃO PARA REIMPRIMIR COMANDA DA COZINHA
         async function reimprimirComandaCozinha(pedidoId) {
             try {
-                // Buscar os dados completos do pedido
                 const { data: pedido, error } = await supabaseClient
                     .from('pedidos')
                     .select('*')
@@ -1755,9 +1712,9 @@ async function verificarStatusGarcom() {
                 const mesaId = pedido.mesa;
                 const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
                 const observacao = pedido.observacao || '';
-                const dataHora = new Date().toLocaleString('pt-BR');
+                // ✅ JST: data/hora da reimpressão no fuso do Japão
+                const dataHora = getJSTDate().toLocaleString('pt-BR');
 
-                // Gerar conteúdo de impressão (igual ao da função original)
                 let printContent = `
                     <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
                         <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
@@ -1770,7 +1727,7 @@ async function verificarStatusGarcom() {
                             <strong>${nomeComanda}</strong>
                         </p>
                         <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;">
-                            <strong>Data: ${dataHora}</strong>
+                            <strong>Data: ${dataHora} (JST)</strong>
                         </p>
                         
                         <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;">
@@ -1798,7 +1755,7 @@ async function verificarStatusGarcom() {
                     </div>
                 `;
 
-                // Enviar para impressora da cozinha
+                // ✅ JST: timestamp da impressão no fuso do Japão
                 const { error: impressaoError } = await supabaseClient
                     .from('impressoes_cozinha')
                     .insert({
@@ -1807,8 +1764,8 @@ async function verificarStatusGarcom() {
                         conteudo: printContent,
                         itens: pedido.itens || [],
                         observacao: observacao,
-                        data_hora: new Date().toISOString(),
-                        reimpressao: true // Marcar como reimpressão
+                        data_hora: getJSTISOString(),
+                        reimpressao: true
                     });
 
                 if (impressaoError) {
@@ -1825,383 +1782,281 @@ async function verificarStatusGarcom() {
             }
         }
 
- // --- FUNÇÕES DE GERENCIAMENTO DO CARDÁPIO (VERSÃO LIMPA) ---
+        // --- GERENCIAMENTO DO CARDÁPIO ---
+        let itemEditando = null;
+        let todosItensCardapio = [];
 
-let itemEditando = null;
-
-function abrirModalGerenciarCardapio() {
-    document.getElementById('modal-gerenciar-cardapio').style.display = 'block';
-    document.getElementById('form-item-cardapio').style.display = 'none';
-    document.getElementById('mensagem-cardapio').style.display = 'none';
-    carregarItensCardapio();
-}
-
-function fecharModalGerenciarCardapio() {
-    document.getElementById('modal-gerenciar-cardapio').style.display = 'none';
-    cancelarEdicaoItem();
-}
-
-function mostrarFormAdicionarItem() {
-    document.getElementById('form-item-cardapio').style.display = 'block';
-    document.getElementById('form-item-titulo').textContent = 'Adicionar Novo Item';
-    document.getElementById('btn-salvar-item').textContent = '💾 Salvar Item';
-    
-    // Limpa os campos
-    document.getElementById('item-nome').value = '';
-    document.getElementById('item-preco').value = '';
-    document.getElementById('item-categoria').value = '';
-    
-    itemEditando = null;
-}
-
-function cancelarEdicaoItem() {
-    document.getElementById('form-item-cardapio').style.display = 'none';
-    itemEditando = null;
-}
-
-async function carregarItensCardapio() {
-    const container = document.getElementById('lista-cardapio-container');
-    container.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
-    
-    try {
-        const { data: itens, error } = await supabaseClient
-            .from('cardapio')
-            .select('*')
-            .order('categoria', { ascending: true })
-            .order('nome_item', { ascending: true });
-        
-        if (error) {
-            console.error('Erro ao carregar cardápio:', error);
-            container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
-            return;
+        function abrirModalGerenciarCardapio() {
+            document.getElementById('modal-gerenciar-cardapio').style.display = 'block';
+            document.getElementById('form-item-cardapio').style.display = 'none';
+            document.getElementById('mensagem-cardapio').style.display = 'none';
+            carregarItensCardapio();
         }
-        
-        if (!itens || itens.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>';
-            return;
+
+        function fecharModalGerenciarCardapio() {
+            document.getElementById('modal-gerenciar-cardapio').style.display = 'none';
+            cancelarEdicaoItem();
         }
-        
-        // Agrupar por categoria
-        const categorias = {};
-        itens.forEach(item => {
-            const categoria = item.categoria || 'Sem Categoria';
-            if (!categorias[categoria]) categorias[categoria] = [];
-            categorias[categoria].push(item);
-        });
-        
-        container.innerHTML = '';
-        
-        for (const [categoria, itensCategoria] of Object.entries(categorias)) {
-            const h3 = document.createElement('h3');
-            h3.textContent = categoria;
-            h3.style.color = '#ff8c00';
-            h3.style.marginTop = '20px';
-            h3.style.marginBottom = '10px';
-            container.appendChild(h3);
+
+        function mostrarFormAdicionarItem() {
+            document.getElementById('form-item-cardapio').style.display = 'block';
+            document.getElementById('form-item-titulo').textContent = 'Adicionar Novo Item';
+            document.getElementById('btn-salvar-item').textContent = '💾 Salvar Item';
             
-            itensCategoria.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'item-cardapio';
-                div.style.marginBottom = '8px';
-                div.style.padding = '10px';
-                div.style.backgroundColor = '#2c2c2c';
-                div.style.borderRadius = '4px';
-                div.style.display = 'flex';
-                div.style.justifyContent = 'space-between';
-                div.style.alignItems = 'center';
+            document.getElementById('item-nome').value = '';
+            document.getElementById('item-preco').value = '';
+            document.getElementById('item-categoria').value = '';
+            
+            itemEditando = null;
+        }
+
+        function cancelarEdicaoItem() {
+            document.getElementById('form-item-cardapio').style.display = 'none';
+            itemEditando = null;
+        }
+
+        async function carregarItensCardapio() {
+            const container = document.getElementById('lista-cardapio-container');
+            container.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
+            
+            try {
+                const { data: itens, error } = await supabaseClient
+                    .from('cardapio')
+                    .select('*')
+                    .order('categoria', { ascending: true })
+                    .order('nome_item', { ascending: true });
                 
-                div.innerHTML = `
-                    <div style="flex: 1;">
-                        <strong>${item.nome_item}</strong>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: bold; color: #ff8c00;">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
-                        <div style="margin-top: 5px;">
-                            <button class="btn-caixa" style="background-color: #17a2b8; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="editarItemCardapio(${item.id})">✏️ Editar</button>
-                            <button class="btn-caixa" style="background-color: #dc3545; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="excluirItemCardapio(${item.id})">🗑️ Excluir</button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
+                if (error) {
+                    console.error('Erro ao carregar cardápio:', error);
+                    container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
+                    return;
+                }
+                
+                if (!itens || itens.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>';
+                    todosItensCardapio = [];
+                    return;
+                }
+                
+                todosItensCardapio = itens;
+                renderizarItensCardapio(itens);
+                
+            } catch (error) {
+                console.error('Erro ao carregar cardápio:', error);
+                container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
+            }
+        }
+
+        function renderizarItensCardapio(itens) {
+            const container = document.getElementById('lista-cardapio-container');
+            
+            if (!itens || itens.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item encontrado.</p>';
+                return;
+            }
+            
+            const categorias = {};
+            itens.forEach(item => {
+                const categoria = item.categoria || 'Sem Categoria';
+                if (!categorias[categoria]) categorias[categoria] = [];
+                categorias[categoria].push(item);
             });
-        }
-        
-    } catch (error) {
-        console.error('Erro ao carregar cardápio:', error);
-        container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
-    }
-}
-
-async function editarItemCardapio(itemId) {
-    try {
-        const { data: item, error } = await supabaseClient
-            .from('cardapio')
-            .select('*')
-            .eq('id', itemId)
-            .single();
-        
-        if (error) throw error;
-        
-        // Verifica se os elementos existem antes de tentar setar valores
-        const nomeInput = document.getElementById('item-nome');
-        const precoInput = document.getElementById('item-preco');
-        const categoriaInput = document.getElementById('item-categoria');
-        
-        if (!nomeInput || !precoInput || !categoriaInput) {
-            throw new Error('Elementos do formulário não encontrados');
-        }
-        
-        // Preenche o formulário com os dados do item
-        nomeInput.value = item.nome_item;
-        precoInput.value = item.preco;
-        categoriaInput.value = item.categoria || '';
-        
-        // Mostra o formulário
-        document.getElementById('form-item-cardapio').style.display = 'block';
-        document.getElementById('form-item-titulo').textContent = 'Editar Item';
-        document.getElementById('btn-salvar-item').textContent = '💾 Atualizar Item';
-        
-        itemEditando = itemId;
-        
-    } catch (error) {
-        console.error('Erro ao carregar item para edição:', error);
-        mostrarMensagemCardapio('❌ Erro ao carregar item para edição: ' + error.message, 'error');
-    }
-}
-
-async function salvarItemCardapio() {
-    try {
-        const nomeInput = document.getElementById('item-nome');
-        const precoInput = document.getElementById('item-preco');
-        const categoriaInput = document.getElementById('item-categoria');
-        
-        if (!nomeInput || !precoInput || !categoriaInput) {
-            throw new Error('Elementos do formulário não encontrados');
-        }
-        
-        const nome = nomeInput.value.trim();
-        const preco = parseFloat(precoInput.value);
-        const categoria = categoriaInput.value.trim();
-        
-        // Validações
-        if (!nome) {
-            mostrarMensagemCardapio('❌ O nome do item é obrigatório.', 'error');
-            return;
-        }
-        
-        if (!preco || preco <= 0) {
-            mostrarMensagemCardapio('❌ O preço deve ser maior que zero.', 'error');
-            return;
-        }
-        
-        // Preparar dados para envio
-        const dadosItem = {
-            nome_item: nome,
-            preco: preco,
-            categoria: categoria || null
-        };
-        
-        if (itemEditando) {
-            // Atualizar item existente
-            const { error } = await supabaseClient
-                .from('cardapio')
-                .update(dadosItem)
-                .eq('id', itemEditando);
             
-            if (error) throw error;
+            container.innerHTML = '';
             
-            mostrarMensagemCardapio('✅ Item atualizado com sucesso!', 'success');
-        } else {
-            // Criar novo item
-            const { error } = await supabaseClient
-                .from('cardapio')
-                .insert(dadosItem);
-            
-            if (error) throw error;
-            
-            mostrarMensagemCardapio('✅ Item adicionado com sucesso!', 'success');
+            for (const [categoria, itensCategoria] of Object.entries(categorias)) {
+                const h3 = document.createElement('h3');
+                h3.textContent = `${categoria} (${itensCategoria.length} itens)`;
+                h3.style.color = '#ff8c00';
+                h3.style.marginTop = '20px';
+                h3.style.marginBottom = '10px';
+                container.appendChild(h3);
+                
+                itensCategoria.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'item-cardapio';
+                    div.style.marginBottom = '8px';
+                    div.style.padding = '10px';
+                    div.style.backgroundColor = '#2c2c2c';
+                    div.style.borderRadius = '4px';
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    
+                    div.innerHTML = `
+                        <div style="flex: 1;">
+                            <strong>${item.nome_item}</strong>
+                            <div style="font-size: 0.8em; color: #ccc; margin-top: 3px;">
+                                Categoria: ${item.categoria || 'Sem categoria'}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; color: #ff8c00;">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
+                            <div style="margin-top: 5px;">
+                                <button class="btn-caixa" style="background-color: #17a2b8; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="editarItemCardapio(${item.id})">✏️ Editar</button>
+                                <button class="btn-caixa" style="background-color: #dc3545; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="excluirItemCardapio(${item.id})">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
         }
-        
-        // Limpa o formulário e atualiza a lista
-        cancelarEdicaoItem();
-        setTimeout(() => {
-            carregarItensCardapio();
-        }, 500);
-        
-    } catch (error) {
-        console.error('Erro ao salvar item:', error);
-        mostrarMensagemCardapio('❌ Erro ao salvar item: ' + error.message, 'error');
-    }
-}
 
-async function excluirItemCardapio(itemId) {
-    if (!confirm('Tem certeza que deseja excluir este item do cardápio? Esta ação não pode ser desfeita.')) {
-        return;
-    }
-    
-    try {
-        const { error } = await supabaseClient
-            .from('cardapio')
-            .delete()
-            .eq('id', itemId);
-        
-        if (error) throw error;
-        
-        mostrarMensagemCardapio('✅ Item excluído com sucesso!', 'success');
-        setTimeout(() => {
-            carregarItensCardapio();
-        }, 500);
-        
-    } catch (error) {
-        console.error('Erro ao excluir item:', error);
-        mostrarMensagemCardapio('❌ Erro ao excluir item: ' + error.message, 'error');
-    }
-}
-
-function mostrarMensagemCardapio(mensagem, tipo) {
-    const div = document.getElementById('mensagem-cardapio');
-    if (!div) {
-        console.error('Elemento mensagem-cardapio não encontrado');
-        return;
-    }
-    
-    div.textContent = mensagem;
-    div.style.display = 'block';
-    div.style.backgroundColor = tipo === 'success' ? '#2d4a2d' : '#4a2d2d';
-    div.style.color = tipo === 'success' ? '#4CAF50' : '#FF5733';
-    div.style.border = `1px solid ${tipo === 'success' ? '#4CAF50' : '#FF5733'}`;
-    
-    setTimeout(() => {
-        div.style.display = 'none';
-    }, 5000);
-}
-
-// --- FUNÇÕES DE PESQUISA DO CARDÁPIO ---
-
-let todosItensCardapio = []; // Para armazenar todos os itens
-
-async function carregarItensCardapio() {
-    const container = document.getElementById('lista-cardapio-container');
-    container.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
-    
-    try {
-        const { data: itens, error } = await supabaseClient
-            .from('cardapio')
-            .select('*')
-            .order('categoria', { ascending: true })
-            .order('nome_item', { ascending: true });
-        
-        if (error) {
-            console.error('Erro ao carregar cardápio:', error);
-            container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
-            return;
+        async function editarItemCardapio(itemId) {
+            try {
+                const { data: item, error } = await supabaseClient
+                    .from('cardapio')
+                    .select('*')
+                    .eq('id', itemId)
+                    .single();
+                
+                if (error) throw error;
+                
+                const nomeInput = document.getElementById('item-nome');
+                const precoInput = document.getElementById('item-preco');
+                const categoriaInput = document.getElementById('item-categoria');
+                
+                if (!nomeInput || !precoInput || !categoriaInput) {
+                    throw new Error('Elementos do formulário não encontrados');
+                }
+                
+                nomeInput.value = item.nome_item;
+                precoInput.value = item.preco;
+                categoriaInput.value = item.categoria || '';
+                
+                document.getElementById('form-item-cardapio').style.display = 'block';
+                document.getElementById('form-item-titulo').textContent = 'Editar Item';
+                document.getElementById('btn-salvar-item').textContent = '💾 Atualizar Item';
+                
+                itemEditando = itemId;
+                
+            } catch (error) {
+                console.error('Erro ao carregar item para edição:', error);
+                mostrarMensagemCardapio('❌ Erro ao carregar item para edição: ' + error.message, 'error');
+            }
         }
-        
-        if (!itens || itens.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>';
-            todosItensCardapio = [];
-            return;
-        }
-        
-        // Salva todos os itens para usar na pesquisa
-        todosItensCardapio = itens;
-        
-        // Renderiza os itens
-        renderizarItensCardapio(itens);
-        
-    } catch (error) {
-        console.error('Erro ao carregar cardápio:', error);
-        container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
-    }
-}
 
-function renderizarItensCardapio(itens) {
-    const container = document.getElementById('lista-cardapio-container');
-    
-    if (!itens || itens.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item encontrado.</p>';
-        return;
-    }
-    
-    // Agrupar por categoria
-    const categorias = {};
-    itens.forEach(item => {
-        const categoria = item.categoria || 'Sem Categoria';
-        if (!categorias[categoria]) categorias[categoria] = [];
-        categorias[categoria].push(item);
-    });
-    
-    container.innerHTML = '';
-    
-    for (const [categoria, itensCategoria] of Object.entries(categorias)) {
-        const h3 = document.createElement('h3');
-        h3.textContent = `${categoria} (${itensCategoria.length} itens)`;
-        h3.style.color = '#ff8c00';
-        h3.style.marginTop = '20px';
-        h3.style.marginBottom = '10px';
-        container.appendChild(h3);
-        
-        itensCategoria.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'item-cardapio';
-            div.style.marginBottom = '8px';
-            div.style.padding = '10px';
-            div.style.backgroundColor = '#2c2c2c';
-            div.style.borderRadius = '4px';
-            div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
-            div.style.alignItems = 'center';
+        async function salvarItemCardapio() {
+            try {
+                const nomeInput = document.getElementById('item-nome');
+                const precoInput = document.getElementById('item-preco');
+                const categoriaInput = document.getElementById('item-categoria');
+                
+                if (!nomeInput || !precoInput || !categoriaInput) {
+                    throw new Error('Elementos do formulário não encontrados');
+                }
+                
+                const nome = nomeInput.value.trim();
+                const preco = parseFloat(precoInput.value);
+                const categoria = categoriaInput.value.trim();
+                
+                if (!nome) {
+                    mostrarMensagemCardapio('❌ O nome do item é obrigatório.', 'error');
+                    return;
+                }
+                
+                if (!preco || preco <= 0) {
+                    mostrarMensagemCardapio('❌ O preço deve ser maior que zero.', 'error');
+                    return;
+                }
+                
+                const dadosItem = {
+                    nome_item: nome,
+                    preco: preco,
+                    categoria: categoria || null
+                };
+                
+                if (itemEditando) {
+                    const { error } = await supabaseClient
+                        .from('cardapio')
+                        .update(dadosItem)
+                        .eq('id', itemEditando);
+                    
+                    if (error) throw error;
+                    mostrarMensagemCardapio('✅ Item atualizado com sucesso!', 'success');
+                } else {
+                    const { error } = await supabaseClient
+                        .from('cardapio')
+                        .insert(dadosItem);
+                    
+                    if (error) throw error;
+                    mostrarMensagemCardapio('✅ Item adicionado com sucesso!', 'success');
+                }
+                
+                cancelarEdicaoItem();
+                setTimeout(() => { carregarItensCardapio(); }, 500);
+                
+            } catch (error) {
+                console.error('Erro ao salvar item:', error);
+                mostrarMensagemCardapio('❌ Erro ao salvar item: ' + error.message, 'error');
+            }
+        }
+
+        async function excluirItemCardapio(itemId) {
+            if (!confirm('Tem certeza que deseja excluir este item do cardápio? Esta ação não pode ser desfeita.')) {
+                return;
+            }
             
-            div.innerHTML = `
-                <div style="flex: 1;">
-                    <strong>${item.nome_item}</strong>
-                    <div style="font-size: 0.8em; color: #ccc; margin-top: 3px;">
-                        Categoria: ${item.categoria || 'Sem categoria'}
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-weight: bold; color: #ff8c00;">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
-                    <div style="margin-top: 5px;">
-                        <button class="btn-caixa" style="background-color: #17a2b8; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="editarItemCardapio(${item.id})">✏️ Editar</button>
-                        <button class="btn-caixa" style="background-color: #dc3545; color: white; padding: 3px 8px; font-size: 0.8em;" onclick="excluirItemCardapio(${item.id})">🗑️ Excluir</button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
-}
+            try {
+                const { error } = await supabaseClient
+                    .from('cardapio')
+                    .delete()
+                    .eq('id', itemId);
+                
+                if (error) throw error;
+                
+                mostrarMensagemCardapio('✅ Item excluído com sucesso!', 'success');
+                setTimeout(() => { carregarItensCardapio(); }, 500);
+                
+            } catch (error) {
+                console.error('Erro ao excluir item:', error);
+                mostrarMensagemCardapio('❌ Erro ao excluir item: ' + error.message, 'error');
+            }
+        }
 
-function filtrarCardapio() {
-    const termo = document.getElementById('busca-cardapio').value.toLowerCase().trim();
-    
-    if (!termo) {
-        // Se não há termo de busca, mostra todos os itens
-        renderizarItensCardapio(todosItensCardapio);
-        return;
-    }
-    
-    // Filtra os itens
-    const itensFiltrados = todosItensCardapio.filter(item => {
-        return (
-            item.nome_item.toLowerCase().includes(termo) ||
-            (item.categoria && item.categoria.toLowerCase().includes(termo)) ||
-            item.preco.toString().includes(termo) ||
-            item.id.toString().includes(termo)
-        );
-    });
-    
-    // Renderiza os itens filtrados
-    renderizarItensCardapio(itensFiltrados);
-}
+        function mostrarMensagemCardapio(mensagem, tipo) {
+            const div = document.getElementById('mensagem-cardapio');
+            if (!div) {
+                console.error('Elemento mensagem-cardapio não encontrado');
+                return;
+            }
+            
+            div.textContent = mensagem;
+            div.style.display = 'block';
+            div.style.backgroundColor = tipo === 'success' ? '#2d4a2d' : '#4a2d2d';
+            div.style.color = tipo === 'success' ? '#4CAF50' : '#FF5733';
+            div.style.border = `1px solid ${tipo === 'success' ? '#4CAF50' : '#FF5733'}`;
+            
+            setTimeout(() => { div.style.display = 'none'; }, 5000);
+        }
 
-// Função para limpar a pesquisa
-function limparPesquisaCardapio() {
-    document.getElementById('busca-cardapio').value = '';
-    renderizarItensCardapio(todosItensCardapio);
-}
+        function filtrarCardapio() {
+            const termo = document.getElementById('busca-cardapio').value.toLowerCase().trim();
+            
+            if (!termo) {
+                renderizarItensCardapio(todosItensCardapio);
+                return;
+            }
+            
+            const itensFiltrados = todosItensCardapio.filter(item => {
+                return (
+                    item.nome_item.toLowerCase().includes(termo) ||
+                    (item.categoria && item.categoria.toLowerCase().includes(termo)) ||
+                    item.preco.toString().includes(termo) ||
+                    item.id.toString().includes(termo)
+                );
+            });
+            
+            renderizarItensCardapio(itensFiltrados);
+        }
 
-        // Inicializar ao carregar a página
+        function limparPesquisaCardapio() {
+            document.getElementById('busca-cardapio').value = '';
+            renderizarItensCardapio(todosItensCardapio);
+        }
+
+        // Inicializar
         inicializarConfiguracoesSistema();
         
         window.addEventListener('beforeunload',()=>{
