@@ -12,8 +12,51 @@
     </audio>
     
     <style>
-        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        body { font-family: Arial, sans-serif; background-color: #000000; background-image: radial-gradient(ellipse at 20% 20%, #0d0d0d 0%, #000000 70%); color: white; margin: 0; padding: 20px; }
         .header { text-align: center; margin-bottom: 30px; }
+
+        /* ✨ TÍTULO PRINCIPAL - NEON DOURADO */
+        .titulo-principal {
+            font-size: 2em;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow:
+                0 0 6px #FFD700,
+                0 0 14px #FFB800,
+                0 0 28px #FF9500,
+                0 0 50px #FF7700;
+            letter-spacing: 2px;
+            animation: neon-gold-pulse 2.5s ease-in-out infinite;
+        }
+        @keyframes neon-gold-pulse {
+            0%, 100% {
+                text-shadow: 0 0 6px #FFD700, 0 0 14px #FFB800, 0 0 28px #FF9500, 0 0 50px #FF7700;
+            }
+            50% {
+                text-shadow: 0 0 10px #FFD700, 0 0 22px #FFD000, 0 0 40px #FFAA00, 0 0 70px #FF8800, 0 0 90px #FF6600;
+            }
+        }
+
+        /* 💡 SUBTÍTULOS DE SEÇÃO - NEON AZUL CLARO */
+        .titulo-secao {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #00CFFF;
+            text-shadow:
+                0 0 5px #00CFFF,
+                0 0 12px #00AAFF,
+                0 0 22px #0088FF,
+                0 0 40px #0055FF;
+            animation: neon-blue-pulse 3s ease-in-out infinite;
+        }
+        @keyframes neon-blue-pulse {
+            0%, 100% {
+                text-shadow: 0 0 5px #00CFFF, 0 0 12px #00AAFF, 0 0 22px #0088FF, 0 0 40px #0055FF;
+            }
+            50% {
+                text-shadow: 0 0 8px #00DFFF, 0 0 18px #00BBFF, 0 0 32px #0099FF, 0 0 55px #0066FF;
+            }
+        }
         .grid-container { display: grid; grid-template-columns: 1fr max-content; gap: 30px; }
         
         #pedidos-container { display: flex; flex-wrap: wrap; gap: 20px; }
@@ -158,11 +201,13 @@
     <div class="status-indicator" id="status-indicator"><div class="status-dot"></div><span>Conectado</span></div>
     <div class="alert-indicator" id="alert-indicator"><div class="status-dot"></div><span>🔔 Novo Pedido!</span></div>
     
-    <div class="header"><h1 style="color: #4CAF50;">Painel de Gerenciamento - Cozinha & Caixa</h1></div>
+    <div class="header">
+        <h1 class="titulo-principal">🍢 Painel de Gerenciamento - Cozinha & Caixa 🍢</h1>
+    </div>
     
     <div class="grid-container">
         <div>
-            <h2>📦 Pedidos - Cozinha</h2>
+            <h2 class="titulo-secao">📦 Pedidos - Cozinha</h2>
             <div id="pedidos-container"><p style="text-align: center;">Carregando pedidos...</p></div>
         </div>
         
@@ -170,7 +215,6 @@
             <button id="btn-toggle-caixa" onclick="toggleCaixa()">💰 Mostrar Caixa</button>
             
             <div id="caixa-container" class="caixa-oculto">
-                
                 <h2>💰 Caixa do Dia</h2>
                 <div id="caixa-do-dia">
                     <div id="caixa-content">
@@ -199,44 +243,20 @@
     
     <div class="grid-container">
         <div>
-            <h2>📋 Status das Mesas</h2>
+            <h2 class="titulo-secao">📋 Status das Mesas</h2>
             <div class="mesas-grid" id="mesas-grid"></div>
         </div>
         
         <div class="gerenciamento-col adicionar-section">
-            <h2>➕ Adicionar Item na Mesa</h2>
+            <h2 class="titulo-secao">➕ Adicionar Item na Mesa</h2>
             <div id="mesa-selecionada-info" style="display: none;" class="mesa-selecionada-info"></div>
             <div id="comanda-selecionada-info" style="display: none;" class="comanda-selecionada-info"></div>
             <div id="selecao-comandas" style="display: none; margin-bottom: 15px;"></div>
             <div id="adicional-cardapio-container"></div>
         </div>
     </div>
-    
-    <div id="modal-fechar-conta" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="fecharModalConta()">&times;</span>
-            <h2 style="color: #ff8c00;">Fechar Conta - Mesa <span id="modal-mesa-num"></span></h2>
-            <div id="modal-itens-lista"></div>
-            <h3 style="color: #4CAF50; margin-top: 20px;">Subtotal: R$ <span id="modal-subtotal">0,00</span></h3>
-            <h3 style="color: #ffc107; font-size: 12px; margin: 5px 0;">Taxa de Serviço (10%): R$ <span id="modal-taxa-servico">0,00</span></h3>
-            <h2 style="color: #4CAF50;">Total a Pagar: R$ <span id="modal-total">0,00</span></h2>
-            <label>Forma de Pagamento:</label>
-            <select id="modal-forma-pagamento">
-                <option value="">Selecione...</option>
-                <option value="Cartao Debito">Cartão Débito</option>
-                <option value="Cartao Credito">Cartão Crédito</option>
-            </select>
-            <div id="campo-dinheiro" style="display: none;">
-                <label>Valor Recebido:</label>
-                <input type="number" id="valor-recebido" step="0.01" placeholder="Ex: 50.00" oninput="calcularTroco()">
-                <div id="troco-info" style="display: none;" class="troco-display">
-                    <h3>Troco: R$ <span id="valor-troco">0,00</span></h3>
-                </div>
-            </div>
-            <button class="btn-confirmar" onclick="confirmarFechamentoConta()">Confirmar e Imprimir</button>
-        </div>
-    </div>
-    
+
+    <!-- MODAL FECHAR CAIXA -->
     <div id="modal-fechar-caixa" class="modal">
         <div class="modal-content">
             <span class="close" onclick="fecharModalFecharCaixa()">&times;</span>
@@ -246,6 +266,7 @@
         </div>
     </div>
 
+    <!-- MODAL DESBLOQUEIO -->
     <div id="modal-desbloqueio" class="modal">
         <div class="modal-content" style="text-align: center;">
             <span class="close" onclick="fecharModalDesbloqueio()">&times;</span>
@@ -260,6 +281,7 @@
     
     <div id="comanda-impressao" style="display:none;"></div>
 
+    <!-- HISTÓRICO -->
     <div style="width: 100%; margin-top: 5px; box-sizing: border-box;">
         <button class="btn-caixa" id="btn-historico-caixa" style="width: 100%; background-color: #ff8c00; color: white;" onclick="abrirModalHistorico()">📜 Histórico Comandas</button>
     </div>
@@ -268,15 +290,11 @@
         <div class="modal-content">
             <span class="close" onclick="fecharModalHistorico()">&times;</span>
             <h2 style="color: #ff8c00;">Histórico de Comandas Fechadas</h2>
-            
             <label for="input-data-historico">Selecione a Data:</label>
             <input type="date" id="input-data-historico" onchange="carregarHistoricoPorData()">
-            
-            <button class="btn-caixa" style="background-color: #dc3545; color: white; width: 100%; margin-top: 15px;" 
-                    onclick="limparHistoricoComandas()">
+            <button class="btn-caixa" style="background-color: #dc3545; color: white; width: 100%; margin-top: 15px;" onclick="limparHistoricoComandas()">
                 🗑️ Limpar HISTÓRICO de Comandas Fechadas
             </button>
-
             <div id="historico-lista" style="margin-top: 20px;">
                 <p style="text-align: center; color: gray;">Selecione uma data para ver o histórico.</p>
             </div>
@@ -292,32 +310,25 @@
         <div class="modal-content">
             <span class="close" onclick="fecharModalGerenciarGarcom()">&times;</span>
             <h2 style="color: #6f42c1;">Gerenciar Acesso do Garçom</h2>
-            
             <div style="margin: 20px 0; padding: 15px; background: #383838; border-radius: 8px;">
                 <h4 style="color: #ff8c00; margin-top: 0;">Ações Disponíveis</h4>
                 <p>Gerencie o acesso e a senha do garçom remotamente.</p>
             </div>
-            
             <div class="caixa-actions" style="margin: 15px 0;">
                 <button class="btn-caixa" style="background-color: #dc3545; color: white; flex: 1;" onclick="deslogarGarcom()">🚪 Deslogar Garçom</button>
                 <button class="btn-caixa" style="background-color: #17a2b8; color: white; flex: 1;" onclick="mostrarFormAlterarSenha()">🔑 Alterar Senha</button>
             </div>
-            
             <div id="form-alterar-senha" style="display: none; margin-top: 20px; padding: 15px; background: #2d2d2d; border-radius: 8px;">
                 <h4 style="color: #4CAF50; margin-top: 0;">Alterar Senha do Garçom</h4>
-                
                 <label for="nova-senha">Nova Senha:</label>
                 <input type="password" id="nova-senha" placeholder="Digite a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
-                
                 <label for="confirmar-senha">Confirmar Senha:</label>
                 <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" style="width: 100%; padding: 10px; margin: 8px 0; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; box-sizing: border-box;">
-                
                 <div class="caixa-actions" style="margin-top: 15px;">
                     <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" onclick="alterarSenhaGarcom()">💾 Salvar Nova Senha</button>
                     <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="ocultarFormAlterarSenha()">❌ Cancelar</button>
                 </div>
             </div>
-            
             <div id="mensagem-garcom" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
     </div>
@@ -331,21 +342,17 @@
         <div class="modal-content" style="max-width: 900px;">
             <span class="close" onclick="fecharModalGerenciarCardapio()">&times;</span>
             <h2 style="color: #28a745;">Gerenciar Cardápio</h2>
-            
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <button class="btn-caixa" style="background-color: #007bff; color: white;" onclick="mostrarFormAdicionarItem()">➕ Novo Item</button>
                 <button class="btn-caixa" style="background-color: #6c757d; color: white;" onclick="carregarItensCardapio()">🔄 Atualizar Lista</button>
             </div>
-
             <div style="margin-bottom: 15px;">
-                <input type="text" id="busca-cardapio" placeholder="🔍 Pesquisar por nome, categoria ou preço..." 
+                <input type="text" id="busca-cardapio" placeholder="🔍 Pesquisar por nome, categoria ou preço..."
                        style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;"
                        onkeyup="filtrarCardapio()">
             </div>
-            
             <div id="form-item-cardapio" style="display: none; margin-bottom: 20px; padding: 15px; background: #383838; border-radius: 8px;">
                 <h4 style="color: #ff8c00; margin-top: 0;" id="form-item-titulo">Adicionar Novo Item</h4>
-                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
                         <label for="item-nome">Nome do Item:</label>
@@ -356,22 +363,18 @@
                         <input type="number" id="item-preco" step="0.01" min="0" placeholder="Ex: 12.50" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
                     </div>
                 </div>
-                
                 <div style="margin-top: 10px;">
                     <label for="item-categoria">Categoria:</label>
                     <input type="text" id="item-categoria" placeholder="Ex: Espetinhos, Bebidas, Acompanhamentos..." style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white;">
                 </div>
-                
                 <div class="caixa-actions" style="margin-top: 15px;">
                     <button class="btn-caixa" style="background-color: #28a745; color: white; flex: 1;" id="btn-salvar-item" onclick="salvarItemCardapio()">💾 Salvar Item</button>
                     <button class="btn-caixa" style="background-color: #6c757d; color: white; flex: 1;" onclick="cancelarEdicaoItem()">❌ Cancelar</button>
                 </div>
             </div>
-            
             <div id="lista-cardapio-container" style="max-height: 400px; overflow-y: auto;">
                 <p style="text-align: center; color: gray;">Carregando cardápio...</p>
             </div>
-            
             <div id="mensagem-cardapio" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
     </div>
@@ -390,52 +393,56 @@
         const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeGJsdGp5c3dieW53bmF5YmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNjA3ODksImV4cCI6MjA3NDkzNjc4OX0.Ii4cIbNkUhbQ0T_C9WOXk15RveVI4YzbQ2eXUKMs9kc';
         const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
         
-        // ⚠️ MUDE ESTA SENHA PARA ALGO SEGURO!
-        const SENHA_DESBLOQUEIO = '888888'; 
+        const SENHA_DESBLOQUEIO = '888888';
+
+        // =============================================
+        // ✅ AJUSTE 3: FUSO HORÁRIO BR SÃO PAULO
+        // Substitui a lógica antiga de new Date().toISOString().split('T')[0]
+        // que usava UTC e causava virada de dia às 21h no horário BR
+        // =============================================
+        const TZ = 'America/Sao_Paulo';
+
+        // Retorna data de hoje no fuso BR no formato YYYY-MM-DD
+        function getBRDateString() {
+            return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); // en-CA = YYYY-MM-DD
+        }
+
+        // Formata um timestamp ISO para data+hora BR legível
+        function formatBRDateTime(isoString) {
+            if (!isoString) return '--';
+            return new Date(isoString).toLocaleString('pt-BR', { timeZone: TZ });
+        }
+
+        // Formata um timestamp ISO para hora BR (HH:MM)
+        function formatBRTime(isoString) {
+            if (!isoString) return '--:--';
+            return new Date(isoString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: TZ });
+        }
+
+        // Verifica se um timestamp UTC corresponde ao dia brDateStr (YYYY-MM-DD) no fuso BR
+        // Resolve o bug de comandas às 21h+ aparecerem no dia seguinte
+        function isSameBRDay(isoString, brDateStr) {
+            if (!isoString) return false;
+            const dateInBR = new Date(isoString).toLocaleDateString('en-CA', { timeZone: TZ });
+            return dateInBR === brDateStr;
+        }
+        // =============================================
         
         let pedidosAtuais=[],mesasStatus=[],cardapioItens=[],pedidoAtualModal=null,mesaSelecionadaAdicionar=null;
         let pollingIntervalPedidos=null,pollingIntervalMesas=null,pollingIntervalCaixa=null;
-        
         let ultimaImpressaoTimestamp = null;
         let impressaoInterval = null;
         let impressoesProcessadas = new Set();
         let isPrinting = false;
-        
         let comandasDaMesaSelecionada = [];
         let comandaSelecionadaParaAdicionar = null;
-
         let totalCom10Percent = 0;
         let taxaServico = 0;
-        let caixaFechadaHoje = true; 
-
-        // =============================================
-        // ===== FUSO HORÁRIO JAPÃO (JST = UTC+9) =====
-        // =============================================
-        function getJSTDate() {
-            const now = new Date();
-            const jstOffset = 9 * 60; // minutos
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            return new Date(utc + (jstOffset * 60000));
-        }
-
-        function getJSTISOString() {
-            const jst = getJSTDate();
-            const pad = n => String(n).padStart(2, '0');
-            return `${jst.getFullYear()}-${pad(jst.getMonth()+1)}-${pad(jst.getDate())}T` +
-                   `${pad(jst.getHours())}:${pad(jst.getMinutes())}:${pad(jst.getSeconds())}.000+09:00`;
-        }
-
-        function getJSTDateString() {
-            const jst = getJSTDate();
-            const pad = n => String(n).padStart(2, '0');
-            return `${jst.getFullYear()}-${pad(jst.getMonth()+1)}-${pad(jst.getDate())}`;
-        }
-        // =============================================
+        let caixaFechadaHoje = true;
         
         function toggleCaixa() {
             const container = document.getElementById('caixa-container');
             const button = document.getElementById('btn-toggle-caixa');
-            
             if (container.classList.contains('caixa-oculto')) {
                 container.classList.remove('caixa-oculto');
                 container.classList.add('caixa-visivel');
@@ -452,23 +459,16 @@
             startAllPolling();
             iniciarImpressaoAutomatica();
             calcularCaixaDoDia();
-            
             document.getElementById('input-senha-desbloqueio').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    verificarSenhaDesbloqueio();
-                }
+                if (e.key === 'Enter') { verificarSenhaDesbloqueio(); }
             });
-            
             updateCaixaBlockStatus();
             toggleCaixa(); 
-            
             ultimaImpressaoTimestamp = new Date().toISOString();
-            console.log('Cozinha iniciada - Só processará impressões após:', ultimaImpressaoTimestamp);
         }
         
         function startAllPolling(){
             if (pollingIntervalPedidos) return; 
-
             fetchPedidos();
             pollingIntervalPedidos=setInterval(fetchPedidos,3000);
             fetchMesas();
@@ -480,47 +480,31 @@
         
         function updateStatusIndicator(success){
             const indicator=document.getElementById('status-indicator');
-            if(success){
-                indicator.style.backgroundColor='#4CAF50';
-            }else{
-                indicator.style.backgroundColor='#FF5733';
-            }
+            indicator.style.backgroundColor=success?'#4CAF50':'#FF5733';
         }
         
         function tocarAlertaSonoro() {
             try {
                 const audio = document.getElementById('alertSound');
                 audio.volume = 0.7;
-                audio.play().catch(e => console.log('Erro ao tocar áudio:', e));
-                
+                audio.play().catch(e => {});
                 const alertIndicator = document.getElementById('alert-indicator');
                 alertIndicator.style.display = 'flex';
-                setTimeout(() => {
-                    alertIndicator.style.display = 'none';
-                }, 3000);
-            } catch (error) {
-                console.log('Erro no alerta sonoro:', error);
-            }
+                setTimeout(() => { alertIndicator.style.display = 'none'; }, 3000);
+            } catch (error) {}
         }
         
-async function fetchPedidos(){
+        async function fetchPedidos(){
             try{
                 const{data,error}=await supabaseClient.from('pedidos').select('*').neq('status','Fechado').order('horario', { ascending: true });
                 if(error)throw error;
-                
                 const tinhaPedidos = pedidosAtuais.length > 0;
-                const novosPedidos = data.filter(newPedido => 
-                    !pedidosAtuais.some(oldPedido => oldPedido.id === newPedido.id)
-                );
-                
+                const novosPedidos = data.filter(newPedido => !pedidosAtuais.some(oldPedido => oldPedido.id === newPedido.id));
                 pedidosAtuais=data;
                 renderPedidos();
                 updateStatusIndicator(true);
                 document.getElementById('status-indicator').querySelector('span').textContent = 'Conectado';
-                
-                if (tinhaPedidos && novosPedidos.length > 0) {
-                    tocarAlertaSonoro();
-                }
+                if (tinhaPedidos && novosPedidos.length > 0) { tocarAlertaSonoro(); }
             }catch(err){
                 console.error('Erro:',err);
                 updateStatusIndicator(false);
@@ -536,30 +520,23 @@ async function fetchPedidos(){
                 container.innerHTML='<p style="color:gray;text-align:center;">Nenhum pedido em preparo.</p>';
                 return;
             }
-            
             pedidosAbertos.forEach(pedido=>{
                 const div=document.createElement('div');
                 div.className='pedido-card';
                 const listaItens=(pedido.itens||[]).map(item=>`<li>${item.quantidade}x ${item.nome}</li>`).join('');
                 const statusColor=pedido.status==='Pronto'?'lime':(pedido.status==='Em Preparo'?'yellow':'red');
-                
-                const horario = pedido.horario ? new Date(pedido.horario).toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: 'Asia/Tokyo'
-                }) : '--:--';
-                
+                // ✅ Horário exibido no fuso BR São Paulo
+                const horario = formatBRTime(pedido.horario);
                 const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
-                
                 div.innerHTML=`
                     <h3>Mesa ${pedido.mesa} - ${nomeComanda} - #${pedido.id.substring(0,4)}</h3>
-                    <p><strong>Horário (JST):</strong> ${horario}</p>
+                    <p><strong>Horário:</strong> ${horario}</p>
                     <p><strong>Status:</strong> <strong style="color:${statusColor};">${pedido.status}</strong></p>
                     <p><strong>Total:</strong> R$ ${(pedido.total||0).toFixed(2).replace('.',',')}</p>
                     <p><strong>Obs:</strong> ${pedido.observacao||'Nenhuma'}</p>
                     <ul class="lista-itens">${listaItens}</ul>
                     <button class="btn-pronto" onclick="marcarComoPronto('${pedido.id}','${pedido.mesa}')" ${pedido.status==='Pronto'?'disabled':''}>${pedido.status==='Pronto'?'✓ PRONTO':'Marcar Pronto'}</button>
-                    <button class="btn-fechar-conta" onclick="abrirModalFecharConta('${pedido.id}')">Fechar Conta</button>
+                    <button class="btn-fechar-conta" onclick="fecharContaDireto('${pedido.id}')">Fechar Conta</button>
                     <button class="btn-reimprimir" onclick="reimprimirComandaCozinha('${pedido.id}')">🖨️ Reimprimir</button>
                 `;
                 container.appendChild(div);
@@ -579,17 +556,13 @@ async function fetchPedidos(){
                 if(error)throw error;
                 mesasStatus=data||[];
                 renderMesas();
-            }catch(err){
-                console.error('Erro:',err);
-            }
+            }catch(err){ console.error('Erro:',err); }
         }
         
         function renderMesas(){
             const container=document.getElementById('mesas-grid');
             container.innerHTML='';
-            
             const mesasOrdenadas=mesasStatus.sort((a,b)=>parseInt(a.mesa)-parseInt(b.mesa));
-            
             mesasOrdenadas.forEach(mesa=>{
                 const button=document.createElement('button');
                 const statusClass=mesa.status.toLowerCase().replace(' ','_');
@@ -601,32 +574,17 @@ async function fetchPedidos(){
         }
         
         async function selecionarMesaParaAdicionar(mesa){
-            if(mesa.status==='Livre'){
-                alert('Esta mesa está livre. Não há comanda para adicionar itens.');
-                return;
-            }
-            
+            if(mesa.status==='Livre'){ alert('Esta mesa está livre. Não há comanda para adicionar itens.'); return; }
             mesaSelecionadaAdicionar=mesa;
             document.getElementById('mesa-selecionada-info').style.display='block';
             document.getElementById('mesa-selecionada-info').textContent=`Mesa ${mesa.mesa} Selecionada (${mesa.status})`;
-            
             await carregarComandasDaMesa(mesa.mesa);
             carregarCardapioAdicionar();
         }
         
         async function carregarComandasDaMesa(mesaId) {
-            const { data: comandas, error } = await supabaseClient
-                .from('pedidos')
-                .select('*')
-                .eq('mesa', mesaId)
-                .neq('status', 'Fechado')
-                .order('horario', { ascending: true });
-
-            if (error) {
-                console.error('Erro ao carregar comandas:', error);
-                return;
-            }
-
+            const { data: comandas, error } = await supabaseClient.from('pedidos').select('*').eq('mesa', mesaId).neq('status', 'Fechado').order('horario', { ascending: true });
+            if (error) { console.error('Erro ao carregar comandas:', error); return; }
             comandasDaMesaSelecionada = comandas || [];
             renderSelecaoComandas();
         }
@@ -634,61 +592,38 @@ async function fetchPedidos(){
         function renderSelecaoComandas() {
             const container = document.getElementById('selecao-comandas');
             const infoContainer = document.getElementById('comanda-selecionada-info');
-            
             if (comandasDaMesaSelecionada.length === 0) {
                 container.innerHTML = '<p style="color: #ccc; text-align: center;">Nenhuma comanda ativa</p>';
                 infoContainer.style.display = 'none';
                 comandaSelecionadaParaAdicionar = null;
                 return;
             }
-            
             container.style.display = 'block';
             container.innerHTML = '<h4>Selecione a Comanda:</h4>';
-            
             comandasDaMesaSelecionada.forEach(comanda => {
                 const div = document.createElement('div');
                 div.className = 'comanda-option';
-                if (comandaSelecionadaParaAdicionar && comandaSelecionadaParaAdicionar.id === comanda.id) {
-                    div.classList.add('selecionada');
-                }
-                
+                if (comandaSelecionadaParaAdicionar && comandaSelecionadaParaAdicionar.id === comanda.id) { div.classList.add('selecionada'); }
                 const nome = comanda.nome_comanda || 'Comanda Principal';
-                const total = comanda.total || 0;
-                const status = comanda.status || 'Aberto';
-                
                 div.innerHTML = `
                     <strong>${nome}</strong>
-                    <div style="font-size: 0.8em; color: #ccc;">
-                        Status: ${status} | Total: R$ ${total.toFixed(2)} | Itens: ${(comanda.itens || []).length}
-                    </div>
+                    <div style="font-size: 0.8em; color: #ccc;">Status: ${comanda.status || 'Aberto'} | Total: R$ ${(comanda.total || 0).toFixed(2)} | Itens: ${(comanda.itens || []).length}</div>
                 `;
-                
-                div.onclick = (event) => {
-                    selecionarComandaParaAdicionar(comanda, event.currentTarget);
-                }
+                div.onclick = (event) => { selecionarComandaParaAdicionar(comanda, event.currentTarget); }
                 container.appendChild(div);
             });
-            
             if (!comandaSelecionadaParaAdicionar && comandasDaMesaSelecionada.length > 0) {
                 const firstOption = container.querySelector('.comanda-option');
-                if (firstOption) {
-                    selecionarComandaParaAdicionar(comandasDaMesaSelecionada[0], firstOption);
-                }
+                if (firstOption) { selecionarComandaParaAdicionar(comandasDaMesaSelecionada[0], firstOption); }
             }
         }
         
         function selecionarComandaParaAdicionar(comanda, element) {
             comandaSelecionadaParaAdicionar = comanda;
-            const nome = comanda.nome_comanda || 'Comanda Principal';
-            
             document.getElementById('comanda-selecionada-info').style.display = 'block';
-            document.getElementById('comanda-selecionada-info').textContent = `Comanda Selecionada: ${nome}`;
-            
-            const options = document.querySelectorAll('.comanda-option');
-            options.forEach(opt => opt.classList.remove('selecionada'));
-            if (element) {
-                element.classList.add('selecionada');
-            }
+            document.getElementById('comanda-selecionada-info').textContent = `Comanda Selecionada: ${comanda.nome_comanda || 'Comanda Principal'}`;
+            document.querySelectorAll('.comanda-option').forEach(opt => opt.classList.remove('selecionada'));
+            if (element) { element.classList.add('selecionada'); }
         }
         
         async function carregarCardapioAdicionar(){
@@ -698,24 +633,14 @@ async function fetchPedidos(){
             }
             const container=document.getElementById('adicional-cardapio-container');
             container.innerHTML='';
-            
-            if (!mesaSelecionadaAdicionar) {
-                container.innerHTML = '<p style="color: #ccc; text-align: center;">Selecione uma mesa primeiro</p>';
-                return;
-            }
-            
+            if (!mesaSelecionadaAdicionar) { container.innerHTML = '<p style="color: #ccc; text-align: center;">Selecione uma mesa primeiro</p>'; return; }
             let categorias={};
             cardapioItens.forEach(item=>{
-                if(item.categoria){
-                    if(!categorias[item.categoria])categorias[item.categoria]=[];
-                    categorias[item.categoria].push(item);
-                }
+                if(item.categoria){ if(!categorias[item.categoria])categorias[item.categoria]=[]; categorias[item.categoria].push(item); }
             });
             for(const[categoria,itens]of Object.entries(categorias)){
                 const h4=document.createElement('h4');
-                h4.textContent=categoria;
-                h4.style.color='#ff8c00';
-                h4.style.marginTop='15px';
+                h4.textContent=categoria; h4.style.color='#ff8c00'; h4.style.marginTop='15px';
                 container.appendChild(h4);
                 itens.forEach(i=>{
                     const div=document.createElement('div');
@@ -731,279 +656,144 @@ async function fetchPedidos(){
         }
         
         async function adicionarItem(itemId,nome,preco){
-            if(!mesaSelecionadaAdicionar){
-                alert('Selecione uma mesa primeiro!');
-                return;
-            }
-            
-            if(!comandaSelecionadaParaAdicionar){
-                alert('Selecione uma comanda primeiro!');
-                return;
-            }
-            
-            const{data:pedido,error}=await supabaseClient.from('pedidos').select('itens,total').eq('id',comandaSelecionadaParaAdicionar.id).single();
-            if(!pedido){
-                alert('Erro ao buscar pedido!');
-                return;
-            }
-            
+            if(!mesaSelecionadaAdicionar){ alert('Selecione uma mesa primeiro!'); return; }
+            if(!comandaSelecionadaParaAdicionar){ alert('Selecione uma comanda primeiro!'); return; }
+            const{data:pedido}=await supabaseClient.from('pedidos').select('itens,total').eq('id',comandaSelecionadaParaAdicionar.id).single();
+            if(!pedido){ alert('Erro ao buscar pedido!'); return; }
             let itens=pedido.itens||[];
             const idx=itens.findIndex(i=>i.id===itemId);
-            
-            if(idx>-1){
-                itens[idx].quantidade+=1;
-            }else{
-                itens.push({id:itemId,nome,preco,quantidade:1});
-            }
-            
-            const novoTotal=(pedido.total||0)+preco;
-            
-            await supabaseClient.from('pedidos').update({
-                itens,
-                total:novoTotal,
-                status:'Em Preparo'
-            }).eq('id',comandaSelecionadaParaAdicionar.id);
-            
+            if(idx>-1){ itens[idx].quantidade+=1; } else { itens.push({id:itemId,nome,preco,quantidade:1}); }
+            await supabaseClient.from('pedidos').update({ itens, total:(pedido.total||0)+preco, status:'Em Preparo' }).eq('id',comandaSelecionadaParaAdicionar.id);
             alert(`${nome} adicionado à comanda ${comandaSelecionadaParaAdicionar.nome_comanda || 'Principal'}!`);
             fetchPedidos();
-            
             await carregarComandasDaMesa(mesaSelecionadaAdicionar.mesa);
         }
         
         async function calcularCaixaDoDia(){
             try{
-                // ✅ JST: usa a data de hoje no fuso do Japão
-                const hoje = getJSTDateString();
-
+                // ✅ AJUSTE 3: Data de hoje no fuso BR (não mais UTC)
+                const hoje = getBRDateString();
                 const{data}=await supabaseClient.from('pedidos').select('total,forma_pagamento,horario_fecha').eq('status','Fechado').not('horario_fecha','is',null);
                 let total=0,count=0,formas={'Cartao Debito':0,'Cartao Credito':0}; 
                 (data||[]).forEach(p=>{
-                    if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
-                        total+=p.total;
-                        count++;
-                        if(formas[p.forma_pagamento]!==undefined){
-                            formas[p.forma_pagamento]+=p.total;
-                        }
+                    // ✅ AJUSTE 3: Compara usando fuso BR, resolve o bug das 21h
+                    if(isSameBRDay(p.horario_fecha, hoje)){
+                        total+=p.total; count++;
+                        if(formas[p.forma_pagamento]!==undefined){ formas[p.forma_pagamento]+=p.total; }
                     }
                 });
                 document.getElementById('total-caixa').textContent=`R$ ${total.toFixed(2).replace('.',',')}`;
                 document.getElementById('contagem-pedidos').textContent=count;
                 const formasDiv=document.getElementById('totais-por-forma');
                 formasDiv.innerHTML='<h5 style="margin-top:15px;color:#ff8c00;">Por Forma:</h5>'+Object.entries(formas).map(([f,v])=>v>0?`<p>${f}: R$ ${v.toFixed(2).replace('.',',')}</p>`:'').join('');
-                
-                if (document.getElementById('caixa-container').classList.contains('caixa-visivel')) {
-                    updateCaixaBlockStatus();
-                }
+                if (document.getElementById('caixa-container').classList.contains('caixa-visivel')) { updateCaixaBlockStatus(); }
+            }catch(err){ console.error(err); }
+        }
 
-            }catch(err){
-                console.error(err);
-            }
-        }
-        
-        function abrirModalFecharConta(pedidoId){
-            const pedido=pedidosAtuais.find(p=>p.id===pedidoId);
-            if(!pedido)return;
-            pedidoAtualModal=pedido;
-            
-            const subtotal = (pedido.total || 0); 
-            taxaServico = subtotal * 0.10;
-            totalCom10Percent = subtotal + taxaServico;
-            
-            document.getElementById('modal-mesa-num').textContent=pedido.mesa;
-            document.getElementById('modal-subtotal').textContent=subtotal.toFixed(2).replace('.',',');
-            document.getElementById('modal-taxa-servico').textContent=taxaServico.toFixed(2).replace('.',',');
-            document.getElementById('modal-total').textContent=totalCom10Percent.toFixed(2).replace('.',',');
-            
-            const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
-            document.getElementById('modal-itens-lista').innerHTML=`
-                <h4>${nomeComanda}</h4>
-                <ul class="lista-itens">${(pedido.itens||[]).map(i=>`<li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2).replace('.',',')}</li>`).join('')}</ul>
-            `;
-            
-            document.getElementById('modal-forma-pagamento').value='';
-            document.getElementById('valor-recebido').value='';
-            document.getElementById('campo-dinheiro').style.display='none';
-            document.getElementById('troco-info').style.display='none';
-            document.getElementById('modal-fechar-conta').style.display='block';
-        }
-        
-        function fecharModalConta(){
-            document.getElementById('modal-fechar-conta').style.display='none';
-            pedidoAtualModal=null;
-            totalCom10Percent = 0;
-            taxaServico = 0;
-        }
-        
-        document.getElementById('modal-forma-pagamento').onchange=function(){
-            document.getElementById('campo-dinheiro').style.display=this.value==='Dinheiro'?'block':'none';
-            document.getElementById('troco-info').style.display='none';
-        };
-        
-        function calcularTroco(){
-            const total=totalCom10Percent;
-            const recebido=parseFloat(document.getElementById('valor-recebido').value)||0;
-            const troco=recebido-total;
-            if(recebido>=total&&recebido>0){
-                document.getElementById('troco-info').style.display='block';
-                document.getElementById('valor-troco').textContent=troco.toFixed(2).replace('.',',');
-            }else{
-                document.getElementById('troco-info').style.display='none';
-            }
-        }
-        
-        async function confirmarFechamentoConta(){
-            if(!pedidoAtualModal)return;
-            const forma=document.getElementById('modal-forma-pagamento').value;
-            if(!forma)return alert('Selecione a forma de pagamento!');
-            
-            const totalFinal = totalCom10Percent;
-            let valorRecebido=null,troco=0;
-            
-            if(forma==='Dinheiro'){
-                valorRecebido=parseFloat(document.getElementById('valor-recebido').value);
-                if(!valorRecebido||valorRecebido<totalFinal)return alert('Valor insuficiente!');
-                troco=valorRecebido-totalFinal;
-            }
-            
-            const { data: comandasRestantes } = await supabaseClient
-                .from('pedidos')
-                .select('id')
-                .eq('mesa', pedidoAtualModal.mesa)
-                .neq('status', 'Fechado');
-            
-            // ✅ JST: grava o horário de fechamento no fuso do Japão
+        // =============================================
+        // ✅ AJUSTE 1: FECHAR CONTA → IMPRESSÃO DIRETA
+        // Remove o modal de detalhes e seleção de forma de pagamento.
+        // Calcula taxa, atualiza banco e imprime direto.
+        // =============================================
+        async function fecharContaDireto(pedidoId){
+            const pedido = pedidosAtuais.find(p => p.id === pedidoId);
+            if(!pedido) return;
+
+            const subtotal = pedido.total || 0;
+            const taxa = subtotal * 0.10;
+            const totalFinal = subtotal + taxa;
+
+            if(!confirm(`Confirmar fechamento e imprimir?\n\nMesa ${pedido.mesa} — ${pedido.nome_comanda || 'Comanda Principal'}\nTotal (c/ 10% taxa): R$ ${totalFinal.toFixed(2).replace('.',',')}`)) return;
+
+            // Grava horario_fecha em UTC; isSameBRDay converte corretamente na comparação
             await supabaseClient.from('pedidos').update({
-                status:'Fechado',
-                forma_pagamento:forma,
-                valor_recebido:valorRecebido,
-                troco:troco,
+                status: 'Fechado',
+                forma_pagamento: 'Cartao Debito',
+                valor_recebido: null,
+                troco: 0,
                 total: totalFinal,
-                taxa_servico: taxaServico,
-                horario_fecha: getJSTISOString()
-            }).eq('id',pedidoAtualModal.id);
-            
-            const comandasAbertasRestantes = comandasRestantes ? comandasRestantes.filter(c => c.id !== pedidoAtualModal.id) : [];
-            if (comandasAbertasRestantes.length === 0) {
-                await supabaseClient.from('mesas_status')
-                    .update({ status: 'Livre', pedido_id: null })
-                    .eq('mesa', pedidoAtualModal.mesa);
+                taxa_servico: taxa,
+                horario_fecha: new Date().toISOString()
+            }).eq('id', pedido.id);
+
+            // Verifica se há outras comandas abertas na mesa
+            const { data: comandasRestantes } = await supabaseClient.from('pedidos').select('id').eq('mesa', pedido.mesa).neq('status', 'Fechado');
+            const sobram = comandasRestantes ? comandasRestantes.filter(c => c.id !== pedido.id) : [];
+            if(sobram.length === 0){
+                await supabaseClient.from('mesas_status').update({ status: 'Livre', pedido_id: null }).eq('mesa', pedido.mesa);
             }
-            
-            imprimirComprovante(pedidoAtualModal, forma, valorRecebido, troco, taxaServico, totalFinal);
-            fecharModalConta();
+
+            // ✅ Chama impressão direta
+            imprimirComprovante(pedido, taxa, totalFinal);
             fetchPedidos();
             fetchMesas();
             calcularCaixaDoDia();
-            alert('Conta fechada!');
         }
-        
-        function imprimirComprovante(pedido,forma,recebido,troco,taxaServico,totalFinal){
-            // ✅ JST: data/hora do comprovante no fuso do Japão
-            const dataHora = getJSTDate().toLocaleString('pt-BR');
+
+        // =============================================
+        // ✅ AJUSTE 2: COMANDA REFORMATADA
+        // - Taxa de serviço discreta no TOPO (logo abaixo do nome)
+        // - SEM linha de subtotal
+        // - TOTAL em destaque
+        // =============================================
+        function imprimirComprovante(pedido, taxa, totalFinal){
+            // ✅ AJUSTE 3: Data/hora no fuso BR São Paulo
+            const dataHora = new Date().toLocaleString('pt-BR', { timeZone: TZ });
             const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
-            const subtotal = totalFinal - taxaServico;
-            
+
             let html=`
-                <div style="font-family:monospace;padding:15px;font-size:14pt;line-height:1.4;color:#000000;">
-                    <h2 style="text-align:center;font-size:20pt;margin-bottom:8px;color:#000000;">
+                <div style="font-family:monospace;padding:10px;font-size:13pt;line-height:1.5;color:#000000;">
+                    <h2 style="text-align:center;font-size:17pt;margin:0 0 2px 0;color:#000000;">
                         <strong>ESPETINHO GESSELO</strong>
                     </h2>
-                    <h3 style="text-align:center;font-size:18pt;margin-top:5px;margin-bottom:15px;color:#000000;">
-                        <strong>COMPROVANTE</strong>
-                    </h3>
-                    <p style="text-align:center;font-size:13pt;margin-bottom:20px;color:#000000;">
-                        <strong>${dataHora} (JST)</strong>
+                   <p style="text-align:center;font-size:8pt;margin:0 0 10px 0;color:#777777;font-weight:normal;">
+    #OBS: Taxa de serviço de 10% já inclusa no total (Opcional)
+</p>
+                    <p style="text-align:center;font-size:11pt;margin:0 0 10px 0;color:#000000;">
+                        <strong>${dataHora}</strong>
                     </p>
-                    <p style="font-size:13pt;margin:10px 0;color:#000000;">
-                        <strong>Mesa: ${pedido.mesa}</strong>
-                    </p>
-                    <p style="font-size:13pt;margin:10px 0;color:#000000;">
-                        <strong>Comanda: ${nomeComanda}</strong>
-                    </p>
-                    <h4 style="font-size:15pt;margin:20px 0 12px 0;border-bottom:2px solid #000;padding-bottom:8px;color:#000000;">
+                    <p style="font-size:12pt;margin:4px 0;color:#000000;"><strong>Mesa: ${pedido.mesa}</strong></p>
+                    <p style="font-size:12pt;margin:4px 0;color:#000000;"><strong>Comanda: ${nomeComanda}</strong></p>
+                    <h4 style="font-size:13pt;margin:14px 0 8px 0;border-bottom:2px solid #000;padding-bottom:5px;color:#000000;">
                         <strong>ITENS:</strong>
                     </h4>
                     <ul style="list-style:none;padding:0;margin:0;">
                         ${(pedido.itens||[]).map(i=>`
-                            <li style="font-size:13pt;margin:8px 0;padding:5px 0;border-bottom:1px dashed #000;color:#000000;">
+                            <li style="font-size:12pt;margin:5px 0;padding:4px 0;border-bottom:1px dashed #000;color:#000000;">
                                 <strong>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade*i.preco).toFixed(2)}</strong>
                             </li>
                         `).join('')}
                     </ul>
-                    <div style="margin-top:20px;border-top:3px solid #000;padding-top:15px;">
-                        <p style="font-size:14pt;margin:10px 0;color:#000000;">
-                            <strong>SUBTOTAL: R$ ${subtotal.toFixed(2)}</strong>
-                        </p>
-                        <p style="font-size:10pt;margin:6px 0;color:#000000;">
-                            <strong>Taxa de Serviço (10%): R$ ${taxaServico.toFixed(2)}</strong>
-                        </p>
-                        <p style="font-size:16pt;margin:15px 0;color:#000000;">
-                            <strong>TOTAL A PAGAR: R$ ${totalFinal.toFixed(2)}</strong>
-                        </p>
-                        <p style="font-size:14pt;margin:10px 0;color:#000000;">
-                            <strong>Forma: ${forma}</strong>
-                        </p>
-                        ${forma==='Dinheiro'&&recebido?`
-                            <p style="font-size:13pt;margin:8px 0;color:#000000;">
-                                <strong>Recebido: R$ ${recebido.toFixed(2)}</strong>
-                            </p>
-                            <p style="font-size:13pt;margin:8px 0;color:#000000;">
-                                <strong>Troco: R$ ${troco.toFixed(2)}</strong>
-                            </p>
-                        `:''}
-                    </div>
-                    <p style="text-align:center;margin-top:25px;font-size:13pt;color:#000000;">
-                        <strong>Obrigado e Volte Sempre!</strong>
-                    </p>
-                </div>
+                   <div style="margin-top:16px;border-top:3px solid #000;padding-top:12px;">
+    <p style="font-size:10pt;margin:4px 0;color:#000000;font-weight:normal;">
+        Subtotal: R$ ${(pedido.total || 0).toFixed(2)}
+    </p>
+
+    </p>
+    <p style="font-size:17pt;margin:8px 0;color:#000000;">
+        <strong>TOTAL: R$ ${totalFinal.toFixed(2)}</strong>
+    </p>      
             `;
             document.getElementById('comanda-impressao').innerHTML=html;
             setTimeout(()=>window.print(),300);
         }
         
         async function verificarNovasImpressoes() {
-            if (isPrinting) {
-                console.log('Já está imprimindo, aguardando...');
-                return;
-            }
-            
+            if (isPrinting) return;
             try {
                 isPrinting = true;
-                
-                let query = supabaseClient
-                    .from('impressoes_cozinha')
-                    .select('*')
-                    .order('data_hora', { ascending: true });
-
-                if (ultimaImpressaoTimestamp) {
-                    query = query.gt('data_hora', ultimaImpressaoTimestamp);
-                }
-
+                let query = supabaseClient.from('impressoes_cozinha').select('*').order('data_hora', { ascending: true });
+                if (ultimaImpressaoTimestamp) { query = query.gt('data_hora', ultimaImpressaoTimestamp); }
                 const { data, error } = await query;
-                
                 if (error) throw error;
-                
                 if (data && data.length > 0) {
-                    console.log(`🆕 ${data.length} nova(s) impressão(ões) encontrada(s)`);
-                    
                     for (const novaImpressao of data) {
                         ultimaImpressaoTimestamp = novaImpressao.data_hora;
-                        
-                        if (impressoesProcessadas.has(novaImpressao.id)) {
-                            console.log(`Impressão ${novaImpressao.id} já processada, pulando...`);
-                            continue;
-                        }
-                        
+                        if (impressoesProcessadas.has(novaImpressao.id)) continue;
                         impressoesProcessadas.add(novaImpressao.id);
-                        
-                        console.log('🖨️ Imprimindo comanda:', novaImpressao.id, 'Mesa:', novaImpressao.mesa);
-                        
                         tocarAlertaSonoro();
-                        
                         await imprimirComandaCozinha(novaImpressao);
-                        
                         await apagarImpressaoComConfirmacao(novaImpressao.id);
-                        
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
                 }
@@ -1016,45 +806,24 @@ async function fetchPedidos(){
 
         async function apagarImpressaoComConfirmacao(impressaoId) {
             let tentativas = 3;
-            
             while (tentativas > 0) {
                 try {
-                    const { error } = await supabaseClient
-                        .from('impressoes_cozinha')
-                        .delete()
-                        .eq('id', impressaoId);
-                    
+                    const { error } = await supabaseClient.from('impressoes_cozinha').delete().eq('id', impressaoId);
                     if (error) throw error;
-                    
-                    console.log('✅ Impressão apagada do banco:', impressaoId);
                     return;
                 } catch (error) {
-                    console.error(`❌ Tentativa ${4 - tentativas} falhou ao apagar impressão ${impressaoId}:`, error);
                     tentativas--;
-                    
-                    if (tentativas > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
+                    if (tentativas > 0) { await new Promise(resolve => setTimeout(resolve, 1000)); }
                 }
             }
-            
-            console.error('❌ Não foi possível apagar a impressão após 3 tentativas:', impressaoId);
         }
 
         function imprimirComandaCozinha(impressao) {
             return new Promise((resolve) => {
-                console.log('📄 Preparando impressão...');
                 document.getElementById('comanda-impressao').innerHTML = impressao.conteudo;
-                
                 setTimeout(() => {
-                    console.log('🖨️ Acionando impressora...');
                     window.print();
-                    
-                    setTimeout(() => {
-                        document.getElementById('comanda-impressao').innerHTML = '';
-                        console.log('✅ Impressão concluída');
-                        resolve();
-                    }, 800);
+                    setTimeout(() => { document.getElementById('comanda-impressao').innerHTML = ''; resolve(); }, 800);
                 }, 300);
             });
         }
@@ -1062,37 +831,25 @@ async function fetchPedidos(){
         function iniciarImpressaoAutomatica() {
             if (impressaoInterval) return;
             impressaoInterval = setInterval(verificarNovasImpressoes, 1000);
-            console.log('🚀 Impressão automática iniciada - Verificando a cada 1 segundo');
         }
 
         function pararImpressaoAutomatica() {
-            if (impressaoInterval) {
-                clearInterval(impressaoInterval);
-                impressaoInterval = null;
-            }
+            if (impressaoInterval) { clearInterval(impressaoInterval); impressaoInterval = null; }
         }
         
         setInterval(() => {
-            if (impressoesProcessadas.size > 100) {
-                console.log('🧹 Limpando set de impressões processadas...');
-                impressoesProcessadas.clear();
-            }
+            if (impressoesProcessadas.size > 100) { impressoesProcessadas.clear(); }
         }, 60000);
         
         function abrirModalFechamentoCaixa() {
-            if (caixaFechadaHoje) {
-                alert('O caixa está bloqueado. Desbloqueie-o antes de fechar.');
-                return;
-            }
-            
-            // ✅ JST: data do caixa no fuso do Japão
-            const hoje = getJSTDate().toLocaleDateString('pt-BR');
+            if (caixaFechadaHoje) { alert('O caixa está bloqueado. Desbloqueie-o antes de fechar.'); return; }
+            // ✅ AJUSTE 3: Data exibida no fuso BR
+            const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: TZ });
             const total = document.getElementById('total-caixa').textContent;
             const pedidos = document.getElementById('contagem-pedidos').textContent;
             const formasDiv = document.getElementById('totais-por-forma').innerHTML;
-            
             document.getElementById('resumo-caixa').innerHTML = `
-                <h3 style="color: #4CAF50;">Resumo do Caixa - ${hoje} (JST)</h3>
+                <h3 style="color: #4CAF50;">Resumo do Caixa - ${hoje}</h3>
                 <p><strong>Total Fechado:</strong> ${total}</p>
                 <p><strong>Número de Pedidos:</strong> ${pedidos}</p>
                 <div>${formasDiv}</div>
@@ -1101,32 +858,24 @@ async function fetchPedidos(){
             document.getElementById('modal-fechar-caixa').style.display = 'block';
         }
         
-        function fecharModalFecharCaixa() {
-            document.getElementById('modal-fechar-caixa').style.display = 'none';
-        }
+        function fecharModalFecharCaixa() { document.getElementById('modal-fechar-caixa').style.display = 'none'; }
         
         async function confirmarFechamentoCaixa() {
             try {
                 const totalAtual = parseFloat(document.getElementById('total-caixa').textContent.replace('R$ ', '').replace(',', '.'));
-                
-                if (totalAtual > 0) {
-                    await baixarCaixaPDF();
-                    await limparCaixaDoDia();
-                } else if (totalAtual === 0) {
-                     if(!confirm('O total do caixa é R$ 0,00. Deseja prosseguir com o bloqueio e fechar o caixa (sem gerar PDF ou limpar pedidos fechados)?')) return;
+                if (totalAtual > 0) { await baixarCaixaPDF(); await limparCaixaDoDia(); }
+                else if (totalAtual === 0) {
+                    if(!confirm('O total do caixa é R$ 0,00. Deseja prosseguir?')) return;
                 }
-                
                 caixaFechadaHoje = true;
                 updateCaixaBlockStatus();
                 fecharModalFecharCaixa();
                 alert('Caixa fechado com sucesso! Ações bloqueadas.');
-            } catch (error) {
-                alert('Erro ao fechar caixa: ' + error.message);
-            }
+            } catch (error) { alert('Erro ao fechar caixa: ' + error.message); }
         }
         
         function bloquearCaixaManualmente() {
-            if (confirm('Tem certeza que deseja BLOQUEAR o caixa? Os dados e ações serão desfocados/ocultados.')) {
+            if (confirm('Tem certeza que deseja BLOQUEAR o caixa?')) {
                 caixaFechadaHoje = true;
                 updateCaixaBlockStatus();
                 alert('Caixa bloqueado. Use a senha para desbloquear.');
@@ -1140,14 +889,11 @@ async function fetchPedidos(){
             document.getElementById('input-senha-desbloqueio').focus();
         }
 
-        function fecharModalDesbloqueio() {
-            document.getElementById('modal-desbloqueio').style.display = 'none';
-        }
+        function fecharModalDesbloqueio() { document.getElementById('modal-desbloqueio').style.display = 'none'; }
         
         function verificarSenhaDesbloqueio() {
             const senhaDigitada = document.getElementById('input-senha-desbloqueio').value;
             const msgErro = document.getElementById('mensagem-erro-desbloqueio');
-
             if (senhaDigitada === SENHA_DESBLOQUEIO) {
                 caixaFechadaHoje = false;
                 updateCaixaBlockStatus();
@@ -1162,22 +908,17 @@ async function fetchPedidos(){
 
         function updateCaixaBlockStatus() {
             const caixaContainer = document.getElementById('caixa-container');
-            if (!caixaContainer || caixaContainer.classList.contains('caixa-oculto')) {
-                return;
-            }
-
+            if (!caixaContainer || caixaContainer.classList.contains('caixa-oculto')) return;
             const caixaContent = document.getElementById('caixa-content');
             const caixaActions = document.getElementById('caixa-actions-container');
             const fecharCaixaBtn = document.getElementById('btn-fechar-caixa').parentElement;
             const desbloquearCaixaBtn = document.getElementById('btn-desbloquear-caixa');
             let statusBloqueado = document.getElementById('caixa-status-bloqueado');
-
             if (caixaFechadaHoje) {
                 if (caixaContent) caixaContent.classList.add('blurry');
                 if (caixaActions) caixaActions.style.display = 'none';
                 if (fecharCaixaBtn) fecharCaixaBtn.style.display = 'none';
                 if (desbloquearCaixaBtn) desbloquearCaixaBtn.style.display = 'block';
-
                 if (!statusBloqueado) {
                     statusBloqueado = document.createElement('p');
                     statusBloqueado.id = 'caixa-status-bloqueado';
@@ -1195,174 +936,91 @@ async function fetchPedidos(){
         }
         
         async function baixarCaixaPDF(){
-            if (caixaFechadaHoje) {
-                alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
-                return;
-            }
-            
-            // ✅ JST: usa a data de hoje no fuso do Japão
-            const hoje = getJSTDateString();
-
+            if (caixaFechadaHoje) { alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.'); return; }
+            // ✅ AJUSTE 3: Data no fuso BR para o PDF
+            const hoje = getBRDateString();
             const{data}=await supabaseClient.from('pedidos').select('*').eq('status','Fechado').not('horario_fecha','is',null);
-            
             let total=0,count=0,formas={'Dinheiro':0,'Cartao Debito':0,'Cartao Credito':0,'PIX':0}, totalTaxaServico = 0;
             const pedidosHoje=[];
             (data||[]).forEach(p=>{
-                if(p.horario_fecha&&p.horario_fecha.startsWith(hoje)){
-                    total+=p.total;
-                    count++;
-                    pedidosHoje.push(p);
+                // ✅ AJUSTE 3: Filtra pelo dia BR correto
+                if(isSameBRDay(p.horario_fecha, hoje)){
+                    total+=p.total; count++; pedidosHoje.push(p);
                     totalTaxaServico += p.taxa_servico || 0;
-                    if(formas[p.forma_pagamento]!==undefined){
-                        formas[p.forma_pagamento]+=p.total;
-                    }
+                    if(formas[p.forma_pagamento]!==undefined){ formas[p.forma_pagamento]+=p.total; }
                 }
             });
-            
             const{jsPDF}=window.jspdf;
             const doc=new jsPDF('p', 'mm', 'a4');
             let y = 20;
-
-            doc.setFontSize(18);
-            doc.text('ESPETINHO GESSELO',105,y,{align:'center'});
-            y += 10;
-            doc.setFontSize(14);
-            doc.text('RELATÓRIO DE CAIXA DETALHADO',105,y,{align:'center'});
-            y += 10;
-            
+            doc.setFontSize(18); doc.text('ESPETINHO GESSELO',105,y,{align:'center'}); y += 10;
+            doc.setFontSize(14); doc.text('RELATÓRIO DE CAIXA DETALHADO',105,y,{align:'center'}); y += 10;
             doc.setFontSize(10);
-            // ✅ JST: data do PDF no fuso do Japão
-            doc.text(`Data: ${getJSTDate().toLocaleDateString('pt-BR')} (JST)`,20,y);
-            y += 6;
-            doc.text(`Pedidos Fechados: ${count}`,20,y);
-            y += 10;
-            doc.setFontSize(12);
-            doc.text(`TOTAL BRUTO (c/ Taxa): R$ ${total.toFixed(2).replace('.',',')}`,20,y);
-            y += 8;
-            doc.setFontSize(10);
-            doc.text(`Taxa de Serviço (10%): R$ ${totalTaxaServico.toFixed(2).replace('.',',')}`,20,y);
-            y += 10;
-            
-            doc.setFontSize(12);
-            doc.text('Totais por Forma de Pagamento:',20,y);
-            y+=6;
+            // ✅ AJUSTE 3: Data no PDF em fuso BR
+            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR', { timeZone: TZ })}`,20,y); y += 6;
+            doc.text(`Pedidos Fechados: ${count}`,20,y); y += 10;
+            doc.setFontSize(12); doc.text(`TOTAL BRUTO (c/ Taxa): R$ ${total.toFixed(2).replace('.',',')}`,20,y); y += 8;
+            doc.setFontSize(10); doc.text(`Taxa de Serviço (10%): R$ ${totalTaxaServico.toFixed(2).replace('.',',')}`,20,y); y += 10;
+            doc.setFontSize(12); doc.text('Totais por Forma de Pagamento:',20,y); y+=6;
             doc.setFontSize(10);
             for(const[forma,valor]of Object.entries(formas)){
-                if(valor>0){
-                    doc.text(`${forma}: R$ ${valor.toFixed(2).replace('.',',')}`,25,y);
-                    y+=6;
-                }
+                if(valor>0){ doc.text(`${forma}: R$ ${valor.toFixed(2).replace('.',',')}`,25,y); y+=6; }
             }
-            
-            y+=10;
-            doc.setFontSize(14);
-            doc.text('DETALHAMENTO DOS PEDIDOS',20,y);
-            y+=8;
-
+            y+=10; doc.setFontSize(14); doc.text('DETALHAMENTO DOS PEDIDOS',20,y); y+=8;
             doc.setFontSize(9);
             pedidosHoje.forEach(p=>{
                 const nomeComanda = p.nome_comanda || 'Principal';
                 const subtotal = (p.total - (p.taxa_servico || 0)).toFixed(2);
-                
-                if(y>270){
-                    doc.addPage();
-                    y=20;
-                }
-                
-                // ✅ JST: horário de fechamento no fuso do Japão
-                const horarioFecha = p.horario_fecha
-                    ? new Date(p.horario_fecha).toLocaleString('pt-BR', { timeZone: 'Asia/Tokyo' })
-                    : 'N/A';
-
-                doc.setFontSize(10);
-                doc.text(`---------------------------------------------------------------------------------------------------------------------------------`, 20, y);
-                y += 4;
+                if(y>270){ doc.addPage(); y=20; }
+                doc.setFontSize(10); doc.text(`---`,20,y); y+=4;
                 doc.setFontSize(12);
-                doc.text(`Mesa ${p.mesa} / ${nomeComanda} - Fechamento: R$ ${p.total.toFixed(2).replace('.',',')} (${p.forma_pagamento||'N/A'})`,20,y);
-                y+=6;
+                doc.text(`Mesa ${p.mesa} / ${nomeComanda} - R$ ${p.total.toFixed(2).replace('.',',')} (${p.forma_pagamento||'N/A'})`,20,y); y+=6;
                 doc.setFontSize(9);
-                doc.text(`Fechado em (JST): ${horarioFecha}`, 20, y);
-                y+=5;
-                doc.text(`Subtotal: R$ ${subtotal.replace('.',',')} | Taxa 10%: R$ ${(p.taxa_servico || 0).toFixed(2).replace('.',',')}`, 20, y);
-                y+=5;
-                doc.text(`ITENS:`, 25, y);
-                y+=5;
-
+                // ✅ AJUSTE 3: Hora de fechamento no PDF em fuso BR
+                doc.text(`Fechado em: ${formatBRDateTime(p.horario_fecha)}`,20,y); y+=5;
+                doc.text(`Subtotal: R$ ${subtotal.replace('.',',')} | Taxa 10%: R$ ${(p.taxa_servico||0).toFixed(2).replace('.',',')}`,20,y); y+=5;
+                doc.text(`ITENS:`, 25, y); y+=5;
                 (p.itens || []).forEach(item => {
-                    if(y>275){
-                        doc.addPage();
-                        y=20;
-                    }
-                    const itemTotal = (item.quantidade * item.preco).toFixed(2);
-                    doc.text(`- ${item.quantidade}x ${item.nome} (R$ ${itemTotal.replace('.',',')})`, 30, y);
-                    y += 5;
+                    if(y>275){ doc.addPage(); y=20; }
+                    doc.text(`- ${item.quantidade}x ${item.nome} (R$ ${(item.quantidade*item.preco).toFixed(2).replace('.',',')})`, 30, y); y += 5;
                 });
-
                 y += 5;
             });
-
             doc.save(`caixa_detalhado_${hoje}.pdf`);
         }
         
         async function limparCaixaDoDia(){
-            if (caixaFechadaHoje) {
-                alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.');
-                return;
-            }
-
-            if(!confirm('ATENÇÃO: Isso irá DELETAR todos os pedidos fechados de hoje do banco de dados! Certifique-se de ter feito backup. Deseja continuar?'))return;
+            if (caixaFechadaHoje) { alert('Ações de caixa bloqueadas. Desbloqueie-o antes de continuar.'); return; }
+            if(!confirm('ATENÇÃO: Isso irá DELETAR todos os pedidos fechados de hoje! Deseja continuar?'))return;
             if(!confirm('Tem ABSOLUTA CERTEZA? Esta ação NÃO pode ser desfeita!'))return;
-            
             try{
-                // ✅ JST: usa a data de hoje no fuso do Japão
-                const hoje = getJSTDateString();
-                
-                const{data:pedidosHoje}=await supabaseClient
-                    .from('pedidos')
-                    .select('id,horario_fecha')
-                    .eq('status','Fechado')
-                    .not('horario_fecha','is',null);
-                
-                const idsParaDeletar=pedidosHoje
-                    .filter(p=>p.horario_fecha&&p.horario_fecha.startsWith(hoje))
-                    .map(p=>p.id);
-                
-                if(idsParaDeletar.length===0){
-                    alert('Não há pedidos fechados hoje para limpar.');
-                    return;
-                }
-                
-                const{error}=await supabaseClient
-                    .from('pedidos')
-                    .delete()
-                    .in('id',idsParaDeletar);
-                
+                // ✅ AJUSTE 3: Data no fuso BR
+                const hoje = getBRDateString();
+                const{data:pedidosHoje}=await supabaseClient.from('pedidos').select('id,horario_fecha').eq('status','Fechado').not('horario_fecha','is',null);
+                // ✅ AJUSTE 3: Filtra pelo dia BR correto
+                const idsParaDeletar=pedidosHoje.filter(p=>isSameBRDay(p.horario_fecha, hoje)).map(p=>p.id);
+                if(idsParaDeletar.length===0){ alert('Não há pedidos fechados hoje para limpar.'); return; }
+                const{error}=await supabaseClient.from('pedidos').delete().in('id',idsParaDeletar);
                 if(error)throw error;
-                
                 alert(`✓ ${idsParaDeletar.length} pedidos foram removidos do sistema!`);
                 calcularCaixaDoDia();
-            }catch(err){
-                console.error('Erro ao limpar caixa:',err);
-                alert('Erro ao limpar caixa! '+err.message);
-            }
+            }catch(err){ alert('Erro ao limpar caixa! '+err.message); }
         }
 
-        // --- HISTÓRICO ---
+        // HISTÓRICO
         let comandaSelecionadaHistorico = null;
 
         function abrirModalHistorico() {
             document.getElementById('modal-historico').style.display = 'block';
             const dataInput = document.getElementById('input-data-historico');
             if (!dataInput.value) {
-                // ✅ JST: data padrão do histórico no fuso do Japão
-                dataInput.value = getJSTDateString();
+                // ✅ AJUSTE 3: Data padrão no fuso BR
+                dataInput.value = getBRDateString();
             }
             carregarHistoricoPorData();
         }
 
-        function fecharModalHistorico() {
-            document.getElementById('modal-historico').style.display = 'none';
-        }
+        function fecharModalHistorico() { document.getElementById('modal-historico').style.display = 'none'; }
 
         function fecharModalVisualizar() {
             document.getElementById('modal-visualizar-comanda').style.display = 'none';
@@ -1373,39 +1031,19 @@ async function fetchPedidos(){
             const dataSelecionada = document.getElementById('input-data-historico').value;
             const listaDiv = document.getElementById('historico-lista');
             listaDiv.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
-            
-            if (!dataSelecionada) {
-                listaDiv.innerHTML = '<p style="text-align: center; color: gray;">Selecione uma data.</p>';
-                return;
-            }
-
+            if (!dataSelecionada) { listaDiv.innerHTML = '<p style="text-align: center; color: gray;">Selecione uma data.</p>'; return; }
             try {
-                const { data, error } = await supabaseClient
-                    .from('pedidos')
-                    .select('*')
-                    .eq('status', 'Fechado')
-                    .not('horario_fecha', 'is', null)
-                    .order('horario_fecha', { ascending: false });
-
+                const { data, error } = await supabaseClient.from('pedidos').select('*').eq('status', 'Fechado').not('horario_fecha', 'is', null).order('horario_fecha', { ascending: false });
                 if (error) throw error;
-
-                // ✅ JST: filtra pelo prefixo da data JST gravada
-                const pedidosDoDia = (data || []).filter(p => 
-                    p.horario_fecha && p.horario_fecha.startsWith(dataSelecionada)
-                );
-
+                // ✅ AJUSTE 3: Filtra pelo dia BR — resolve o bug das datas erradas após 21h
+                const pedidosDoDia = (data || []).filter(p => isSameBRDay(p.horario_fecha, dataSelecionada));
                 if (pedidosDoDia.length === 0) {
                     listaDiv.innerHTML = `<p style="text-align: center; color: gray;">Nenhuma comanda fechada em ${dataSelecionada.split('-').reverse().join('/')}.</p>`;
                     return;
                 }
-
                 listaDiv.innerHTML = pedidosDoDia.map(p => {
-                    // ✅ JST: exibe horário no fuso do Japão
-                    const horario = new Date(p.horario_fecha).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Asia/Tokyo'
-                    });
+                    // ✅ AJUSTE 3: Horário exibido no fuso BR
+                    const horario = formatBRTime(p.horario_fecha);
                     const nomeComanda = p.nome_comanda || 'Comanda Principal';
                     return `
                         <div style="background-color: #383838; padding: 10px; border-radius: 4px; margin-bottom: 8px; cursor: pointer; border: 1px solid #555;"
@@ -1415,115 +1053,63 @@ async function fetchPedidos(){
                                 <span style="float: right; color: #4CAF50;">R$ ${p.total.toFixed(2).replace('.',',')}</span>
                             </p>
                             <p style="font-size: 0.8em; margin: 0; color: #ccc;">
-                                Fechado às ${horario} (JST) | Pagamento: ${p.forma_pagamento || 'N/A'}
+                                Fechado às ${horario} | Pagamento: ${p.forma_pagamento || 'N/A'}
                             </p>
                         </div>
                     `;
                 }).join('');
-
             } catch (err) {
-                console.error('Erro ao carregar histórico:', err);
                 listaDiv.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar dados.</p>';
             }
         }
 
         async function visualizarComandaFechada(pedidoId) {
-            const { data: pedido, error } = await supabaseClient
-                .from('pedidos')
-                .select('*')
-                .eq('id', pedidoId)
-                .single();
-            
-            if (error || !pedido) {
-                alert('Erro ao carregar detalhes da comanda.');
-                return;
-            }
-            
+            const { data: pedido, error } = await supabaseClient.from('pedidos').select('*').eq('id', pedidoId).single();
+            if (error || !pedido) { alert('Erro ao carregar detalhes da comanda.'); return; }
             comandaSelecionadaHistorico = pedido;
-            const detalhesDiv = document.getElementById('comanda-detalhe-conteudo');
             const subtotal = (pedido.total - (pedido.taxa_servico || 0)).toFixed(2).replace('.',',');
-
-            // ✅ JST: exibe data/hora de fechamento no fuso do Japão
-            const fechadoEm = new Date(pedido.horario_fecha).toLocaleString('pt-BR', { timeZone: 'Asia/Tokyo' });
-
-            detalhesDiv.innerHTML = `
+            // ✅ AJUSTE 3: Data/hora do fechamento no fuso BR
+            const fechadoEm = formatBRDateTime(pedido.horario_fecha);
+            document.getElementById('comanda-detalhe-conteudo').innerHTML = `
                 <p><strong>Mesa:</strong> ${pedido.mesa}</p>
                 <p><strong>Comanda:</strong> ${pedido.nome_comanda || 'Principal'}</p>
                 <p><strong>Total (c/ 10%):</strong> R$ ${pedido.total.toFixed(2).replace('.',',')}</p>
                 <p><strong>Forma de Pagamento:</strong> ${pedido.forma_pagamento}</p>
-                <p><strong>Fechado em (JST):</strong> ${fechadoEm}</p>
+                <p><strong>Fechado em:</strong> ${fechadoEm}</p>
                 <hr style="border-color: #555;">
                 <h4 style="color: #ff8c00;">Resumo dos Itens (Subtotal: R$ ${subtotal})</h4>
                 <ul class="lista-itens">
-                    ${(pedido.itens || []).map(i => `
-                        <li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade * i.preco).toFixed(2).replace('.',',')}</li>
-                    `).join('')}
+                    ${(pedido.itens || []).map(i => `<li>${i.quantidade}x ${i.nome} - R$ ${(i.quantidade * i.preco).toFixed(2).replace('.',',')}</li>`).join('')}
                 </ul>
                 <hr style="border-color: #555;">
                 <p style="font-size: 0.9em; color: #ffc107;">Taxa de Serviço: R$ ${(pedido.taxa_servico || 0).toFixed(2).replace('.',',')}</p>
             `;
-
             document.getElementById('modal-visualizar-comanda').style.display = 'block';
             fecharModalHistorico();
         }
 
         function reimprimirComprovante() {
-            if (!comandaSelecionadaHistorico) {
-                alert('Nenhuma comanda selecionada.');
-                return;
-            }
-            
-            imprimirComprovante(
-                comandaSelecionadaHistorico, 
-                comandaSelecionadaHistorico.forma_pagamento, 
-                comandaSelecionadaHistorico.valor_recebido, 
-                comandaSelecionadaHistorico.troco, 
-                comandaSelecionadaHistorico.taxa_servico, 
-                comandaSelecionadaHistorico.total
-            );
-
+            if (!comandaSelecionadaHistorico) { alert('Nenhuma comanda selecionada.'); return; }
+            const p = comandaSelecionadaHistorico;
+            imprimirComprovante(p, p.taxa_servico || 0, p.total);
             fecharModalVisualizar();
-            alert('Comprovante enviado para reimpressão!');
         }
 
         async function limparHistoricoComandas() {
-            if (!confirm('ATENÇÃO: Você tem certeza que deseja deletar TODAS as comandas fechadas permanentemente do sistema? Esta ação é irreversível e pode afetar relatórios passados.')) {
-                return;
-            }
-
+            if (!confirm('ATENÇÃO: Você tem certeza que deseja deletar TODAS as comandas fechadas permanentemente?')) return;
             try {
-                const { data: pedidosFechados, error: fetchError } = await supabaseClient
-                    .from('pedidos')
-                    .select('id')
-                    .eq('status', 'Fechado')
-                    .not('horario_fecha', 'is', null);
-
+                const { data: pedidosFechados, error: fetchError } = await supabaseClient.from('pedidos').select('id').eq('status', 'Fechado').not('horario_fecha', 'is', null);
                 if (fetchError) throw fetchError;
-
                 const idsParaDeletar = (pedidosFechados || []).map(p => p.id);
-
-                if (idsParaDeletar.length === 0) {
-                    alert('Não há comandas fechadas para limpar no histórico.');
-                    return;
-                }
-
-                const { error: deleteError } = await supabaseClient
-                    .from('pedidos')
-                    .delete()
-                    .in('id', idsParaDeletar);
-
+                if (idsParaDeletar.length === 0) { alert('Não há comandas fechadas para limpar no histórico.'); return; }
+                const { error: deleteError } = await supabaseClient.from('pedidos').delete().in('id', idsParaDeletar);
                 if (deleteError) throw deleteError;
-
-                alert(`✓ ${idsParaDeletar.length} comandas foram removidas permanentemente do histórico!`);
-                carregarHistoricoPorData(); 
-
-            } catch (err) {
-                console.error('Erro ao limpar histórico de comandas:', err);
-                alert('Erro ao limpar histórico! ' + err.message);
-            }
+                alert(`✓ ${idsParaDeletar.length} comandas foram removidas permanentemente!`);
+                carregarHistoricoPorData();
+            } catch (err) { alert('Erro ao limpar histórico! ' + err.message); }
         }
 
-        // --- GERENCIAMENTO DO GARÇOM ---
+        // GARÇOM
         const EMAIL_GARCOM = 'garcom@admin.com';
 
         function abrirModalGerenciarGarcom() {
@@ -1533,9 +1119,7 @@ async function fetchPedidos(){
             verificarStatusGarcom();
         }
 
-        function fecharModalGerenciarGarcom() {
-            document.getElementById('modal-gerenciar-garcom').style.display = 'none';
-        }
+        function fecharModalGerenciarGarcom() { document.getElementById('modal-gerenciar-garcom').style.display = 'none'; }
 
         function mostrarFormAlterarSenha() {
             document.getElementById('form-alterar-senha').style.display = 'block';
@@ -1544,198 +1128,73 @@ async function fetchPedidos(){
             document.getElementById('mensagem-garcom').style.display = 'none';
         }
 
-        function ocultarFormAlterarSenha() {
-            document.getElementById('form-alterar-senha').style.display = 'none';
-        }
+        function ocultarFormAlterarSenha() { document.getElementById('form-alterar-senha').style.display = 'none'; }
 
         async function verificarStatusGarcom() { 
             try {
-                const { data, error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .select('valor, atualizado_em')
-                    .eq('chave', 'logout_garcom')
-                    .single();
-
+                const { data, error } = await supabaseClient.from('configuracoes_sistema').select('valor, atualizado_em').eq('chave', 'logout_garcom').single();
                 let statusText = '✅ Garçom está logado';
-                
-                if (!error && data) {
-                    if (data.valor === 'true') {
-                        statusText = '🔄 Comando de logout enviado - aguardando garçom desconectar...';
-                    } else {
-                        statusText = '✅ Garçom está logado';
-                    }
-                }
-                
+                if (!error && data && data.valor === 'true') { statusText = '🔄 Comando de logout enviado...'; }
                 document.getElementById('status-garcom').innerHTML = statusText;
-                
-            } catch (error) {
-                console.error('Erro ao verificar status:', error);
-                document.getElementById('status-garcom').textContent = 'Erro ao verificar status';
-            }
+            } catch (error) { console.error('Erro ao verificar status:', error); }
         }
 
         async function deslogarGarcom() { 
-            if (!confirm('Tem certeza que deseja deslogar o garçom remotamente? Isso fará com que ele precise fazer login novamente.')) {
-                return;
-            }
-
+            if (!confirm('Tem certeza que deseja deslogar o garçom remotamente?')) return;
             try {
-                const { error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .upsert({
-                        chave: 'logout_garcom',
-                        valor: 'true',
-                        atualizado_em: new Date().toISOString()
-                    }, {
-                        onConflict: 'chave'
-                    });
-
+                const { error } = await supabaseClient.from('configuracoes_sistema').upsert({ chave: 'logout_garcom', valor: 'true', atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
                 if (error) throw error;
-
-                mostrarMensagem('✅ Comando de logout enviado! O garçom será desconectado em instantes.', 'success');
+                mostrarMensagem('✅ Comando de logout enviado!', 'success');
                 setTimeout(verificarStatusGarcom, 1000);
-                
-            } catch (error) {
-                console.error('Erro ao deslogar garçom:', error);
-                mostrarMensagem('❌ Erro ao enviar comando de logout: ' + error.message, 'error');
-            }
+            } catch (error) { mostrarMensagem('❌ Erro ao enviar comando de logout: ' + error.message, 'error'); }
         }
 
         async function alterarSenhaGarcom() { 
             const novaSenha = document.getElementById('nova-senha').value;
             const confirmarSenha = document.getElementById('confirmar-senha').value;
-
-            if (!novaSenha || !confirmarSenha) {
-                mostrarMensagem('❌ Por favor, preencha ambos os campos de senha.', 'error');
-                return;
-            }
-
-            if (novaSenha !== confirmarSenha) {
-                mostrarMensagem('❌ As senhas não coincidem!', 'error');
-                return;
-            }
-
-            if (novaSenha.length < 6) {
-                mostrarMensagem('❌ A senha deve ter pelo menos 6 caracteres.', 'error');
-                return;
-            }
-
+            if (!novaSenha || !confirmarSenha) { mostrarMensagem('❌ Preencha ambos os campos.', 'error'); return; }
+            if (novaSenha !== confirmarSenha) { mostrarMensagem('❌ As senhas não coincidem!', 'error'); return; }
+            if (novaSenha.length < 6) { mostrarMensagem('❌ A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
             try {
-                const { error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .upsert({
-                        chave: 'senha_garcom',
-                        valor: novaSenha,
-                        atualizado_em: new Date().toISOString()
-                    }, {
-                        onConflict: 'chave'
-                    });
-
+                const { error } = await supabaseClient.from('configuracoes_sistema').upsert({ chave: 'senha_garcom', valor: novaSenha, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
                 if (error) throw error;
-
-                mostrarMensagem('✅ Senha do garçom alterada com sucesso! O garçom será desconectado.', 'success');
+                mostrarMensagem('✅ Senha do garçom alterada com sucesso!', 'success');
                 ocultarFormAlterarSenha();
                 await deslogarGarcom();
-                
-            } catch (error) {
-                console.error('Erro ao alterar senha:', error);
-                mostrarMensagem('❌ Erro ao alterar senha: ' + error.message, 'error');
-            }
-        }
-
-        async function salvarSenhaEmConfiguracoes(novaSenha) {
-            try {
-                const { error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .upsert({
-                        chave: 'senha_garcom',
-                        valor: novaSenha,
-                        atualizado_em: new Date().toISOString()
-                    }, {
-                        onConflict: 'chave'
-                    });
-
-                if (error) throw error;
-
-                mostrarMensagem('✅ Senha do garçom atualizada nas configurações!', 'success');
-                ocultarFormAlterarSenha();
-                await deslogarGarcom();
-                
-            } catch (error) {
-                throw new Error('Não foi possível salvar a senha: ' + error.message);
-            }
+            } catch (error) { mostrarMensagem('❌ Erro ao alterar senha: ' + error.message, 'error'); }
         }
 
         function mostrarMensagem(mensagem, tipo) {
             const div = document.getElementById('mensagem-garcom');
-            div.textContent = mensagem;
-            div.style.display = 'block';
+            div.textContent = mensagem; div.style.display = 'block';
             div.style.backgroundColor = tipo === 'success' ? '#2d4a2d' : '#4a2d2d';
             div.style.color = tipo === 'success' ? '#4CAF50' : '#FF5733';
             div.style.border = `1px solid ${tipo === 'success' ? '#4CAF50' : '#FF5733'}`;
-            
-            setTimeout(() => {
-                div.style.display = 'none';
-            }, 5000);
+            setTimeout(() => { div.style.display = 'none'; }, 5000);
         }
 
         async function inicializarConfiguracoesSistema() {
             try {
-                const { error } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .insert({
-                        chave: 'inicializado',
-                        valor: 'true',
-                        atualizado_em: new Date().toISOString()
-                    })
-                    .select();
-
-                if (error && error.message.includes('does not exist')) {
-                    console.log('Tabela configuracoes_sistema não existe. Criando...');
-                }
-                
-            } catch (error) {
-                console.log('Tabela configuracoes_sistema já existe ou erro na verificação:', error);
-            }
+                await supabaseClient.from('configuracoes_sistema').insert({ chave: 'inicializado', valor: 'true', atualizado_em: new Date().toISOString() }).select();
+            } catch (error) {}
         }
 
         async function reimprimirComandaCozinha(pedidoId) {
             try {
-                const { data: pedido, error } = await supabaseClient
-                    .from('pedidos')
-                    .select('*')
-                    .eq('id', pedidoId)
-                    .single();
-
-                if (error || !pedido) {
-                    alert('Erro ao carregar dados da comanda para reimpressão.');
-                    return;
-                }
-
+                const { data: pedido, error } = await supabaseClient.from('pedidos').select('*').eq('id', pedidoId).single();
+                if (error || !pedido) { alert('Erro ao carregar dados da comanda para reimpressão.'); return; }
                 const mesaId = pedido.mesa;
                 const nomeComanda = pedido.nome_comanda || 'Comanda Principal';
                 const observacao = pedido.observacao || '';
-                // ✅ JST: data/hora da reimpressão no fuso do Japão
-                const dataHora = getJSTDate().toLocaleString('pt-BR');
-
+                // ✅ AJUSTE 3: Data/hora no fuso BR
+                const dataHora = new Date().toLocaleString('pt-BR', { timeZone: TZ });
                 let printContent = `
                     <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
-                        <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
-                            <span style="color: #ff0000;">--- REIMPRESSÃO ---</span>
-                        </h2>
-                        <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;">
-                            <strong>COMANDA - MESA ${mesaId}</strong>
-                        </h3>
-                        <p style="text-align: center; margin: 0 0 8px 0; font-size: 13pt; color: #000000;">
-                            <strong>${nomeComanda}</strong>
-                        </p>
-                        <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;">
-                            <strong>Data: ${dataHora} (JST)</strong>
-                        </p>
-                        
-                        <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;">
-                            <strong>ITENS:</strong>
-                        </h4>
+                        <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #ff0000;">--- REIMPRESSÃO ---</h2>
+                        <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;"><strong>COMANDA - MESA ${mesaId}</strong></h3>
+                        <p style="text-align: center; margin: 0 0 8px 0; font-size: 13pt; color: #000000;"><strong>${nomeComanda}</strong></p>
+                        <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;"><strong>Data: ${dataHora}</strong></p>
+                        <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;"><strong>ITENS:</strong></h4>
                         <ul style="list-style: none; padding: 0; margin: 0;">
                         ${(pedido.itens || []).map(item => `
                             <li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;">
@@ -1743,49 +1202,20 @@ async function fetchPedidos(){
                             </li>
                         `).join('')}
                         </ul>
-                        
-                        ${observacao ? `
-                            <div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;">
-                                <p style="font-size: 12pt; margin: 8px 0; color: #000000;">
-                                    <strong>OBS: ${observacao}</strong>
-                                </p>
-                            </div>
-                        ` : ''}
-                        
-                        <p style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: center; font-size: 12pt; color: #000000;">
-                            *** REIMPRESSÃO ***
-                        </p>
-                    </div>
-                `;
-
-                // ✅ JST: timestamp da impressão no fuso do Japão
-                const { error: impressaoError } = await supabaseClient
-                    .from('impressoes_cozinha')
-                    .insert({
-                        mesa: mesaId,
-                        comanda_nome: nomeComanda,
-                        conteudo: printContent,
-                        itens: pedido.itens || [],
-                        observacao: observacao,
-                        data_hora: getJSTISOString(),
-                        reimpressao: true
-                    });
-
-                if (impressaoError) {
-                    console.error('Erro ao enviar reimpressão para cozinha:', impressaoError);
-                    alert('Erro ao enviar reimpressão para a cozinha.');
-                    return;
-                }
-
+                        ${observacao ? `<div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;"><p style="font-size: 12pt; margin: 8px 0; color: #000000;"><strong>OBS: ${observacao}</strong></p></div>` : ''}
+                        <p style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: center; font-size: 12pt; color: #000000;">*** REIMPRESSÃO ***</p>
+                    </div>`;
+                const { error: impressaoError } = await supabaseClient.from('impressoes_cozinha').insert({
+                    mesa: mesaId, comanda_nome: nomeComanda, conteudo: printContent,
+                    itens: pedido.itens || [], observacao: observacao,
+                    data_hora: new Date().toISOString(), reimpressao: true
+                });
+                if (impressaoError) { alert('Erro ao enviar reimpressão para a cozinha.'); return; }
                 alert('✅ Comanda enviada para reimpressão na cozinha!');
-
-            } catch (error) {
-                console.error('Erro na reimpressão:', error);
-                alert('Erro ao processar reimpressão.');
-            }
+            } catch (error) { alert('Erro ao processar reimpressão.'); }
         }
 
-        // --- GERENCIAMENTO DO CARDÁPIO ---
+        // CARDÁPIO
         let itemEditando = null;
         let todosItensCardapio = [];
 
@@ -1796,102 +1226,50 @@ async function fetchPedidos(){
             carregarItensCardapio();
         }
 
-        function fecharModalGerenciarCardapio() {
-            document.getElementById('modal-gerenciar-cardapio').style.display = 'none';
-            cancelarEdicaoItem();
-        }
+        function fecharModalGerenciarCardapio() { document.getElementById('modal-gerenciar-cardapio').style.display = 'none'; cancelarEdicaoItem(); }
 
         function mostrarFormAdicionarItem() {
             document.getElementById('form-item-cardapio').style.display = 'block';
             document.getElementById('form-item-titulo').textContent = 'Adicionar Novo Item';
             document.getElementById('btn-salvar-item').textContent = '💾 Salvar Item';
-            
             document.getElementById('item-nome').value = '';
             document.getElementById('item-preco').value = '';
             document.getElementById('item-categoria').value = '';
-            
             itemEditando = null;
         }
 
-        function cancelarEdicaoItem() {
-            document.getElementById('form-item-cardapio').style.display = 'none';
-            itemEditando = null;
-        }
+        function cancelarEdicaoItem() { document.getElementById('form-item-cardapio').style.display = 'none'; itemEditando = null; }
 
         async function carregarItensCardapio() {
             const container = document.getElementById('lista-cardapio-container');
             container.innerHTML = '<p style="text-align: center; color: #ff8c00;">Carregando...</p>';
-            
             try {
-                const { data: itens, error } = await supabaseClient
-                    .from('cardapio')
-                    .select('*')
-                    .order('categoria', { ascending: true })
-                    .order('nome_item', { ascending: true });
-                
-                if (error) {
-                    console.error('Erro ao carregar cardápio:', error);
-                    container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
-                    return;
-                }
-                
-                if (!itens || itens.length === 0) {
-                    container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>';
-                    todosItensCardapio = [];
-                    return;
-                }
-                
+                const { data: itens, error } = await supabaseClient.from('cardapio').select('*').order('categoria', { ascending: true }).order('nome_item', { ascending: true });
+                if (error) { container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>'; return; }
+                if (!itens || itens.length === 0) { container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item no cardápio.</p>'; todosItensCardapio = []; return; }
                 todosItensCardapio = itens;
                 renderizarItensCardapio(itens);
-                
-            } catch (error) {
-                console.error('Erro ao carregar cardápio:', error);
-                container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>';
-            }
+            } catch (error) { container.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar cardápio.</p>'; }
         }
 
         function renderizarItensCardapio(itens) {
             const container = document.getElementById('lista-cardapio-container');
-            
-            if (!itens || itens.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item encontrado.</p>';
-                return;
-            }
-            
+            if (!itens || itens.length === 0) { container.innerHTML = '<p style="text-align: center; color: gray;">Nenhum item encontrado.</p>'; return; }
             const categorias = {};
-            itens.forEach(item => {
-                const categoria = item.categoria || 'Sem Categoria';
-                if (!categorias[categoria]) categorias[categoria] = [];
-                categorias[categoria].push(item);
-            });
-            
+            itens.forEach(item => { const cat = item.categoria || 'Sem Categoria'; if (!categorias[cat]) categorias[cat] = []; categorias[cat].push(item); });
             container.innerHTML = '';
-            
             for (const [categoria, itensCategoria] of Object.entries(categorias)) {
                 const h3 = document.createElement('h3');
                 h3.textContent = `${categoria} (${itensCategoria.length} itens)`;
-                h3.style.color = '#ff8c00';
-                h3.style.marginTop = '20px';
-                h3.style.marginBottom = '10px';
+                h3.style.color = '#ff8c00'; h3.style.marginTop = '20px'; h3.style.marginBottom = '10px';
                 container.appendChild(h3);
-                
                 itensCategoria.forEach(item => {
                     const div = document.createElement('div');
-                    div.className = 'item-cardapio';
-                    div.style.marginBottom = '8px';
-                    div.style.padding = '10px';
-                    div.style.backgroundColor = '#2c2c2c';
-                    div.style.borderRadius = '4px';
-                    div.style.display = 'flex';
-                    div.style.justifyContent = 'space-between';
-                    div.style.alignItems = 'center';
-                    
+                    div.style.cssText = 'margin-bottom:8px;padding:10px;background-color:#2c2c2c;border-radius:4px;display:flex;justify-content:space-between;align-items:center;';
                     div.innerHTML = `
                         <div style="flex: 1;">
                             <strong>${item.nome_item}</strong>
-                            <div style="font-size: 0.8em; color: #ccc; margin-top: 3px;">
-                                Categoria: ${item.categoria || 'Sem categoria'}
-                            </div>
+                            <div style="font-size: 0.8em; color: #ccc; margin-top: 3px;">Categoria: ${item.categoria || 'Sem categoria'}</div>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-weight: bold; color: #ff8c00;">R$ ${item.preco.toFixed(2).replace('.', ',')}</div>
@@ -1908,158 +1286,71 @@ async function fetchPedidos(){
 
         async function editarItemCardapio(itemId) {
             try {
-                const { data: item, error } = await supabaseClient
-                    .from('cardapio')
-                    .select('*')
-                    .eq('id', itemId)
-                    .single();
-                
+                const { data: item, error } = await supabaseClient.from('cardapio').select('*').eq('id', itemId).single();
                 if (error) throw error;
-                
-                const nomeInput = document.getElementById('item-nome');
-                const precoInput = document.getElementById('item-preco');
-                const categoriaInput = document.getElementById('item-categoria');
-                
-                if (!nomeInput || !precoInput || !categoriaInput) {
-                    throw new Error('Elementos do formulário não encontrados');
-                }
-                
-                nomeInput.value = item.nome_item;
-                precoInput.value = item.preco;
-                categoriaInput.value = item.categoria || '';
-                
+                document.getElementById('item-nome').value = item.nome_item;
+                document.getElementById('item-preco').value = item.preco;
+                document.getElementById('item-categoria').value = item.categoria || '';
                 document.getElementById('form-item-cardapio').style.display = 'block';
                 document.getElementById('form-item-titulo').textContent = 'Editar Item';
                 document.getElementById('btn-salvar-item').textContent = '💾 Atualizar Item';
-                
                 itemEditando = itemId;
-                
-            } catch (error) {
-                console.error('Erro ao carregar item para edição:', error);
-                mostrarMensagemCardapio('❌ Erro ao carregar item para edição: ' + error.message, 'error');
-            }
+            } catch (error) { mostrarMensagemCardapio('❌ Erro ao carregar item: ' + error.message, 'error'); }
         }
 
         async function salvarItemCardapio() {
             try {
-                const nomeInput = document.getElementById('item-nome');
-                const precoInput = document.getElementById('item-preco');
-                const categoriaInput = document.getElementById('item-categoria');
-                
-                if (!nomeInput || !precoInput || !categoriaInput) {
-                    throw new Error('Elementos do formulário não encontrados');
-                }
-                
-                const nome = nomeInput.value.trim();
-                const preco = parseFloat(precoInput.value);
-                const categoria = categoriaInput.value.trim();
-                
-                if (!nome) {
-                    mostrarMensagemCardapio('❌ O nome do item é obrigatório.', 'error');
-                    return;
-                }
-                
-                if (!preco || preco <= 0) {
-                    mostrarMensagemCardapio('❌ O preço deve ser maior que zero.', 'error');
-                    return;
-                }
-                
-                const dadosItem = {
-                    nome_item: nome,
-                    preco: preco,
-                    categoria: categoria || null
-                };
-                
+                const nome = document.getElementById('item-nome').value.trim();
+                const preco = parseFloat(document.getElementById('item-preco').value);
+                const categoria = document.getElementById('item-categoria').value.trim();
+                if (!nome) { mostrarMensagemCardapio('❌ O nome do item é obrigatório.', 'error'); return; }
+                if (!preco || preco <= 0) { mostrarMensagemCardapio('❌ O preço deve ser maior que zero.', 'error'); return; }
+                const dadosItem = { nome_item: nome, preco: preco, categoria: categoria || null };
                 if (itemEditando) {
-                    const { error } = await supabaseClient
-                        .from('cardapio')
-                        .update(dadosItem)
-                        .eq('id', itemEditando);
-                    
+                    const { error } = await supabaseClient.from('cardapio').update(dadosItem).eq('id', itemEditando);
                     if (error) throw error;
                     mostrarMensagemCardapio('✅ Item atualizado com sucesso!', 'success');
                 } else {
-                    const { error } = await supabaseClient
-                        .from('cardapio')
-                        .insert(dadosItem);
-                    
+                    const { error } = await supabaseClient.from('cardapio').insert(dadosItem);
                     if (error) throw error;
                     mostrarMensagemCardapio('✅ Item adicionado com sucesso!', 'success');
                 }
-                
                 cancelarEdicaoItem();
                 setTimeout(() => { carregarItensCardapio(); }, 500);
-                
-            } catch (error) {
-                console.error('Erro ao salvar item:', error);
-                mostrarMensagemCardapio('❌ Erro ao salvar item: ' + error.message, 'error');
-            }
+            } catch (error) { mostrarMensagemCardapio('❌ Erro ao salvar item: ' + error.message, 'error'); }
         }
 
         async function excluirItemCardapio(itemId) {
-            if (!confirm('Tem certeza que deseja excluir este item do cardápio? Esta ação não pode ser desfeita.')) {
-                return;
-            }
-            
+            if (!confirm('Tem certeza que deseja excluir este item do cardápio?')) return;
             try {
-                const { error } = await supabaseClient
-                    .from('cardapio')
-                    .delete()
-                    .eq('id', itemId);
-                
+                const { error } = await supabaseClient.from('cardapio').delete().eq('id', itemId);
                 if (error) throw error;
-                
                 mostrarMensagemCardapio('✅ Item excluído com sucesso!', 'success');
                 setTimeout(() => { carregarItensCardapio(); }, 500);
-                
-            } catch (error) {
-                console.error('Erro ao excluir item:', error);
-                mostrarMensagemCardapio('❌ Erro ao excluir item: ' + error.message, 'error');
-            }
+            } catch (error) { mostrarMensagemCardapio('❌ Erro ao excluir item: ' + error.message, 'error'); }
         }
 
         function mostrarMensagemCardapio(mensagem, tipo) {
             const div = document.getElementById('mensagem-cardapio');
-            if (!div) {
-                console.error('Elemento mensagem-cardapio não encontrado');
-                return;
-            }
-            
-            div.textContent = mensagem;
-            div.style.display = 'block';
+            if (!div) return;
+            div.textContent = mensagem; div.style.display = 'block';
             div.style.backgroundColor = tipo === 'success' ? '#2d4a2d' : '#4a2d2d';
             div.style.color = tipo === 'success' ? '#4CAF50' : '#FF5733';
             div.style.border = `1px solid ${tipo === 'success' ? '#4CAF50' : '#FF5733'}`;
-            
             setTimeout(() => { div.style.display = 'none'; }, 5000);
         }
 
         function filtrarCardapio() {
             const termo = document.getElementById('busca-cardapio').value.toLowerCase().trim();
-            
-            if (!termo) {
-                renderizarItensCardapio(todosItensCardapio);
-                return;
-            }
-            
-            const itensFiltrados = todosItensCardapio.filter(item => {
-                return (
-                    item.nome_item.toLowerCase().includes(termo) ||
-                    (item.categoria && item.categoria.toLowerCase().includes(termo)) ||
-                    item.preco.toString().includes(termo) ||
-                    item.id.toString().includes(termo)
-                );
-            });
-            
+            if (!termo) { renderizarItensCardapio(todosItensCardapio); return; }
+            const itensFiltrados = todosItensCardapio.filter(item =>
+                item.nome_item.toLowerCase().includes(termo) ||
+                (item.categoria && item.categoria.toLowerCase().includes(termo)) ||
+                item.preco.toString().includes(termo)
+            );
             renderizarItensCardapio(itensFiltrados);
         }
 
-        function limparPesquisaCardapio() {
-            document.getElementById('busca-cardapio').value = '';
-            renderizarItensCardapio(todosItensCardapio);
-        }
-
-        // Inicializar
         inicializarConfiguracoesSistema();
         
         window.addEventListener('beforeunload',()=>{
@@ -2071,4 +1362,3 @@ async function fetchPedidos(){
     </script>
 </body>
 </html>
-
