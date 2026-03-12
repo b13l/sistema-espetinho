@@ -746,9 +746,7 @@
                     <h2 style="text-align:center;font-size:17pt;margin:0 0 2px 0;color:#000000;">
                         <strong>ESPETINHO GESSELO</strong>
                     </h2>
-                   <p style="text-align:center;font-size:8pt;margin:0 0 10px 0;color:#777777;font-weight:normal;">
-    #OBS: Taxa de serviço de 10% já inclusa no total (Opcional)
-</p>
+
                     <p style="text-align:center;font-size:11pt;margin:0 0 10px 0;color:#000000;">
                         <strong>${dataHora}</strong>
                     </p>
@@ -764,15 +762,17 @@
                             </li>
                         `).join('')}
                     </ul>
-                   <div style="margin-top:16px;border-top:3px solid #000;padding-top:12px;">
-    <p style="font-size:10pt;margin:4px 0;color:#000000;font-weight:normal;">
-        Subtotal: R$ ${(pedido.total || 0).toFixed(2)}
+<div style="margin-top:4px;">
+        <p style="font-size:10pt;margin:4px 0;color:#000000;font-weight:normal;">
+        Subtotal: R$ ${(totalFinal / 1.10).toFixed(2)}
     </p>
-
+    <p style="font-size:10pt;margin:4px 0 10px 0;color:#000000;font-weight:normal;">
+        Taxa de serviço de 10% 
     </p>
+    <div style="border-top:3px solid #000;margin:10px 0;"></div>
     <p style="font-size:17pt;margin:8px 0;color:#000000;">
         <strong>TOTAL: R$ ${totalFinal.toFixed(2)}</strong>
-    </p>      
+    </p>    
             `;
             document.getElementById('comanda-impressao').innerHTML=html;
             setTimeout(()=>window.print(),300);
