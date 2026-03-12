@@ -12,149 +12,237 @@
     
     <style>
         /* ESTILOS CSS BÁSICOS */
-        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: white; margin: 0; padding: 0; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #2c2c2c; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); }
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #000000;
+    background-image: none;
+    color: black;
+    margin: 0;
+    padding: 0;
+}
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #000000; border-radius: 8px; box-shadow: none; }
         .header { text-align: center; margin-bottom: 30px; }
-        
-        /* ESTILOS DE LOGIN */
-        #login-view { text-align: center; padding: 50px; }
-        #login-view input { padding: 10px; margin: 10px 0; width: 80%; max-width: 300px; border: none; border-radius: 4px; }
-        #login-view button { padding: 10px 20px; background-color: #ff8c00; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
 
-        /* ESTILOS DE MESAS - AGORA COM NUMERAÇÃO ORGANIZADA */
-        #mesas-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; text-align: center; }
-        .mesa-container { position: relative; }
-        .mesa-btn { padding: 25px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; transition: background-color 0.2s; width: 100%; position: relative; }
-        .mesa-btn.livre { background-color: #4CAF50; color: white; }
-        .mesa-btn.ocupada { background-color: #FF5733; color: white; }
-        .mesa-btn.em_preparo { background-color: #FFC300; color: black; }
-        .mesa-btn.pronto { background-color: #00bcd4; color: white; }
-        .badge-comandas { position: absolute; top: -8px; right: -8px; background: #ff4081; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 0.8em; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        
-        /* NOVO: SELEÇÃO DE COMANDA */
-        #comanda-selection-view { display: none; text-align: center; padding: 20px; }
-        .comanda-option { background: #383838; margin: 10px auto; padding: 15px; border-radius: 8px; cursor: pointer; max-width: 400px; border: 2px solid #555; }
-        .comanda-option:hover { border-color: #ff8c00; }
-        .comanda-option.nova { background: #2d4a2d; border-color: #4CAF50; }
-        
-        /* ESTILOS DO PDV - DESKTOP */
-        #pdv-view { display: none; gap: 20px; }
-        .pdv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .comanda-info { background: #383838; padding: 10px 15px; border-radius: 8px; }
-        .cardapio-col { flex: 2; overflow-y: auto; max-height: 80vh; padding-right: 10px; }
-        .comanda-col { flex: 1; background-color: #383838; padding: 15px; border-radius: 8px; }
-        
-        .item-cardapio { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #555; }
-        .item-cardapio:last-child { border-bottom: none; }
-        .item-info { flex-grow: 1; }
-        .item-preco { font-weight: bold; margin-right: 10px; color: #ff8c00; }
-        .add-btn { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        
-        /* ESTILOS DA COMANDA */
-        #itens-comanda { list-style: none; padding: 0; margin: 10px 0; }
-        #itens-comanda li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #555; }
-        .remover-btn { background-color: #FF5733; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; margin-left: 5px; }
-        
-        #total-comanda { font-size: 1.2em; font-weight: bold; margin-top: 15px; border-top: 2px solid #555; padding-top: 10px; }
-        #observacao { width: 95%; padding: 10px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: white; margin-bottom: 15px; }
-        
-        /* ESTILOS DE BOTÕES DE AÇÃO */
-        .action-buttons button { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .imprimir-btn { background-color: #007bff; color: white; }
-        .fechar-btn { background-color: #dc3545; color: white; }
-        .nova-comanda-btn { background-color: #ff8c00; color: white; margin-bottom: 10px; }
-
-        /* INDICADOR DE ATUALIZAÇÃO */
-        .status-indicator { position: fixed; top: 10px; right: 10px; padding: 5px 10px; background-color: #4CAF50; color: white; border-radius: 4px; font-size: 0.8em; }
-
-        /* MODAL PARA EDITAR NOME DA COMANDA */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        .modal-content { background-color: #2c2c2c; margin: 15% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .close-modal { color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer; }
-        .close-modal:hover { color: white; }
-        .modal-input { width: 100%; padding: 10px; margin: 10px 0; background: #444; border: 1px solid #555; border-radius: 4px; color: white; }
-
-        /* ESTILOS DE IMPRESSÃO */
-        @media print {
-            body > *:not(#comanda-para-impressao) {
-                display: none;
+        /* ✨ TÍTULO PRINCIPAL - NEON DOURADO (igual à cozinha) */
+        .titulo-principal {
+            font-size: 2em;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow:
+                0 0 6px #FFD700,
+                0 0 14px #FFB800,
+                0 0 28px #FF9500,
+                0 0 50px #FF7700;
+            letter-spacing: 2px;
+            animation: neon-gold-pulse 2.5s ease-in-out infinite;
+            margin: 0;
+        }
+        @keyframes neon-gold-pulse {
+            0%, 100% {
+                text-shadow: 0 0 6px #FFD700, 0 0 14px #FFB800, 0 0 28px #FF9500, 0 0 50px #FF7700;
             }
+            50% {
+                text-shadow: 0 0 10px #FFD700, 0 0 22px #FFD000, 0 0 40px #FFAA00, 0 0 70px #FF8800, 0 0 90px #FF6600;
+            }
+        }
+
+        /* 💛 SUBTÍTULO "ESCOLHA A MESA" - NEON AMARELO */
+        .titulo-mesas-neon {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fdfdfd;
+            text-shadow: 0 0 5px #FF8C00, 0 0 12px #FF6600, 0 0 22px #FF4400, 0 0 40px #FF2200;
+            animation: neon-yellow-pulse 3s ease-in-out infinite;
+            margin: 0 0 20px 0;
+        }
+        @keyframes neon-yellow-pulse {
+            0%, 100% {
+                text-shadow: 0 0 5px #FFEE00, 0 0 12px #FFD700, 0 0 22px #FFCC00, 0 0 40px #FFAA00;
+            }
+            50% {
+                text-shadow: 0 0 8px #FFFF33, 0 0 18px #FFE500, 0 0 32px #FFD000, 0 0 55px #FFBB00;
+            }
+        }
+
+      /* ESTILOS DE LOGIN */
+#login-view { text-align: center; padding: 50px; }
+#login-view h2 {
+    color: #FFD700;
+    text-shadow: 0 0 8px #FFD700, 0 0 20px #FF9500, 0 0 40px #FF7700;
+    letter-spacing: 2px;
+}
+#login-view input {
+    padding: 10px; margin: 10px 0; width: 80%; max-width: 300px;
+    border-radius: 4px; background-color: #1a1a1a; color: #ffffff;
+    border: 1px solid #FFD700; outline: none;
+}
+#login-view input:focus { border-color: #FF9500; box-shadow: 0 0 8px #FF9500; }
+#login-view button {
+    padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;
+    color: white; font-weight: bold;
+    background-color: #ff8c00;
+    box-shadow: 0 0 10px #ff8c00, 0 0 20px #ff6600;
+    transition: all 0.3s;
+}
+#login-view button:hover { box-shadow: 0 0 16px #FFD700, 0 0 32px #FF8800; }
+
+/* ESTILOS DE MESAS */
+#mesas-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; text-align: center; }
+.mesa-container { position: relative; }
+.mesa-btn {
+    padding: 25px 10px; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 1em; font-weight: bold; width: 100%; position: relative;
+    transition: all 0.3s; letter-spacing: 0.5px;
+}
+.mesa-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+.mesa-btn.livre { background-color: #00c458d7; color: #f9faf9; border: 1px solid #000000; box-shadow: 0 0 8px #008cdd44; }
+.mesa-btn.ocupada { background-color: #1a0000; color: #FF0000; border: 1px solid #FF0000; box-shadow: 0 0 8px #FF0000, 0 0 20px #FF0000, 0 0 40px #CC0000; text-shadow: 0 0 6px #FF0000, 0 0 14px #FF0000; }
+.mesa-btn.em_preparo { background-color: #d5fa05; color: #030303; border: 1px solid #abf500; box-shadow: 0 0 8px #cef102, 0 0 20px #9dd404, 0 0 40px #bee708; text-shadow: 0 0 6px #a9c507, 0 0 14px #c5e60a; }
+.badge-comandas {
+    position: absolute; top: -8px; right: -8px; background: #ff4081;
+    color: white; border-radius: 50%; width: 24px; height: 24px;
+    font-size: 0.8em; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; box-shadow: 0 0 6px #ff4081;
+}
+
+/* SELEÇÃO DE COMANDA */
+#comanda-selection-view { display: none; text-align: center; padding: 20px; }
+.comanda-option {
+    background: #1a1a1a; margin: 10px auto; padding: 15px;
+    border-radius: 8px; cursor: pointer; max-width: 400px;
+    border: 1px solid #444; color: #ffffff; transition: all 0.3s;
+}
+.comanda-option:hover { border-color: #FFD700; box-shadow: 0 0 12px #FFD70044; }
+.comanda-option strong { color: #ff8c00; }
+.comanda-option.nova {
+    background: #0d1f0d; border: 1px solid #4CAF50; color: #4CAF50;
+    box-shadow: 0 0 10px #4CAF5033;
+}
+.comanda-option.nova:hover { box-shadow: 0 0 18px #4CAF5077; }
+
+/* ESTILOS DO PDV */
+#pdv-view { display: none; gap: 20px; }
+.pdv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.comanda-info {
+    background: #111111; padding: 10px 15px; border-radius: 8px;
+    border: 1px solid #ff8c00; box-shadow: 0 0 8px #ff8c0033;
+    color: #ffffff;
+}
+.comanda-info h2 { color: #FFD700; margin: 0 0 4px 0; }
+.cardapio-col { flex: 2; overflow-y: auto; max-height: 80vh; padding-right: 10px; }
+.comanda-col {
+    flex: 1; background-color: #111111; padding: 15px; border-radius: 8px;
+    border: 1px solid #333; color: #ffffff;
+}
+.comanda-col h3 {
+    color: #FFD700;
+    text-shadow: 0 0 6px #FFD700, 0 0 14px #FF9500;
+    margin-top: 0;
+}
+
+.item-cardapio { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #2a2a2a; }
+.item-cardapio:last-child { border-bottom: none; }
+.item-info { flex-grow: 1; color: #dddddd; }
+.item-preco { font-weight: bold; margin-right: 10px; color: #ff8c00; }
+.add-btn {
+    background-color: #1a3a1a; color: #4CAF50; border: 1px solid #4CAF50;
+    padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;
+    transition: all 0.2s;
+}
+.add-btn:hover { background-color: #4CAF50; color: white; box-shadow: 0 0 8px #4CAF50; }
+
+/* ESTILOS DA COMANDA */
+#itens-comanda { list-style: none; padding: 0; margin: 10px 0; }
+#itens-comanda li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #2a2a2a; color: #dddddd; font-size: 0.9em; }
+.remover-btn {
+    background-color: #3a0a0a; color: #FF5733; border: 1px solid #FF5733;
+    padding: 2px 6px; border-radius: 3px; cursor: pointer; margin-left: 5px;
+    transition: all 0.2s;
+}
+.remover-btn:hover { background-color: #FF5733; color: white; }
+
+#total-comanda {
+    font-size: 1.2em; font-weight: bold; margin-top: 15px;
+    border-top: 2px solid #FFD700; padding-top: 10px;
+    color: #FFD700;
+    text-shadow: 0 0 6px #FFD700, 0 0 14px #FF9500;
+}
+#observacao {
+    width: 95%; padding: 10px; border-radius: 4px;
+    border: 1px solid #444; background-color: #1a1a1a;
+    color: #ffffff; margin-bottom: 15px; outline: none;
+}
+#observacao:focus { border-color: #ff8c00; box-shadow: 0 0 6px #ff8c0066; }
+
+/* BOTÕES DE AÇÃO */
+.action-buttons button { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+.imprimir-btn {
+    background-color: #003a7a; color: #00aaff; border: 1px solid #007bff;
+    box-shadow: 0 0 8px #007bff44;
+}
+.imprimir-btn:hover { background-color: #007bff; color: white; box-shadow: 0 0 14px #007bff; }
+.fechar-btn { background-color: #dc3545; color: white; }
+.nova-comanda-btn {
+    background-color: #3a1f00; color: #ff8c00; border: 1px solid #ff8c00;
+    box-shadow: 0 0 8px #ff8c0033; margin-bottom: 10px;
+}
+.nova-comanda-btn:hover { background-color: #ff8c00; color: white; box-shadow: 0 0 14px #ff8c00; }
+
+/* INDICADOR DE ATUALIZAÇÃO */
+.status-indicator {
+    position: fixed; top: 10px; right: 10px; padding: 5px 10px;
+    background-color: #0d1f0d; color: #4CAF50; border-radius: 4px;
+    font-size: 0.8em; border: 1px solid #4CAF50; box-shadow: 0 0 6px #4CAF5066;
+}
+
+/* MODAL */
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); }
+.modal-content {
+    background-color: #111111; margin: 15% auto; padding: 20px;
+    border-radius: 8px; width: 90%; max-width: 400px;
+    border: 1px solid #FFD700; box-shadow: 0 0 20px #FFD70033;
+}
+.modal-content h3 {
+    color: #FFD700;
+    text-shadow: 0 0 8px #FFD700, 0 0 18px #FF9500;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.close-modal { color: #666; font-size: 24px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
+.close-modal:hover { color: #FFD700; text-shadow: 0 0 8px #FFD700; }
+.modal-input {
+    width: 100%; padding: 10px; margin: 10px 0;
+    background: #1a1a1a; border: 1px solid #444;
+    border-radius: 4px; color: white; outline: none;
+    box-sizing: border-box;
+}
+.modal-input:focus { border-color: #FFD700; box-shadow: 0 0 8px #FFD70066; }
+
+        /* IMPRESSÃO */
+        @media print {
+            body > *:not(#comanda-para-impressao) { display: none; }
             #comanda-para-impressao {
                 display: block !important;
                 width: 80mm;
                 margin: 0 auto;
             }
-            @page {
-                margin: 0;
-                padding: 0;
-            }
+            @page { margin: 0; padding: 0; }
         }
         
-        /* -------------------------------------- */
-        /* NOVO: ESTILOS PARA DISPOSITIVOS MÓVEIS */
-        /* -------------------------------------- */
+        /* MOBILE */
         @media (max-width: 768px) {
-            .container {
-                margin: 0;
-                padding: 10px;
-                border-radius: 0;
-                box-shadow: none;
-            }
-            
-            /* MESAS: Otimização para celular */
-            #mesas-view {
-                /* Minmax ajustado para caber mais mesas em telas pequenas, no mínimo 120px */
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 8px;
-            }
-            
-            /* PDV: Colunas empilhadas */
-            #pdv-view {
-                flex-direction: column; /* Empilha o cardápio e a comanda */
-            }
-
-            .cardapio-col {
-                order: 2; /* Move o cardápio para baixo */
-                max-height: 60vh; /* Limita a altura para deixar espaço para a comanda */
-                padding-right: 0;
-                margin-top: 15px;
-            }
-
-            .comanda-col {
-                order: 1; /* Move a comanda (resumo) para o topo */
-                min-height: auto;
-            }
-            
-            .pdv-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .pdv-header > div:first-child {
-                margin-bottom: 10px;
-            }
-            
-            .nova-comanda-btn {
-                width: 100%;
-                margin-top: 5px;
-            }
-
-            /* INPUT DE BUSCA: Ocupa toda a largura */
-            #busca-input {
-                width: 98%; 
-            }
-            
-            /* ITENS DO CARDÁPIO: Ajuste o espaçamento */
-            .item-cardapio {
-                padding: 10px 0;
-                font-size: 0.9em;
-            }
-            
-            /* COMANDA: Ajuste o tamanho da fonte */
-            #itens-comanda li {
-                font-size: 0.9em;
-            }
+            .container { margin: 0; padding: 10px; border-radius: 0; box-shadow: none; }
+            #mesas-view { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+            #pdv-view { flex-direction: column; }
+            .cardapio-col { order: 2; max-height: 60vh; padding-right: 0; margin-top: 15px; }
+            .comanda-col { order: 1; min-height: auto; }
+            .pdv-header { flex-direction: column; align-items: flex-start; }
+            .pdv-header > div:first-child { margin-bottom: 10px; }
+            .nova-comanda-btn { width: 100%; margin-top: 5px; }
+            #busca-input { width: 98%; }
+            .item-cardapio { padding: 10px 0; font-size: 0.9em; }
+            #itens-comanda li { font-size: 0.9em; }
+            .titulo-principal { font-size: 1.4em; }
+            .titulo-mesas-neon { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -164,7 +252,7 @@
 
     <div class="container">
         <div class="header">
-            <h1 style="color: #ff8c00;">PDV Espetinho Gesselo</h1>
+            <h1 class="titulo-principal">🍢 PDV Espetinho Gesselo 🍢</h1>
         </div>
 
         <div id="login-view">
@@ -175,11 +263,11 @@
         </div>
 
         <div id="mesas-view" style="display:none;">
-            <h2>Escolha a Mesa</h2>
+            <h2 class="titulo-mesas-neon">Escolha a Mesa</h2>
         </div>
 
         <div id="comanda-selection-view">
-            <h2>Selecione a Comanda - Mesa <span id="mesa-selecionada-numero"></span></h2>
+            <h2 class="titulo-mesas-neon">Selecione a Comanda - Mesa <span id="mesa-selecionada-numero"></span></h2>
             <div id="comandas-list"></div>
             <div class="comanda-option nova" onclick="criarNovaComanda()">
                 <h3>➕ Nova Comanda</h3>
@@ -205,14 +293,12 @@
             
             <div class="cardapio-col">
                 <input type="text" id="busca-input" placeholder="Buscar no Cardápio..." onkeyup="carregarCardapio()" style="width: 95%; padding: 10px; margin-bottom: 15px; background-color: #444; color: white; border: 1px solid #555; border-radius: 4px;">
-                <div id="cardapio-view">
-                </div>
+                <div id="cardapio-view"></div>
             </div>
 
             <div class="comanda-col">
                 <h3>Comanda Atual</h3>
-                <ul id="itens-comanda">
-                </ul>
+                <ul id="itens-comanda"></ul>
                 <div id="total-comanda">Total: R$ 0,00</div>
                 
                 <h4>Observação da Comanda</h4>
@@ -251,20 +337,13 @@
             }
         });
         
-        // Variáveis Globais para o PDV
         let GLOBAL_MESA_ID = null;
         let GLOBAL_COMANDA_ID = null;
         let GLOBAL_ORDER_ITEMS = [];
         let GLOBAL_COMANDA_NOME = "Principal";
-        
-        // VARIÁVEIS PARA MÚLTIPLAS COMANDA
         let GLOBAL_MESA_COMANDAS = [];
-        
-        // VARIÁVEIS PARA POLLING
         let pollingInterval = null;
         const POLLING_INTERVAL_MS = 2000;
-
-        // --- FUNÇÕES DE NAVEGAÇÃO ---
 
         function showLoginView() {
             stopPolling();
@@ -302,11 +381,8 @@
             renderComanda();
         }
 
-        // --- FUNÇÕES DE POLLING ---
-
         function startPolling() {
             if (pollingInterval) return;
-            
             pollingInterval = setInterval(async () => {
                 try {
                     await carregarMesas();
@@ -319,40 +395,20 @@
         }
 
         function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
         }
 
         function updateStatusIndicator(success) {
             const indicator = document.getElementById('status-indicator');
-            if (success) {
-                indicator.style.backgroundColor = '#4CAF50';
-                indicator.textContent = '●';
-            } else {
-                indicator.style.backgroundColor = '#FF5733';
-                indicator.textContent = '⚠';
-            }
+            if (success) { indicator.style.backgroundColor = '#4CAF50'; indicator.textContent = '●'; }
+            else { indicator.style.backgroundColor = '#FF5733'; indicator.textContent = '⚠'; }
         }
-
-        // --- FUNÇÕES DE MÚLTIPLAS COMANDA ---
 
         async function carregarComandasDaMesa(mesaId) {
             document.getElementById('mesa-selecionada-numero').textContent = mesaId;
-            
             const { data: comandas, error } = await supabaseClient
-                .from('pedidos')
-                .select('*')
-                .eq('mesa', mesaId)
-                .neq('status', 'Fechado')
-                .order('horario', { ascending: true }); // Ordenar por horário de chegada
-
-            if (error) {
-                console.error('Erro ao carregar comandas:', error);
-                return;
-            }
-
+                .from('pedidos').select('*').eq('mesa', mesaId).neq('status', 'Fechado').order('horario', { ascending: true });
+            if (error) { console.error('Erro ao carregar comandas:', error); return; }
             GLOBAL_MESA_COMANDAS = comandas || [];
             renderComandasList();
         }
@@ -360,27 +416,18 @@
         function renderComandasList() {
             const container = document.getElementById('comandas-list');
             container.innerHTML = '';
-
             if (GLOBAL_MESA_COMANDAS.length === 0) {
                 container.innerHTML = '<p style="color: #ccc; margin: 20px 0;">Nenhuma comanda aberta</p>';
                 return;
             }
-
             GLOBAL_MESA_COMANDAS.forEach(comanda => {
                 const div = document.createElement('div');
                 div.className = 'comanda-option';
                 div.onclick = () => selecionarComanda(comanda);
-                
                 const total = comanda.total || 0;
                 const status = comanda.status || 'Aberto';
                 const nome = comanda.nome_comanda || 'Comanda Principal';
-                
-                // Formatar horário
-                const horario = comanda.horario ? new Date(comanda.horario).toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }) : '--:--';
-                
+                const horario = comanda.horario ? new Date(comanda.horario).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
                 div.innerHTML = `
                     <h3>${nome}</h3>
                     <p><strong>Status:</strong> ${status} | <strong>Total:</strong> R$ ${total.toFixed(2).replace('.', ',')}</p>
@@ -391,319 +438,150 @@
             });
         }
 
-      function selecionarComanda(comanda) {
-    GLOBAL_COMANDA_ID = comanda.id;
-    // MODIFICAÇÃO: Garante que todos os itens tenham um status, assumindo 'enviado' se for a primeira vez que carregamos um item.
-    GLOBAL_ORDER_ITEMS = (comanda.itens || []).map(item => ({
-        ...item,
-        status_cozinha: item.status_cozinha || 'enviado' // Se não tem status, já foi enviado
-    })); 
-    
-    GLOBAL_COMANDA_NOME = comanda.nome_comanda || 'Principal';
-    document.getElementById('observacao').value = comanda.observacao || '';
-    showPdvView(comanda.mesa);
-}
+        function selecionarComanda(comanda) {
+            GLOBAL_COMANDA_ID = comanda.id;
+            GLOBAL_ORDER_ITEMS = (comanda.itens || []).map(item => ({
+                ...item,
+                status_cozinha: item.status_cozinha || 'enviado'
+            }));
+            GLOBAL_COMANDA_NOME = comanda.nome_comanda || 'Principal';
+            document.getElementById('observacao').value = comanda.observacao || '';
+            showPdvView(comanda.mesa);
+        }
 
         async function criarNovaComanda() {
-            const { data: newPedido, error } = await supabaseClient
-                .from('pedidos')
-                .insert({ 
-                    mesa: GLOBAL_MESA_ID, 
-                    status: 'Aberto', 
-                    itens: [], 
-                    total: 0,
-                    nome_comanda: `Comanda ${GLOBAL_MESA_COMANDAS.length + 1}`,
-                    horario: new Date().toISOString(),
-                    data: new Date().toISOString().split('T')[0] 
-                })
-                .select()
-                .single();
-
-            if (error) {
-                alert('Erro ao criar nova comanda!');
-                console.error(error);
-                return;
-            }
-
+            const { data: newPedido, error } = await supabaseClient.from('pedidos').insert({
+                mesa: GLOBAL_MESA_ID, status: 'Aberto', itens: [], total: 0,
+                nome_comanda: `Comanda ${GLOBAL_MESA_COMANDAS.length + 1}`,
+                horario: new Date().toISOString(),
+                data: new Date().toISOString().split('T')[0]
+            }).select().single();
+            if (error) { alert('Erro ao criar nova comanda!'); console.error(error); return; }
             GLOBAL_COMANDA_ID = newPedido.id;
             GLOBAL_ORDER_ITEMS = [];
             GLOBAL_COMANDA_NOME = newPedido.nome_comanda;
             showPdvView(GLOBAL_MESA_ID);
         }
 
-        function abrirNovaComandaNaMesmaMesa() {
-            showComandaSelectionView();
-        }
-
-        // --- FUNÇÃO EDITAR NOME DA COMANDA ---
+        function abrirNovaComandaNaMesmaMesa() { showComandaSelectionView(); }
 
         function editarNomeComanda() {
             document.getElementById('novo-nome-comanda').value = GLOBAL_COMANDA_NOME;
             document.getElementById('modal-editar-nome').style.display = 'block';
         }
 
-        function fecharModalEditarNome() {
-            document.getElementById('modal-editar-nome').style.display = 'none';
-        }
+        function fecharModalEditarNome() { document.getElementById('modal-editar-nome').style.display = 'none'; }
 
         async function salvarNomeComanda() {
             const novoNome = document.getElementById('novo-nome-comanda').value.trim();
-            if (!novoNome) {
-                alert('Digite um nome para a comanda!');
-                return;
-            }
-
-            const { error } = await supabaseClient
-                .from('pedidos')
-                .update({ nome_comanda: novoNome })
-                .eq('id', GLOBAL_COMANDA_ID);
-
-            if (error) {
-                alert('Erro ao atualizar nome da comanda!');
-                console.error(error);
-                return;
-            }
-
+            if (!novoNome) { alert('Digite um nome para a comanda!'); return; }
+            const { error } = await supabaseClient.from('pedidos').update({ nome_comanda: novoNome }).eq('id', GLOBAL_COMANDA_ID);
+            if (error) { alert('Erro ao atualizar nome da comanda!'); console.error(error); return; }
             GLOBAL_COMANDA_NOME = novoNome;
             document.getElementById('comanda-nome-display').textContent = novoNome;
             fecharModalEditarNome();
             alert('Nome da comanda atualizado!');
         }
 
-        // --- FUNÇÕES DE AUTENTICAÇÃO ---
-
-     // index.html - SUBSTITUIR função fazerLogin completa
-async function fazerLogin() {
-    const email = document.getElementById('email-login').value;
-    const senha = document.getElementById('senha-login').value;
-
-    if (!email || !senha) {
-        alert('Por favor, preencha email e senha.');
-        return;
-    }
-
-    try {
-        // Primeiro verificar se há logout remoto
-        await verificarLogoutRemoto();
-        
-        // Buscar a senha atual da tabela de configurações
-        const { data: configSenha, error: configError } = await supabaseClient
-            .from('configuracoes_sistema')
-            .select('valor')
-            .eq('chave', 'senha_garcom')
-            .single();
-
-        let senhaCorreta = false;
-        
-        if (configError) {
-            console.error('Erro ao buscar senha:', configError);
-            // Se não encontrar na configuração, usa a padrão
-            senhaCorreta = (senha === '#Kwaii2020');
-        } else {
-            // Verifica contra a senha salva nas configurações
-            senhaCorreta = (senha === configSenha.valor);
+        async function fazerLogin() {
+            const email = document.getElementById('email-login').value;
+            const senha = document.getElementById('senha-login').value;
+            if (!email || !senha) { alert('Por favor, preencha email e senha.'); return; }
+            try {
+                await verificarLogoutRemoto();
+                const { data: configSenha, error: configError } = await supabaseClient
+                    .from('configuracoes_sistema').select('valor').eq('chave', 'senha_garcom').single();
+                let senhaCorreta = false;
+                if (configError) { senhaCorreta = (senha === '#Kwaii2020'); }
+                else { senhaCorreta = (senha === configSenha.valor); }
+                if (!senhaCorreta) { alert('Senha incorreta!'); return; }
+                localStorage.setItem('garcom_logado', 'true');
+                localStorage.setItem('garcom_email', email);
+                localStorage.setItem('garcom_login_time', new Date().toISOString());
+                showMesasView();
+            } catch (error) { console.error('Erro no login:', error); alert('Erro ao fazer login. Tente novamente.'); }
         }
 
-        if (!senhaCorreta) {
-            alert('Senha incorreta!');
-            return;
+        function verificarSessaoLocal() {
+            const logado = localStorage.getItem('garcom_logado');
+            const loginTime = localStorage.getItem('garcom_login_time');
+            if (logado === 'true' && loginTime) {
+                const diffHours = (new Date() - new Date(loginTime)) / (1000 * 60 * 60);
+                if (diffHours < 12) return true;
+                else { localStorage.removeItem('garcom_logado'); localStorage.removeItem('garcom_email'); localStorage.removeItem('garcom_login_time'); }
+            }
+            return false;
         }
-
-        // Se a senha estiver correta, faz login SIMULADO (sem Supabase Auth)
-        // Armazenar sessão localmente
-        localStorage.setItem('garcom_logado', 'true');
-        localStorage.setItem('garcom_email', email);
-        localStorage.setItem('garcom_login_time', new Date().toISOString());
-        
-        console.log('Login realizado com sucesso!');
-        showMesasView();
-        
-    } catch (error) {
-        console.error('Erro no login:', error);
-        alert('Erro ao fazer login. Tente novamente.');
-    }
-}
-
-// index.html - ADICIONAR esta função
-function verificarSessaoLocal() {
-    const logado = localStorage.getItem('garcom_logado');
-    const loginTime = localStorage.getItem('garcom_login_time');
-    
-    if (logado === 'true' && loginTime) {
-        // Verificar se o login foi feito há menos de 12 horas
-        const loginDate = new Date(loginTime);
-        const now = new Date();
-        const diffHours = (now - loginDate) / (1000 * 60 * 60);
-        
-        if (diffHours < 12) {
-            return true;
-        } else {
-            // Sessão expirada
-            localStorage.removeItem('garcom_logado');
-            localStorage.removeItem('garcom_email');
-            localStorage.removeItem('garcom_login_time');
-        }
-    }
-    return false;
-}
-                
-
-        // --- FUNÇÕES DE MESAS ---
 
         async function carregarMesas() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('mesas_status')
-                    .select('*')
-                    .order('mesa', { ascending: true });
-
-                if (error) {
-                    console.error('Erro ao carregar mesas:', error);
-                    updateStatusIndicator(false);
-                    return;
-                }
-
+                const { data, error } = await supabaseClient.from('mesas_status').select('*').order('mesa', { ascending: true });
+                if (error) { updateStatusIndicator(false); return; }
                 const container = document.getElementById('mesas-view');
-                container.innerHTML = '<h2>Escolha a Mesa</h2>';
-
+                container.innerHTML = '<h2 class="titulo-mesas-neon">Escolha a Mesa</h2>';
                 const mesasOrdenadas = data.sort((a, b) => parseInt(a.mesa) - parseInt(b.mesa));
-
                 mesasOrdenadas.forEach(mesa => {
                     const mesaContainer = document.createElement('div');
                     mesaContainer.className = 'mesa-container';
-                    
                     const button = document.createElement('button');
                     const statusClass = mesa.status.toLowerCase().replace(' ', '_');
                     button.className = `mesa-btn ${statusClass}`;
-                    
-                    // 🆕 MOSTRAR STATUS NO TEXTO DO BOTÃO
                     button.textContent = `Mesa ${mesa.mesa}\n(${mesa.status})`;
                     button.onclick = () => abrirMesa(mesa.mesa, mesa.status, mesa.pedido_id);
-                    
                     if (mesa.status !== 'Livre') {
                         const badge = document.createElement('div');
                         badge.className = 'badge-comandas';
                         badge.textContent = '1+';
                         mesaContainer.appendChild(badge);
                     }
-                    
                     mesaContainer.appendChild(button);
                     container.appendChild(mesaContainer);
                 });
-
                 updateStatusIndicator(true);
-            } catch (err) {
-                console.error('Erro no polling:', err);
-                updateStatusIndicator(false);
-            }
+            } catch (err) { updateStatusIndicator(false); }
         }
 
         async function abrirMesa(mesaId, status, pedidoId) {
             GLOBAL_MESA_ID = mesaId;
-            
-            if (status === 'Livre') {
-                await criarPrimeiraComanda(mesaId);
-            } else {
-                showComandaSelectionView();
-            }
+            if (status === 'Livre') { await criarPrimeiraComanda(mesaId); }
+            else { showComandaSelectionView(); }
         }
 
         async function criarPrimeiraComanda(mesaId) {
-            const { data: newPedido, error: pedidoError } = await supabaseClient
-                .from('pedidos')
-                .insert({ 
-                    mesa: mesaId, 
-                    status: 'Aberto', 
-                    itens: [], 
-                    total: 0,
-                    nome_comanda: 'Comanda Principal',
-                    horario: new Date().toISOString(),
-                    data: new Date().toISOString().split('T')[0] 
-                })
-                .select()
-                .single();
-
-            if (pedidoError) {
-                alert('Erro ao criar nova comanda!');
-                console.error('Erro ao criar comanda:', pedidoError);
-                return;
-            }
-
+            const { data: newPedido, error: pedidoError } = await supabaseClient.from('pedidos').insert({
+                mesa: mesaId, status: 'Aberto', itens: [], total: 0,
+                nome_comanda: 'Comanda Principal',
+                horario: new Date().toISOString(),
+                data: new Date().toISOString().split('T')[0]
+            }).select().single();
+            if (pedidoError) { alert('Erro ao criar nova comanda!'); return; }
             GLOBAL_COMANDA_ID = newPedido.id;
             GLOBAL_ORDER_ITEMS = [];
             GLOBAL_COMANDA_NOME = 'Comanda Principal';
-
-            const { error: mesaError } = await supabaseClient
-                .from('mesas_status')
-                .update({ status: 'Ocupada', pedido_id: newPedido.id })
-                .eq('mesa', mesaId);
-
-            if (mesaError) {
-                console.error('Erro ao atualizar status da mesa:', mesaError);
-            }
-
+            const { error: mesaError } = await supabaseClient.from('mesas_status').update({ status: 'Ocupada', pedido_id: newPedido.id }).eq('mesa', mesaId);
+            if (mesaError) console.error('Erro ao atualizar status da mesa:', mesaError);
             showPdvView(mesaId);
         }
 
-        // --- FUNÇÕES DE CARDÁPIO E BUSCA ---
-
         async function carregarCardapio() {
-            console.log('Carregando cardápio...');
-            
             const buscaInput = document.getElementById('busca-input');
             const buscaTermo = buscaInput ? buscaInput.value.toLowerCase().trim() : '';
-
             let query = supabaseClient.from('cardapio').select('*');
-            
-            if (buscaTermo) {
-                query = query.ilike('nome_item', `%${buscaTermo}%`); 
-            }
-
-            const { data: itens, error } = await query
-                .order('categoria', { ascending: true })
-                .order('nome_item', { ascending: true });
-
-            if (error) { 
-                console.error('Erro ao carregar cardápio:', error); 
-                document.getElementById('cardapio-view').innerHTML = '<p style="color: #ff4444; padding: 20px; text-align: center;">Erro ao carregar cardápio. Verifique a conexão.</p>';
-                return; 
-            }
-
-            console.log('Itens carregados:', itens);
-
+            if (buscaTermo) { query = query.ilike('nome_item', `%${buscaTermo}%`); }
+            const { data: itens, error } = await query.order('categoria', { ascending: true }).order('nome_item', { ascending: true });
+            if (error) { document.getElementById('cardapio-view').innerHTML = '<p style="color: #ff4444; padding: 20px; text-align: center;">Erro ao carregar cardápio.</p>'; return; }
             const container = document.getElementById('cardapio-view');
-            
-            if (!itens || itens.length === 0) {
-                container.innerHTML = '<p style="color: #ccc; padding: 20px; text-align: center;">Nenhum item encontrado no cardápio.</p>';
-                return;
-            }
-
+            if (!itens || itens.length === 0) { container.innerHTML = '<p style="color: #ccc; padding: 20px; text-align: center;">Nenhum item encontrado no cardápio.</p>'; return; }
             container.innerHTML = '';
-
             let categorias = {};
-            itens.forEach(item => {
-                if (item.categoria && item.categoria.trim() !== '') {
-                    if (!categorias[item.categoria]) categorias[item.categoria] = [];
-                    categorias[item.categoria].push(item);
-                }
-            });
-
-            if (Object.keys(categorias).length === 0) {
-                itens.forEach(i => {
-                    adicionarItemCardapio(container, i);
-                });
-            } else {
+            itens.forEach(item => { if (item.categoria && item.categoria.trim() !== '') { if (!categorias[item.categoria]) categorias[item.categoria] = []; categorias[item.categoria].push(item); } });
+            if (Object.keys(categorias).length === 0) { itens.forEach(i => adicionarItemCardapio(container, i)); }
+            else {
                 for (const [categoria, itensCategoria] of Object.entries(categorias)) {
                     const h3 = document.createElement('h3');
-                    h3.textContent = categoria;
-                    h3.style.color = '#ff8c00';
-                    h3.style.marginTop = '20px';
-                    h3.style.marginBottom = '10px';
+                    h3.textContent = categoria; h3.style.color = '#ff8c00'; h3.style.marginTop = '20px'; h3.style.marginBottom = '10px';
                     container.appendChild(h3);
-
-                    itensCategoria.forEach(i => {
-                        adicionarItemCardapio(container, i);
-                    });
+                    itensCategoria.forEach(i => adicionarItemCardapio(container, i));
                 }
             }
         }
@@ -711,39 +589,27 @@ function verificarSessaoLocal() {
         function adicionarItemCardapio(container, item) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item-cardapio';
-            const precoFormatado = parseFloat(item.preco).toFixed(2).replace('.', ','); 
-            
+            const precoFormatado = parseFloat(item.preco).toFixed(2).replace('.', ',');
             itemDiv.innerHTML = `
-                <span class="item-info">${item.nome_item}</span> 
+                <span class="item-info">${item.nome_item}</span>
                 <span class="item-preco">R$ ${precoFormatado}</span>
                 <button class="add-btn" onclick="addToCommand(${item.id}, '${item.nome_item.replace(/'/g, "\\'")}', ${item.preco})">ADD</button>
             `;
             container.appendChild(itemDiv);
         }
 
-        // --- FUNÇÕES DE MANIPULAÇÃO DA COMANDA ---
-
-       function addToCommand(id, nome, preco) {
-    const itemIndex = GLOBAL_ORDER_ITEMS.findIndex(item => item.id === id);
-
-    if (itemIndex > -1) {
-        GLOBAL_ORDER_ITEMS[itemIndex].quantidade += 1;
-        // Se já existe, mas está "enviado", marcamos como "novo" novamente
-        if (GLOBAL_ORDER_ITEMS[itemIndex].status_cozinha === 'enviado') {
-             GLOBAL_ORDER_ITEMS[itemIndex].status_cozinha = 'novo';
+        function addToCommand(id, nome, preco) {
+            const itemIndex = GLOBAL_ORDER_ITEMS.findIndex(item => item.id === id);
+            if (itemIndex > -1) {
+                GLOBAL_ORDER_ITEMS[itemIndex].quantidade += 1;
+                if (GLOBAL_ORDER_ITEMS[itemIndex].status_cozinha === 'enviado') { GLOBAL_ORDER_ITEMS[itemIndex].status_cozinha = 'novo'; }
+            } else { GLOBAL_ORDER_ITEMS.push({ id, nome, preco, quantidade: 1, status_cozinha: 'novo' }); }
+            renderComanda();
         }
-    } else {
-        // NOVO: Adicione o campo status_cozinha: 'novo'
-        GLOBAL_ORDER_ITEMS.push({ id, nome, preco, quantidade: 1, status_cozinha: 'novo' });
-    }
-    renderComanda();
-}
 
         function removeFromCommand(index) {
             GLOBAL_ORDER_ITEMS[index].quantidade -= 1;
-            if (GLOBAL_ORDER_ITEMS[index].quantidade <= 0) {
-                GLOBAL_ORDER_ITEMS.splice(index, 1);
-            }
+            if (GLOBAL_ORDER_ITEMS[index].quantidade <= 0) { GLOBAL_ORDER_ITEMS.splice(index, 1); }
             renderComanda();
         }
 
@@ -751,317 +617,121 @@ function verificarSessaoLocal() {
             const lista = document.getElementById('itens-comanda');
             lista.innerHTML = '';
             let total = 0;
-
             GLOBAL_ORDER_ITEMS.forEach((item, index) => {
                 const li = document.createElement('li');
                 const subtotal = item.quantidade * item.preco;
                 total += subtotal;
-
-                const subtotalFormatado = subtotal.toFixed(2).replace('.', ',');
-
                 li.innerHTML = `
-                    <span>${item.quantidade}x ${item.nome}</span> 
-                    <span>R$ ${subtotalFormatado} 
+                    <span>${item.quantidade}x ${item.nome}</span>
+                    <span>R$ ${subtotal.toFixed(2).replace('.', ',')}
                         <button class="remover-btn" onclick="removeFromCommand(${index})">X</button>
                     </span>
                 `;
                 lista.appendChild(li);
             });
-
             document.getElementById('total-comanda').textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
-        // Localize esta função (aproximadamente linha 692)
-async function enviarParaCozinha() { 
-    if (GLOBAL_ORDER_ITEMS.length === 0) {
-        alert("Não há itens para enviar para cozinha.");
-        return;
-    }
-
-    const totalComanda = parseFloat(document.getElementById('total-comanda').textContent.replace('Total: R$ ', '').replace(',', '.'));
-    const observacao = document.getElementById('observacao').value.trim();
-
-    // 🆕 IMPRIMIR NA COZINHA (Isto agora FILTRA, IMPRIME E ATUALIZA O STATUS LOCAL)
-    const impressoComSucesso = await imprimirNaCozinha();
-    
-    if (!impressoComSucesso && GLOBAL_ORDER_ITEMS.filter(item => item.status_cozinha === 'novo').length > 0) {
-        // Se a impressão falhar e ainda houver itens 'novo' (caso o `imprimirNaCozinha` tenha falhado antes de atualizar o local),
-        // interrompemos a operação para evitar salvar um estado errado.
-        alert('Falha crítica ao enviar para impressão/atualizar status. Tente novamente.');
-        return;
-    }
-
-
-    // 🆕 ATUALIZAR O PEDIDO NO SUPABASE (SALVA O STATUS 'enviado' de volta no banco)
-    const { error: saveError } = await supabaseClient
-        .from('pedidos')
-        .update({ 
-            itens: GLOBAL_ORDER_ITEMS, // ARRAY AGORA CONTÉM OS ITENS NOVOS COM status_cozinha: 'enviado'
-            observacao: observacao,
-            total: totalComanda,
-            status: 'Em Preparo'
-        })
-        .eq('id', GLOBAL_COMANDA_ID);
-
-    if (saveError) {
-        console.error('Erro ao salvar o pedido atualizado com status:', saveError);
-        alert('Erro ao salvar o status atualizado do pedido!');
-        return;
-    }
-
-    // O restante da sua função continua...
-
-    // 🆕 ATUALIZAR STATUS DA MESA
-    const { error: mesaError } = await supabaseClient
-        .from('mesas_status')
-        .update({ status: 'Em Preparo' })
-        .eq('mesa', GLOBAL_MESA_ID);
-
-    if (mesaError) {
-        console.error('Erro ao atualizar status da mesa:', mesaError);
-    }
-    
-    alert('Pedido enviado para cozinha com sucesso! (Itens novos impressos)');
-    
-    // VOLTAR PARA MESAS APÓS ENVIAR
-    setTimeout(() => {
-        showMesasView();
-        carregarMesas();
-    }, 1000);
-}
-
-// 🆕 ATUALIZE ESTA FUNÇÃO: Mantenha o nome original, mas mude a lógica.
-async function imprimirNaCozinha() {
-    const mesaId = GLOBAL_MESA_ID;
-    const nomeComanda = GLOBAL_COMANDA_NOME;
-    const observacao = document.getElementById('observacao').value.trim();
-    const dataHora = new Date().toLocaleString('pt-BR');
-
-    // 1. BUSCAR O PEDIDO COMO ELE ESTÁ SALVO NO SUPABASE (ESTADO ANTERIOR)
-    const { data: pedidoAnterior, error: fetchError } = await supabaseClient
-        .from('pedidos')
-        .select('itens')
-        .eq('id', GLOBAL_COMANDA_ID)
-        .single();
-        
-    if (fetchError || !pedidoAnterior) {
-        console.error('Erro ao buscar pedido anterior para cálculo do delta:', fetchError);
-        alert('Atenção: Falha ao conferir itens antigos. O pedido pode ser impresso com quantidades totais. Tente novamente.');
-        return false; // Interrompe para evitar erro de impressão
-    }
-
-    const itensAnteriores = pedidoAnterior ? pedidoAnterior.itens || [] : [];
-    
-    // Mapeia os itens anteriores para fácil comparação (ID -> Quantidade)
-    const mapaItensAnteriores = itensAnteriores.reduce((map, item) => {
-        map[item.id] = (map[item.id] || 0) + item.quantidade;
-        return map;
-    }, {});
-    
-    // 2. CALCULAR O DELTA: FILTRAR ITENS NOVOS E AJUSTAR A QUANTIDADE
-    const itensNovosDelta = [];
-
-    // Itera sobre o estado atual (GLOBAL_ORDER_ITEMS)
-    GLOBAL_ORDER_ITEMS.forEach(itemAtual => {
-        // Só consideramos itens que foram adicionados e marcados como 'novo' pelo garçom
-        if (itemAtual.status_cozinha === 'novo') {
-            const quantidadeAnterior = mapaItensAnteriores[itemAtual.id] || 0;
-            const quantidadeAtual = itemAtual.quantidade;
-            // O AJUSTE CRUCIAL: calcula a diferença
-            const deltaQuantidade = quantidadeAtual - quantidadeAnterior; 
-            
-            if (deltaQuantidade > 0) {
-                // Adiciona ao delta com a nova quantidade (a diferença)
-                itensNovosDelta.push({
-                    ...itemAtual,
-                    quantidade: deltaQuantidade // SÓ A QUANTIDADE ADICIONADA
-                });
+        async function enviarParaCozinha() {
+            if (GLOBAL_ORDER_ITEMS.length === 0) { alert("Não há itens para enviar para cozinha."); return; }
+            const totalComanda = parseFloat(document.getElementById('total-comanda').textContent.replace('Total: R$ ', '').replace(',', '.'));
+            const observacao = document.getElementById('observacao').value.trim();
+            const impressoComSucesso = await imprimirNaCozinha();
+            if (!impressoComSucesso && GLOBAL_ORDER_ITEMS.filter(item => item.status_cozinha === 'novo').length > 0) {
+                alert('Falha crítica ao enviar para impressão/atualizar status. Tente novamente.');
+                return;
             }
+            const { error: saveError } = await supabaseClient.from('pedidos').update({
+                itens: GLOBAL_ORDER_ITEMS, observacao: observacao, total: totalComanda, status: 'Em Preparo'
+            }).eq('id', GLOBAL_COMANDA_ID);
+            if (saveError) { alert('Erro ao salvar o status atualizado do pedido!'); return; }
+            const { error: mesaError } = await supabaseClient.from('mesas_status').update({ status: 'Em Preparo' }).eq('mesa', GLOBAL_MESA_ID);
+            if (mesaError) console.error('Erro ao atualizar status da mesa:', mesaError);
+            alert('Pedido enviado para cozinha com sucesso! (Itens novos impressos)');
+            setTimeout(() => { showMesasView(); carregarMesas(); }, 1000);
         }
-    });
 
-    const itensAImprimir = itensNovosDelta;
-
-    if (itensAImprimir.length === 0) {
-        console.log("Nenhum item novo para imprimir na cozinha.");
-        return true; 
-    }
-
-    // 3. GERAR CONTEÚDO DE IMPRESSÃO SÓ COM ITENS NOVOS (USA itensAImprimir)
-    let printContent = `
-        <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
-            <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;">
-                <span style="color: #ff0000;">--- NOVO PEDIDO ---</span>
-            </h2>
-            <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;">
-                <strong>COMANDA - MESA ${mesaId}</strong>
-            </h3>
-            <p style="text-align: center; margin: 0 0 8px 0; font-size: 13pt; color: #000000;">
-                <strong>${nomeComanda}</strong>
-            </p>
-            <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;">
-                <strong>Data: ${dataHora}</strong>
-            </p>
-            
-            <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;">
-                <strong>ITENS NOVOS:</strong>
-            </h4>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-            ${itensAImprimir.map(item => `
-                <li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;">
-                    <strong>${item.quantidade}x ${item.nome}</strong>
-                </li>
-            `).join('')}
-            </ul>
-            
-            ${observacao ? `
-                <div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;">
-                    <p style="font-size: 12pt; margin: 8px 0; color: #000000;">
-                        <strong>OBS: ${observacao}</strong>
-                    </p>
-                </div>
-            ` : ''}
-            
-            <p style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: right; font-size: 12pt; color: #000000;">
-                NOVOS ITENS ENVIADOS
-            </p>
-        </div>
-    `;
-
-    // 4. ATUALIZAR STATUS DOS ITENS LOCAIS PARA 'enviado' (Crucial para o próximo ciclo)
-    // Isso garante que o estado local esteja pronto para a próxima adição.
-    GLOBAL_ORDER_ITEMS.forEach(item => {
-        if (item.status_cozinha === 'novo') {
-            item.status_cozinha = 'enviado';
-        }
-    });
-
-    // 5. ENVIAR PARA IMPRESSORA DA COZINHA VIA SUPABASE
-    const { error } = await supabaseClient
-        .from('impressoes_cozinha')
-        .insert({
-            mesa: mesaId,
-            comanda_nome: nomeComanda,
-            conteudo: printContent, 
-            itens: itensAImprimir, 
-            observacao: observacao,
-            data_hora: new Date().toISOString()
-        });
-
-    if (error) {
-        console.error('Erro ao enviar para impressão na cozinha:', error);
-        alert('Erro ao enviar impressão para a cozinha, verifique o console.');
-        return false;
-    }
-    
-    return true;
-}
-
-        // --- INICIALIZAÇÃO ---
-        // index.html - SUBSTITUIR o event listener DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Verificar logout remoto imediatamente ao carregar
-    verificarLogoutRemoto();
-    
-    // Verificar sessão local primeiro
-    if (verificarSessaoLocal()) {
-        console.log('Usuário logado (sessão local), mostrando mesas...');
-        showMesasView();
-        
-        setTimeout(() => {
-            console.log('Testando carregamento do cardápio...');
-            carregarCardapio().then(() => {
-                console.log('Cardápio carregado com sucesso!');
-            }).catch(error => {
-                console.error('Erro ao carregar cardápio:', error);
+        async function imprimirNaCozinha() {
+            const mesaId = GLOBAL_MESA_ID;
+            const nomeComanda = GLOBAL_COMANDA_NOME;
+            const observacao = document.getElementById('observacao').value.trim();
+            const dataHora = new Date().toLocaleString('pt-BR');
+            const { data: pedidoAnterior, error: fetchError } = await supabaseClient.from('pedidos').select('itens').eq('id', GLOBAL_COMANDA_ID).single();
+            if (fetchError || !pedidoAnterior) { alert('Atenção: Falha ao conferir itens antigos. Tente novamente.'); return false; }
+            const itensAnteriores = pedidoAnterior ? pedidoAnterior.itens || [] : [];
+            const mapaItensAnteriores = itensAnteriores.reduce((map, item) => { map[item.id] = (map[item.id] || 0) + item.quantidade; return map; }, {});
+            const itensNovosDelta = [];
+            GLOBAL_ORDER_ITEMS.forEach(itemAtual => {
+                if (itemAtual.status_cozinha === 'novo') {
+                    const deltaQuantidade = itemAtual.quantidade - (mapaItensAnteriores[itemAtual.id] || 0);
+                    if (deltaQuantidade > 0) { itensNovosDelta.push({ ...itemAtual, quantidade: deltaQuantidade }); }
+                }
             });
-        }, 1000);
-        
-    } else {
-        console.log('Usuário não logado, mostrando login...');
-        showLoginView();
-    }
-});
+            const itensAImprimir = itensNovosDelta;
+            if (itensAImprimir.length === 0) { return true; }
+            let printContent = `
+                <div style="font-family: monospace; font-size: 14pt; line-height: 1.4; color: #000000;">
+                    <h2 style="text-align: center; margin: 5px 0; font-size: 18pt; color: #000000;"><span style="color: #ff0000;">--- NOVO PEDIDO ---</span></h2>
+                    <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16pt; color: #000000;"><strong>COMANDA - MESA ${mesaId}</strong></h3>
+                    <p style="text-align: center; margin: 0 0 8px 0; font-size: 13pt; color: #000000;"><strong>${nomeComanda}</strong></p>
+                    <p style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 10px; font-size: 12pt; color: #000000;"><strong>Data: ${dataHora}</strong></p>
+                    <h4 style="font-size: 14pt; margin: 15px 0 8px 0; border-bottom: 2px solid #000; padding-bottom: 5px; color: #000000;"><strong>ITENS NOVOS:</strong></h4>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                    ${itensAImprimir.map(item => `<li style="margin-bottom: 8px; font-size: 13pt; color: #000000; border-bottom: 1px dashed #000; padding-bottom: 4px;"><strong>${item.quantidade}x ${item.nome}</strong></li>`).join('')}
+                    </ul>
+                    ${observacao ? `<div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px;"><p style="font-size: 12pt; margin: 8px 0; color: #000000;"><strong>OBS: ${observacao}</strong></p></div>` : ''}
+                    <p style="border-top: 3px solid #000; padding-top: 12px; margin-top: 20px; text-align: right; font-size: 12pt; color: #000000;">NOVOS ITENS ENVIADOS</p>
+                </div>
+            `;
+            GLOBAL_ORDER_ITEMS.forEach(item => { if (item.status_cozinha === 'novo') { item.status_cozinha = 'enviado'; } });
+            const { error } = await supabaseClient.from('impressoes_cozinha').insert({
+                mesa: mesaId, comanda_nome: nomeComanda, conteudo: printContent,
+                itens: itensAImprimir, observacao: observacao, data_hora: new Date().toISOString()
+            });
+            if (error) { alert('Erro ao enviar impressão para a cozinha, verifique o console.'); return false; }
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            verificarLogoutRemoto();
+            if (verificarSessaoLocal()) {
+                showMesasView();
+                setTimeout(() => { carregarCardapio(); }, 1000);
+            } else { showLoginView(); }
+        });
 
         window.onclick = function(event) {
             const modal = document.getElementById('modal-editar-nome');
-            if (event.target === modal) {
-                fecharModalEditarNome();
-            }
+            if (event.target === modal) { fecharModalEditarNome(); }
         }
 
-             // --- FUNÇÕES DE LOGOUT REMOTO E VERIFICAÇÃO ---
-        
-        // Verificar se houve logout remoto
-        // index.html - ATUALIZAR função verificarLogoutRemoto
-async function verificarLogoutRemoto() { 
-    try {
-        const { data, error } = await supabaseClient
-            .from('configuracoes_sistema')
-            .select('valor')
-            .eq('chave', 'logout_garcom')
-            .single();
-
-        if (!error && data && data.valor === 'true') {
-            // Logout remoto detectado - fazer logout local E LIMPAR A FLAG
-            await fazerLogoutEResetarFlag();
-        }
-    } catch (error) {
-        console.log('Erro ao verificar logout remoto:', error);
-    }
-}
-
-        async function fazerLogoutEResetarFlag() { 
-
+        async function verificarLogoutRemoto() {
             try {
-                // 1. Primeiro resetar a flag para false no banco
-                const { error: resetError } = await supabaseClient
-                    .from('configuracoes_sistema')
-                    .upsert({
-                        chave: 'logout_garcom',
-                        valor: 'false',
-                        atualizado_em: new Date().toISOString()
-                    }, {
-                        onConflict: 'chave'
-                    });
-
-                if (resetError) {
-                    console.error('Erro ao resetar flag de logout:', resetError);
-                }
-
-                // 2. Depois fazer o logout local
-                await fazerLogoutLocal();
-                
-            } catch (error) {
-                console.error('Erro no processo de logout:', error);
-            }
+                const { data, error } = await supabaseClient.from('configuracoes_sistema').select('valor').eq('chave', 'logout_garcom').single();
+                if (!error && data && data.valor === 'true') { await fazerLogoutEResetarFlag(); }
+            } catch (error) { console.log('Erro ao verificar logout remoto:', error); }
         }
 
-             // index.html - ATUALIZAR função fazerLogoutLocal
-async function fazerLogoutLocal() {
-    // Limpar sessão local
-    localStorage.removeItem('garcom_logado');
-    localStorage.removeItem('garcom_email');
-    localStorage.removeItem('garcom_login_time');
-    
-    // Resetar variáveis globais
-    GLOBAL_MESA_ID = null;
-    GLOBAL_COMANDA_ID = null;
-    GLOBAL_ORDER_ITEMS = [];
-    GLOBAL_COMANDA_NOME = "Principal";
-    GLOBAL_MESA_COMANDAS = [];
-    
-    // Parar polling
-    stopPolling();
-    
-    // Mostrar tela de login
-    showLoginView();
-    
-    alert('Sessão encerrada remotamente pela cozinha.');
-}
-        // Verificar logout remoto periodicamente (mantém 5 segundos)
-        setInterval(verificarLogoutRemoto, 5000); // Verificar logout remoto periodicamente (mantém 5 segundos)
-        
+        async function fazerLogoutEResetarFlag() {
+            try {
+                const { error: resetError } = await supabaseClient.from('configuracoes_sistema').upsert({ chave: 'logout_garcom', valor: 'false', atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
+                if (resetError) console.error('Erro ao resetar flag de logout:', resetError);
+                await fazerLogoutLocal();
+            } catch (error) { console.error('Erro no processo de logout:', error); }
+        }
+
+        async function fazerLogoutLocal() {
+            localStorage.removeItem('garcom_logado');
+            localStorage.removeItem('garcom_email');
+            localStorage.removeItem('garcom_login_time');
+            GLOBAL_MESA_ID = null; GLOBAL_COMANDA_ID = null; GLOBAL_ORDER_ITEMS = [];
+            GLOBAL_COMANDA_NOME = "Principal"; GLOBAL_MESA_COMANDAS = [];
+            stopPolling();
+            showLoginView();
+            alert('Sessão encerrada remotamente pela cozinha.');
+        }
+
+        setInterval(verificarLogoutRemoto, 5000);
     </script>
 </body>
 </html>
